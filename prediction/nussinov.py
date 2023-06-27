@@ -47,7 +47,7 @@ def initialize_matrix(L: int):
     return P
 
 
-def fill_matrix(P: np.ndarray, S: str):
+def fill_matrix(P: np.ndarray, S: str, q: int = 1):
     """Main step of Nussinov's algorithm, i.e. filling the P matrix to find maximum base-pairing
 
     Args:
@@ -55,7 +55,7 @@ def fill_matrix(P: np.ndarray, S: str):
         S (string): The RNA sequence comprised of the letters A, U, G or C.
 
     Returns:
-        P (np.ndarray):
+        P (np.ndarray): 2D array where entry i, j defines the maximum number of base-pairs for segment [i, j].
 
     """
     L = len(S)
@@ -64,25 +64,70 @@ def fill_matrix(P: np.ndarray, S: str):
         for i in range(1, L - k + 1):  # loop over starting index of segment
             j = i + k
             j_unpaired = P[i, j-1]
-            l_j_paired = [P[i, l-1] + P[l+1, j-1] + 1 for l in range(i, j) if pairs[S[l-1], S[j-1]]]
+            l_j_paired = [P[i, l-1] + P[l+1, j-1] + 1 for l in range(i, j-q) if pairs[S[l-1], S[j-1]]]
 
-            # for l in range(i, j):
-            #     if pairs[S[l - 1], S[j - 1]]:
-            #         t = P[i, l - 1] + P[l + 1, j - 1] + 1
-            #         print(i, j, l, t, P[i, l - 1], P[l + 1, j - 1])
-            #         print("REFS:", (i, l-1), (l+1, j-1))
-
-            P[i, j] = max(j_unpaired, *l_j_paired)
-
+            if l_j_paired:
+                P[i, j] = max(j_unpaired, *l_j_paired)
+            else:
+                P[i, j] = j_unpaired
     return P
 
 
+def traceback(P: np.ndarray, S: str):
+    """
+
+    Args:
+        P (np.ndarray): 2D array that should be empty except for zeros along diagonal and lower off-diagonal
+        S (string): The RNA sequence comprised of the letters A, U, G or C.
+
+    Returns:
+        B (list): List of base pairs in tuple format
+
+    """
+    L = len(S)
+    sigma = [(1, L)]
+    B = []
+
+    while sigma:
+        i, j = sigma.pop()
+        if i >= j:  # ignore segments too small for a base-pair (produced when two neighboring sites pair or first)
+            continue
+        if P[i, j] == P[i, j-1]:
+            sigma.append((i, j-1))
+        else:
+            for l in range(i, j):
+                if pairs[S[l-1], S[j-1]]:
+                    if P[i, j] == P[i, l-1] + P[l+1, j-1] + 1:
+                        B.append((l, j))
+                        sigma.extend([(i, l-1), (l+1, j-1)])
+                        break
+    return B
+
+
+def bp_to_dotbracket(bp: list, L: int) -> str:
+    """Turn list of base-pairs into dot-bracket notation
+
+    Args:
+        bp (list): List of tuples defining base-pairs
+        L (int): Length of sequence
+
+    Returns:
+        db (str): Secondary structure in dot-bracket notation
+
+    """
+    db = ["."] * L
+    for pair in bp:
+        db[pair[0] - 1] = "("
+        db[pair[1] - 1] = ")"
+    db = ''.join(db)
+    return db
+
 if __name__ ==  "__main__":
     S = sys.argv[1]
-    print(S)
     P = initialize_matrix(len(S))
+    P = fill_matrix(P, S, q=0)
     print(P)
-    print("START")
-    P = fill_matrix(P, S)
-    print("END")
-    print(P)
+    B = traceback(P, S)
+    print(B)
+    db = bp_to_dotbracket(B, L=len(S))
+    print(db)
