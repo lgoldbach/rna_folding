@@ -38,55 +38,51 @@ def initialize_matrix(L: int):
         M (np.ndarray) : 2d array of integers
 
     """
-    M = np.zeros((L, L), dtype=int)
+    P = np.zeros((L+1, L+1), dtype=int)
 
-    x, y = np.diag_indices(L)
-    M[x, y] = 0    # set diagonal to zero
-    M[x[1:], y[1:]-1] = 0    # set lower one-off diagonal to zero
+    # x, y = np.diag_indices(L)
+    # P[x, y] = 0    # set diagonal to zero
+    # P[x[1:], y[1:]-1] = 0    # set lower one-off diagonal to zero
 
-    return M
+    return P
 
 
-def fill_matrix(M: np.ndarray, S: str):
-    """Main step of Nussinov's algorithm, i.e. filling the M matrix to find maximum base-pairing
+def fill_matrix(P: np.ndarray, S: str):
+    """Main step of Nussinov's algorithm, i.e. filling the P matrix to find maximum base-pairing
 
     Args:
-        M (np.ndarray): 2D array that should be empty except for zeros along diagonal and lower off-diagonal
+        P (np.ndarray): 2D array that should be empty except for zeros along diagonal and lower off-diagonal
         S (string): The RNA sequence comprised of the letters A, U, G or C.
 
     Returns:
-        M (np.ndarray):
+        P (np.ndarray):
 
     """
     L = len(S)
 
-    for j in range(1, L):
-        for i in range(j-1, -1, -1):
-            T = np.zeros((L, L))
-            T[i, j] = 1
-            if pairs[(S[i], S[j])]:
-                M[i, j] = M[i + 1, j - 1] + 1
-                T[i + 1, j - 1] = 2
-                print(T)
+    for k in range(1, L):  # loop over segment sizes
+        for i in range(1, L - k + 1):  # loop over starting index of segment
+            j = i + k
+            j_unpaired = P[i, j-1]
+            l_j_paired = [P[i, l-1] + P[l+1, j-1] + 1 for l in range(i, j) if pairs[S[l-1], S[j-1]]]
 
-            else:
-                M[i, j] = max(M[i, j - 1], M[i + 1, j - 1], M[i + 1, j])
-                T[i, j - 1] = 2
-                T[i + 1, j - 1] = 3
-                T[i + 1, j] = 4
-                print(T)
+            # for l in range(i, j):
+            #     if pairs[S[l - 1], S[j - 1]]:
+            #         t = P[i, l - 1] + P[l + 1, j - 1] + 1
+            #         print(i, j, l, t, P[i, l - 1], P[l + 1, j - 1])
+            #         print("REFS:", (i, l-1), (l+1, j-1))
 
+            P[i, j] = max(j_unpaired, *l_j_paired)
 
-
-    return M
+    return P
 
 
 if __name__ ==  "__main__":
     S = sys.argv[1]
     print(S)
-    M = initialize_matrix(len(S))
-    print(M)
+    P = initialize_matrix(len(S))
+    print(P)
     print("START")
-    M = fill_matrix(M, S)
+    P = fill_matrix(P, S)
     print("END")
-    print(M)
+    print(P)

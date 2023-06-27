@@ -34,7 +34,7 @@ def fill(nm, rna):
     for k in range(1, len(rna)):
         for i in range(len(rna) - k):
             j = i + k
-
+            print(i, j)
             if j - i >= minimal_loop_length:
                 down = nm[i + 1][j]  # 1st rule
                 left = nm[i][j - 1]  # 2nd rule
