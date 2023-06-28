@@ -74,7 +74,7 @@ def fill_matrix(P: np.ndarray, S: str, q: int = 1):
 
 
 def traceback(P: np.ndarray, S: str):
-    """
+    """Find an base-pairs of an optimal secondary structure, i.e. a structure with maximum number of base-pairs
 
     Args:
         P (np.ndarray): 2D array that should be empty except for zeros along diagonal and lower off-diagonal
@@ -82,6 +82,9 @@ def traceback(P: np.ndarray, S: str):
 
     Returns:
         B (list): List of base pairs in tuple format
+
+    Remarks:
+        Only returns one structure. There may be more structures with the same number of base-pairs.
 
     """
     L = len(S)
@@ -101,6 +104,39 @@ def traceback(P: np.ndarray, S: str):
                         B.append((l, j))
                         sigma.extend([(i, l-1), (l+1, j-1)])
                         break
+    return B
+
+
+def traceback_subopt(P: np.ndarray, S: str, d: int = 0):
+    """Find all suboptimal structures within a certain number of base-pairs from the maximum.
+
+    Args:
+        P (np.ndarray): 2D array that should be empty except for zeros along diagonal and lower off-diagonal
+        S (string): The RNA sequence comprised of the letters A, U, G or C.
+        d (int): allowed difference in number of base-pairs between optimal and suboptimal structures. Default d = 0
+                     generates all possible optimal structures.
+
+    Returns:
+        B (list): List of base pairs in tuple format
+
+    """
+    # L = len(S)
+    # sigma = [(1, L)]
+    # B = []
+    #
+    # while sigma:
+    #     i, j = sigma.pop()
+    #     if i >= j:  # ignore segments too small for a base-pair (produced when two neighboring sites pair or first)
+    #         continue
+    #     if P[i, j] == P[i, j-1]:
+    #         sigma.append((i, j-1))
+    #     else:
+    #         for l in range(i, j):
+    #             if pairs[S[l-1], S[j-1]]:
+    #                 if P[i, j] == P[i, l-1] + P[l+1, j-1] + 1:
+    #                     B.append((l, j))
+    #                     sigma.extend([(i, l-1), (l+1, j-1)])
+    #                     break
     return B
 
 
