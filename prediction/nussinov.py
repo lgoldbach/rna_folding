@@ -74,7 +74,7 @@ def fill_matrix(P: np.ndarray, S: str, q: int = 1):
 
 
 def traceback(P: np.ndarray, S: str):
-    """Find an base-pairs of an optimal secondary structure, i.e. a structure with maximum number of base-pairs
+    """Find a base-pairs of an optimal secondary structure, i.e. a structure with maximum number of base-pairs
 
     Args:
         P (np.ndarray): 2D array that should be empty except for zeros along diagonal and lower off-diagonal
