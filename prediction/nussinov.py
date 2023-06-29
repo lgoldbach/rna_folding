@@ -121,26 +121,35 @@ def traceback_subopt(P: np.ndarray, S: str, d: int = 0):
 
     """
     L = len(S)
-    sigma = [(1, L)]
-    B = []
+    s_init = SecondaryStructure(sigma=[(1, L)], B=[])  # initiate first suboptimal structure
+    R = [s_init]  # initiate stack of suboptimal structures
+    final_structures = []  # where we collect suboptimal structures
+    p_max = P[1, -1]  # maximum possible number of base-pairs
 
-    while sigma:
-        i, j = sigma.pop()
-        if i >= j:  # ignore segments too small for a base-pair (produced when two neighboring sites pair or first)
+    while R:
+        added_to_R_stack = False  # track whether something has been put on R stack since popping s
+        s = R.pop()
+        if s.is_folded():
+            final_structures.append(s)
             continue
-        if P[i, j] == P[i, j-1]:
-            sigma.append((i, j-1))
-        else:
+        while not s.is_folded():
+            i, j = s.pop()
+            s_ = SecondaryStructure(sigma=[(i, j-1), *s.sigma], B=s.B)
+            if s_.maximum_bp(P) >= p_max - d:
+                R.append(s_)
+                added_to_R_stack = True
             for l in range(i, j):
-                if pairs[S[l-1], S[j-1]]:
-                    if P[i, j] == P[i, l-1] + P[l+1, j-1] + 1:
-                        B.append((l, j))
-                        sigma.extend([(i, l-1), (l+1, j-1)])
-                        break
-    return B
+                if pairs[S[l - 1], S[j - 1]]:
+                    s_ = SecondaryStructure(sigma=[(i, l-1), (l+1, j-1), *s.sigma], B=[*s.B, (l, j)])
+                    if s_.maximum_bp(P) >= p_max - d:
+                        R.append(s_)
+                        added_to_R_stack = True
+        if not added_to_R_stack:  # nothing has been put on stack since popping s
+            R.append(s)  # continue with s next iteration (no infinite loop because each iteration we pop from s.sigma)
+    return final_structures
 
 
-class StructureStack:
+class SecondaryStructure:
     """Implements data structure for backtracking an RNA secondary structure. Holds identified base-pairs and sequence
     segments that have yet to be explored by backtracking.
 
@@ -152,8 +161,10 @@ class StructureStack:
             sigma (list): Stack of segments (tuples of size 2)
             B (list): Stack of base-pairs (tuples of size 2)
         """
-        self._sigma = sigma
-        self._B = B
+        self._sigma = []
+        self.__add_segments(sigma)
+        self._B = []
+        self.__add_base_pairs(B)
 
     def maximum_bp(self, P: np.ndarray) -> int:
         """Determine the maximum possible number of base pairs this structure can have
@@ -166,8 +177,7 @@ class StructureStack:
 
         """
         determined_bps = len(self._B)
-        potential_bps = sum([P[seg[0], seg[1]] for seg in self._sigma])
-
+        potential_bps = sum([P[seg] for seg in self._sigma])
         max_bps = determined_bps + potential_bps
         return max_bps
 
@@ -183,7 +193,9 @@ class StructureStack:
         return self._sigma
 
     def __add_segments(self, segments: list):
-        self._sigma.extend(segments)
+        for s in segments:
+            if s[0] < s[1]:  # ignore segments too small for a base-pair (produced when two neighboring sites pair or first)
+                self._sigma.append(s)
 
     def pop(self):
         """Return segment last added to the stack
@@ -192,7 +204,14 @@ class StructureStack:
             (tuple): Interval (i, j), with i, j in [0, L] (L=seq. length) and i<j, which defines a sequence segment.
 
         """
-        return self._sigma.pop()
+        if not self.is_folded():
+            return self._sigma.pop()
+
+    def is_folded(self):
+        if self._sigma:
+            return False
+        else:
+            return True
 
     def update(self, segments: list, base_pairs: list):
         """Updates segment stack and base pairs simultaneously to avoid unsynched access to either of the two
@@ -229,10 +248,9 @@ def bp_to_dotbracket(bp: list, L: int) -> str:
 
 if __name__ ==  "__main__":
     S = sys.argv[1]
+    d = int(sys.argv[2])
     P = initialize_matrix(len(S))
     P = fill_matrix(P, S, q=0)
-    print(P)
-    B = traceback(P, S)
-    print(B)
-    db = bp_to_dotbracket(B, L=len(S))
-    print(db)
+    subopt_strucs = traceback_subopt(P=P, S=S, d=d)
+    for s in subopt_strucs:
+        print(bp_to_dotbracket(s.B, L=len(S)))
