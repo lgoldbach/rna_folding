@@ -120,24 +120,93 @@ def traceback_subopt(P: np.ndarray, S: str, d: int = 0):
         B (list): List of base pairs in tuple format
 
     """
-    # L = len(S)
-    # sigma = [(1, L)]
-    # B = []
-    #
-    # while sigma:
-    #     i, j = sigma.pop()
-    #     if i >= j:  # ignore segments too small for a base-pair (produced when two neighboring sites pair or first)
-    #         continue
-    #     if P[i, j] == P[i, j-1]:
-    #         sigma.append((i, j-1))
-    #     else:
-    #         for l in range(i, j):
-    #             if pairs[S[l-1], S[j-1]]:
-    #                 if P[i, j] == P[i, l-1] + P[l+1, j-1] + 1:
-    #                     B.append((l, j))
-    #                     sigma.extend([(i, l-1), (l+1, j-1)])
-    #                     break
+    L = len(S)
+    sigma = [(1, L)]
+    B = []
+
+    while sigma:
+        i, j = sigma.pop()
+        if i >= j:  # ignore segments too small for a base-pair (produced when two neighboring sites pair or first)
+            continue
+        if P[i, j] == P[i, j-1]:
+            sigma.append((i, j-1))
+        else:
+            for l in range(i, j):
+                if pairs[S[l-1], S[j-1]]:
+                    if P[i, j] == P[i, l-1] + P[l+1, j-1] + 1:
+                        B.append((l, j))
+                        sigma.extend([(i, l-1), (l+1, j-1)])
+                        break
     return B
+
+
+class StructureStack:
+    """Implements data structure for backtracking an RNA secondary structure. Holds identified base-pairs and sequence
+    segments that have yet to be explored by backtracking.
+
+    """
+    def __init__(self, sigma: list, B: list):
+        """Initialize a stack of segments (sigma) and a list of base-pairs
+
+        Args:
+            sigma (list): Stack of segments (tuples of size 2)
+            B (list): Stack of base-pairs (tuples of size 2)
+        """
+        self._sigma = sigma
+        self._B = B
+
+    def maximum_bp(self, P: np.ndarray) -> int:
+        """Determine the maximum possible number of base pairs this structure can have
+
+        Args:
+            P (np.ndarray): Matrix containing the maximum number of base-pairs possible for each segment [i, j] in P_i,j
+
+        Returns:
+            max_bps (int): Maximum number of base-pairs possible for this structure.
+
+        """
+        determined_bps = len(self._B)
+        potential_bps = sum([P[seg[0], seg[1]] for seg in self._sigma])
+
+        max_bps = determined_bps + potential_bps
+        return max_bps
+
+    @property
+    def B(self):
+        return self._B
+
+    def __add_base_pairs(self, bp: list):
+        self._B.extend(bp)
+
+    @property
+    def sigma(self):
+        return self._sigma
+
+    def __add_segments(self, segments: list):
+        self._sigma.extend(segments)
+
+    def pop(self):
+        """Return segment last added to the stack
+
+        Returns:
+            (tuple): Interval (i, j), with i, j in [0, L] (L=seq. length) and i<j, which defines a sequence segment.
+
+        """
+        return self._sigma.pop()
+
+    def update(self, segments: list, base_pairs: list):
+        """Updates segment stack and base pairs simultaneously to avoid unsynched access to either of the two
+
+        Args:
+            segments (list): list of tuples defining segments to be added to the stack
+            base_pairs (list): list of tuples defining new base pairs to be added
+
+        Returns:
+            None
+
+        """
+        self.__add_segments(segments)
+        self.__add_base_pairs(base_pairs)
 
 
 def bp_to_dotbracket(bp: list, L: int) -> str:
