@@ -10,22 +10,10 @@ import numpy as np
 
 
 # Define all possible base-pairs. Use dictionary for quick look-up with hashing
-pairs = {("A", "A"): 0,
-         ("A", "U"): 1,
-         ("A", "G"): 0,
-         ("A", "C"): 0,
-         ("U", "A"): 1,
-         ("U", "U"): 0,
-         ("U", "G"): 1,
-         ("U", "C"): 0,
-         ("G", "A"): 0,
-         ("G", "U"): 1,
-         ("G", "G"): 0,
-         ("G", "C"): 1,
-         ("C", "A"): 0,
-         ("C", "U"): 0,
-         ("C", "G"): 1,
-         ("C", "C"): 0}
+pairs = {("A", "A"): 0, ("A", "U"): 1, ("A", "G"): 0, ("A", "C"): 0,
+         ("U", "A"): 1, ("U", "U"): 0, ("U", "G"): 1, ("U", "C"): 0,
+         ("G", "A"): 0, ("G", "U"): 1, ("G", "G"): 0, ("G", "C"): 1,
+         ("C", "A"): 0, ("C", "U"): 0, ("C", "G"): 1, ("C", "C"): 0}
 
 
 def initialize_matrix(L: int):
@@ -127,7 +115,7 @@ def traceback_subopt(P: np.ndarray, S: str, d: int = 0):
     p_max = P[1, -1]  # maximum possible number of base-pairs
 
     while R:
-        added_to_R_stack = False  # track whether something has been put on R stack since popping s
+        added_to_R = False  # track whether something has been put on R stack since popping s
         s = R.pop()
         if s.is_folded():
             final_structures.append(s)
@@ -137,14 +125,14 @@ def traceback_subopt(P: np.ndarray, S: str, d: int = 0):
             s_ = SecondaryStructure(sigma=[(i, j-1), *s.sigma], B=s.B)
             if s_.maximum_bp(P) >= p_max - d:
                 R.append(s_)
-                added_to_R_stack = True
+                added_to_R = True
             for l in range(i, j):
                 if pairs[S[l - 1], S[j - 1]]:
                     s_ = SecondaryStructure(sigma=[(i, l-1), (l+1, j-1), *s.sigma], B=[*s.B, (l, j)])
                     if s_.maximum_bp(P) >= p_max - d:
                         R.append(s_)
-                        added_to_R_stack = True
-        if not added_to_R_stack:  # nothing has been put on stack since popping s
+                        added_to_R = True
+        if not added_to_R:  # nothing has been put on stack since popping s
             R.append(s)  # continue with s next iteration (no infinite loop because each iteration we pop from s.sigma)
     return final_structures
 
