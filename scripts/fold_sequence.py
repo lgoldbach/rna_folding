@@ -22,3 +22,17 @@ if __name__ ==  "__main__":
     for s in strucs:
         db = bp_to_dotbracket(s.B, l=len(args.sequence))
         print(db)
+
+    #### DEBUG CODE START #####
+   # S = "UUG"
+   # mls = 1
+   # sub = 0
+   # P = BasePairMatrixNussinov(n=len(S))
+   # P.fill_matrix(seq=S, min_loop_size=mls)
+   #  strucs = P.traceback_subopt(seq=S, d=sub)
+   # 
+   # for s in strucs:
+   #     db = bp_to_dotbracket(s.B, l=len(S))
+   #     print(db)
+    #### DEBUG CODE END #####
+
