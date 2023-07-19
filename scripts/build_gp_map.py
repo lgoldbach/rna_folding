@@ -14,6 +14,7 @@ if __name__ ==  "__main__":
                         help="Create all suboptimal structures with number of base-pairs in the range"
                              "of max - s, where s is an integer. Without the flag, only one structure "
                              "is computed.")
+    parser.add_argument("-z", "--structures_max", required=False, type=int, help="Limit on how many suboptimal structures to generate")
 
     args = parser.parse_args()
 
@@ -23,7 +24,7 @@ if __name__ ==  "__main__":
             seq = sequence.strip()
             P = BasePairMatrixNussinov(n=len(seq))
             P.fill_matrix(seq=seq, min_loop_size=args.min_loop_size)
-            strucs = P.traceback_subopt(seq=seq, d=args.suboptimal)
+            strucs = P.traceback_subopt(seq=seq, d=args.suboptimal, structures_max=args.structures_max)
             for s in strucs:
                 db = bp_to_dotbracket(s.B, l=len(seq))
                 try:

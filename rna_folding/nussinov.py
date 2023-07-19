@@ -101,7 +101,7 @@ class BasePairMatrixNussinov:
                             break
         return s
 
-    def traceback_subopt(self, seq: str, d: int = 0):
+    def traceback_subopt(self, seq: str, d: int = 0, structures_max = np.inf):
         """Find all suboptimal structures within a certain number of base-pairs from the maximum according to the
         Wuchty1999 algorithm.
 
@@ -129,7 +129,10 @@ class BasePairMatrixNussinov:
             s = R.pop()
             if s.is_folded():
                 final_structures.append(s)
+                if len(final_structures) == structures_max:
+                    break
                 continue
+
             while not s.is_folded():
                 i, j = s.pop()
                 if j-i > self._min_loop_size:
