@@ -3,21 +3,6 @@ import numpy as np
 from itertools import product
 
 
-def combinatorically_complete_genotypes(l, a):
-    """
-
-    Args:
-        l (int): Sequence length.
-        a (str): Alphabet as a continuous string, e.g. "AUGC".
-
-    Returns:
-        g (itertools.product): Generator of genotypes (str).
-
-    """
-    g = product(list(a), repeat=l)
-    return g
-
-
 def gp_map_sample(l: int, a: str, s: int):
     """Sample from a g-p map. For efficiency this creates samples with replacement. It is meant for large g-p maps.
     
@@ -96,14 +81,3 @@ if __name__ ==  "__main__":
         for g in gp_map_sample(l=args.seq_len, a=args.alphabet, s=args.sample_size):
             f.write(g + "\n")
         f.close()
-
-    # genotypes = combinatorically_complete_genotypes(args.seq_len, args.alphabet)
-    
-    # generator_len = len(args.alphabet) ** args.seq_len
-    # print(generator_len, args.sample_size)
-    # sample = random_sample_generator(generator=genotypes, generator_len=generator_len, sample_size=args.sample_size)
-
-    # with open(args.output, "w") as f:
-    #     for g in genotypes:
-    #         f.write("".join(g + ("\n",)))
-    # f.close()

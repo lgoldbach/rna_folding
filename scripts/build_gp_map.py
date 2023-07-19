@@ -1,4 +1,3 @@
-import sys
 import argparse
 
 from rna_folding.nussinov import BasePairMatrixNussinov
