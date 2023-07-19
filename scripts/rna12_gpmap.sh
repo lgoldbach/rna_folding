@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --job-name=RNA12
-#SBATCH --nodes=4
+#SBATCH --nodes=1
 #SBATCH --ntasks=4
 #SBATCH --time=00-01:00:00
 

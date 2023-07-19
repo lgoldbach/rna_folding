@@ -1,4 +1,3 @@
-import sys
 import argparse
 import numpy as np
 from itertools import product
