@@ -1,5 +1,9 @@
 import argparse
+import numpy as np
+import matplotlib.pyplot as plt
+
 from rna_folding.evaluate import f1_score
+from rna_folding.parsing import gpmap_to_dict
 
 
 if __name__ ==  "__main__":
@@ -11,25 +15,29 @@ if __name__ ==  "__main__":
 
     args = parser.parse_args()
     
-    seqid_to_db = {}
-    if args.file:
-        # Parse the phenotype output to be a sequence ID to RNA SS dict
-        with open(args.phenotypes, "r") as query_file:
-            for line in query_file:
-                l = line.split()
-                db = l[0]
-                for i in l[1:]:
-                    id = int(i)
-                    if id in seqid_to_db:
-                        seqid_to_db[id].append(db)
-                    else:
-                        seqid_to_db[id] = [db]
-        
-        # Parse the genotype input file (line number (-1) = sequence ID
-        query_seq_list = []
-        with open(args.genotypes, "r") as ref_file:    
-            for id, line in enumerate(ref_file):
-                query_seq_list.append(line.strip())
-        print(query_seq_list)
+    gp_map = gpmap_to_dict(args.phenotypes, args.genotypes)
+    
 
+    
+
+    with open(args.reference, "r") as ref:
+        ref_dict = dict([line.strip().split() for line in ref])
+    
+    f1_scores = []
+    for seq_id in seqid_to_db:
+        query_seq = query_seq_list[seq_id]  # get sequence
+        ref_ss = ref_dict[query_seq]
+        # loop over suboptimal strucs and compare to ref
+        f1 = [f1_score(ref_ss, query_ss) 
+                for query_ss in seqid_to_db[seq_id]]  
+        f1_scores.append(f1)
+            
+    f1_score_avg = [np.mean(scores) for scores in f1_scores]
+    
+    # ids = np.arange(len(f1_score_avg))
+
+    f1_score_avg_no_zero = [i for i in f1_score_avg if i > 0]
+    print(len(f1_score_avg) - len(f1_score_avg_no_zero))
+    plt.hist(f1_score_avg_no_zero)
+    plt.savefig('hist_no_zeros.png')
         
