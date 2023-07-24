@@ -8,8 +8,11 @@ numpy = "*"
 scipy = "*"
 matplotlib = "*"
 pandas = "*"
+jupyter = "*"
+ipykernel = "*"
 
 [dev-packages]
+ipykernel = "*"
 
 [requires]
 python_version = "3.8"

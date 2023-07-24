@@ -17,3 +17,24 @@ def bp_to_dotbracket(bp: list, l: int) -> str:
         db[pair[1] - 1] = ")"
     db = ''.join(db)
     return db
+
+
+def dotbracket_to_bp(db: str) -> set:
+    """Convert RNA secondary structure from dot-bracket format to list of 
+    base-pairs format
+
+    Args:
+        db (str): dot-bracket string
+
+    Returns:
+        bp (str): list of base-pair tuples (numeric).
+
+    """
+    opening_stack = []
+    bp = []
+    for i, site in enumerate(db):
+        if site == "(":
+            opening_stack.append(i)
+        elif site == ")":
+            bp.append((opening_stack.pop(), i))
+    return set(bp)

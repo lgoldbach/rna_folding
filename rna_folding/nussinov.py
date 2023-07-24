@@ -101,7 +101,7 @@ class BasePairMatrixNussinov:
                             break
         return s
 
-    def traceback_subopt(self, seq: str, d: int = 0):
+    def traceback_subopt(self, seq: str, d: int = 0, structures_max = np.inf):
         """Find all suboptimal structures within a certain number of base-pairs from the maximum according to the
         Wuchty1999 algorithm.
 
@@ -129,19 +129,23 @@ class BasePairMatrixNussinov:
             s = R.pop()
             if s.is_folded():
                 final_structures.append(s)
+                if len(final_structures) == structures_max:
+                    break
                 continue
+
             while not s.is_folded():
                 i, j = s.pop()
-                s_ = SecondaryStructure(sigma=[(i, j-1), *s.sigma], B=s.B)
-                if s_.maximum_bp(self._P) >= p_max - d:
-                    R.append(s_)
-                    added_to_R = True
-                for l in range(i, j):
-                    if pairs[seq[l - 1], seq[j - 1]]:
-                        s_ = SecondaryStructure(sigma=[(i, l-1), (l+1, j-1), *s.sigma], B=[*s.B, (l, j)])
-                        if s_.maximum_bp(self._P) >= p_max - d:
-                            R.append(s_)
-                            added_to_R = True
+                if j-i > self._min_loop_size:
+                    s_ = SecondaryStructure(sigma=[(i, j-1), *s.sigma], B=s.B)
+                    if s_.maximum_bp(self._P) >= p_max - d:
+                        R.append(s_)
+                        added_to_R = True
+                    for l in range(i, j):
+                        if pairs[seq[l - 1], seq[j - 1]] and j-l > self._min_loop_size:
+                            s_ = SecondaryStructure(sigma=[(i, l-1), (l+1, j-1), *s.sigma], B=[*s.B, (l, j)])
+                            if s_.maximum_bp(self._P) >= p_max - d:
+                                R.append(s_)
+                                added_to_R = True
             if not added_to_R:  # nothing has been put on stack since popping s
                 R.append(s)  # continue with s next iteration (no infinite loop because each iteration we pop from s.sigma)
         return final_structures
