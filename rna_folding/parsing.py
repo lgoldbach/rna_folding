@@ -29,7 +29,7 @@ def gpmap_to_dict(gpmap_file: str, genotype_file: str) -> dict:
     """
     # read in genotypes as list
     with open(genotype_file, "r") as g_file:    
-        genotype_list = [line.strip() for line in enumerate(g_file)]
+        genotype_list = [line.strip() for line in g_file]
          
     gp_map = {}
     with open(gpmap_file, "r") as gp_file:
