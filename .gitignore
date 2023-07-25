@@ -2,5 +2,5 @@
 data
 *__pycache__
 .vscode
-.png
-.jpeg
+*.png
+*.jpeg
