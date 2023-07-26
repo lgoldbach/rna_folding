@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """Decrypt the sgreenbury format for storing g-p map info into a single file
 of the format (see: https://github.com/sgreenbury/gp-maps-nav):
 <seq> <secondary structure>
