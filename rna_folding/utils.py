@@ -38,3 +38,20 @@ def dotbracket_to_bp(db: str) -> set:
         elif site == ")":
             bp.append((opening_stack.pop(), i))
     return set(bp)
+
+
+def count_bp(seq):
+    """Count number of base-pairs in sequence
+
+    Args:
+        seq (str): dot-bracket notation string, e.g. "(..)(..)"
+
+    Returns:
+        int: Number of base-pairs in string
+    """
+    bp_count = 0
+    for i in seq:
+        if i == "(":
+            bp_count += 1
+    return bp_count
+
