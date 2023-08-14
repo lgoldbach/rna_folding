@@ -110,7 +110,7 @@ if __name__ ==  "__main__":
     print(folding_cm)
     print("Done!")
 
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2)
+    fig1, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2)
     ax1.hist([np.mean(i) for i in f1_scores_by_folding[0][0]])
     ax2.hist([np.mean(i) for i in f1_scores_by_folding[0][1]])
     ax3.hist([np.mean(i) for i in f1_scores_by_folding[1][0]])
@@ -119,10 +119,10 @@ if __name__ ==  "__main__":
     ax2.set_title("ref. unfolded, query folded")
     ax3.set_title("query unfolded, ref folded")
     ax4.set_title("both folded")
-    fig.suptitle("Mean F1 score histograms for confusion matrix.")
-    fig.savefig("mean_f1_score_conf_matrix.pdf")
+    fig1.suptitle("Mean F1 score histograms for confusion matrix.")
+    fig1.savefig("mean_f1_score_conf_matrix.png")
 
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2)
+    fig2, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2)
     ax1.hist([np.max(i) for i in f1_scores_by_folding[0][0]])
     ax2.hist([np.max(i) for i in f1_scores_by_folding[0][1]])
     ax3.hist([np.max(i) for i in f1_scores_by_folding[1][0]])
@@ -131,10 +131,10 @@ if __name__ ==  "__main__":
     ax2.set_title("ref. unfolded, query folded")
     ax3.set_title("query unfolded, ref folded")
     ax4.set_title("both folded")
-    fig.suptitle("Max F1 score histograms for confusion matrix.")
-    fig.savefig("max_f1_score_conf_matrix.pdf")
+    fig2.suptitle("Max F1 score histograms for confusion matrix.")
+    fig2.savefig("max_f1_score_conf_matrix.png")
 
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2)
+    fig3, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2)
     ax1.hist([np.min(i) for i in f1_scores_by_folding[0][0]])
     ax2.hist([np.min(i) for i in f1_scores_by_folding[0][1]])
     ax3.hist([np.min(i) for i in f1_scores_by_folding[1][0]])
@@ -143,8 +143,8 @@ if __name__ ==  "__main__":
     ax2.set_title("ref. unfolded, query folded")
     ax3.set_title("query unfolded, ref folded")
     ax4.set_title("both folded")
-    fig.suptitle("Min F1 score histograms for confusion matrix.")
-    fig.savefig("min_f1_score_conf_matrix.pdf")
+    fig3.suptitle("Min F1 score histograms for confusion matrix.")
+    fig3.savefig("min_f1_score_conf_matrix.png")
 
 
     # Create heat map for number of bp in ref and query structure
@@ -158,7 +158,7 @@ if __name__ ==  "__main__":
     max_bp = max(max(ref_bp_counts_sorted, pred_bp_counts_sorted))
 
     bp_count_pairs = zip(ref_bp_counts_sorted, pred_bp_counts_sorted)
-    counts_matrix_ = np.zeros((max_bp,max_bp))
+    counts_matrix_ = np.zeros((max_bp + 1,max_bp + 1))
     for count_pair in bp_count_pairs:
             counts_matrix_[count_pair] += 1
     counts_matrix = np.log10(counts_matrix_)
@@ -174,4 +174,4 @@ if __name__ ==  "__main__":
     ax.set_xlabel("#base-pairs (predicted)")
     ax.set_ylabel("#base-pairs (reference)")
     ax.set_title("Base-pair counts (log10)")
-    fig.savefig("basepair_counts_heatmap.pdf")
+    fig.savefig("basepair_counts_heatmap.png")
