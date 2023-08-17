@@ -8,7 +8,7 @@ from rna_folding.utils import bp_to_dotbracket
 
 if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--file", help="File input for genotypes")
+    parser.add_argument("-f", "--file", help="Input file with genotypes")
     parser.add_argument("-o", "--output", help="File output for phenotypes")
     parser.add_argument("-m", "--min_loop_size", required=True, type=int, default=1, help="Minimum size for loop")
     parser.add_argument("-s", "--suboptimal", type=int, required=True,

@@ -6,13 +6,7 @@ GitHub: lgolbach
 """
 import numpy as np
 from rna_folding.secondary_structure import SecondaryStructure
-
-
-# Define all possible base-pairs. Use dictionary for quick look-up with hashing
-pairs = {("A", "A"): 0, ("A", "U"): 1, ("A", "G"): 0, ("A", "C"): 0,
-         ("U", "A"): 1, ("U", "U"): 0, ("U", "G"): 1, ("U", "C"): 0,
-         ("G", "A"): 0, ("G", "U"): 1, ("G", "G"): 0, ("G", "C"): 1,
-         ("C", "A"): 0, ("C", "U"): 0, ("C", "G"): 1, ("C", "C"): 0}
+from rna_folding.base_pairing import BasePairing
 
 
 class BasePairMatrixNussinov:
@@ -20,13 +14,15 @@ class BasePairMatrixNussinov:
     i+1, j+1 of the matrix holds the maximum number of base pairs for segment [i,j] of the RNA sequence.
 
     """
-    def __init__(self, n: int):
+    def __init__(self, n: int, base_pairing: BasePairing):
         """Initialize a (L+1)x(L+1) matrix with zeros on diagonal and the diagonal below.
 
         Args:
-            l (int) : Sequence length.
+            l (int): Sequence length.
+            base_pairing (BasePairing): Instance of a BasePairing object.
 
         """
+        self.base_pairing = base_pairing
         self._P = np.zeros((n+1, n+1), dtype=int)
         self._min_loop_size = None
         self._n = n
@@ -63,7 +59,7 @@ class BasePairMatrixNussinov:
                 j = i + k
                 j_unpaired = self._P[i, j-1]
                 l_j_paired = [self._P[i, l-1] + self._P[l+1, j-1] + 1 for l in range(i, j-self._min_loop_size)
-                              if pairs[seq[l-1], seq[j-1]]]
+                              if self.base_pairing.pairs(seq[l-1], seq[j-1])]
 
                 if l_j_paired:
                     self._P[i, j] = max(j_unpaired, *l_j_paired)
@@ -75,7 +71,7 @@ class BasePairMatrixNussinov:
         """Find a base-pairs of an optimal secondary structure, i.e. a structure with maximum number of base-pairs
 
         Args:
-            seq (string): The RNA sequence comprised of the letters A, U, G or C.
+            seq (string): The RNA sequence
 
         Returns:
             B (list): List of base pairs in tuple format
@@ -94,7 +90,7 @@ class BasePairMatrixNussinov:
                 s.sigma.append((i, j-1))
             else:
                 for l in range(i, j):
-                    if pairs[seq[l-1], seq[j-1]]:
+                    if self.base_pairing.pairs(seq[l-1], seq[j-1]):
                         if self._P[i, j] == self._P[i, l-1] + self._P[l+1, j-1] + 1:
                             s.B.append((l, j))
                             s.sigma.extend([(i, l-1), (l+1, j-1)])
@@ -141,7 +137,7 @@ class BasePairMatrixNussinov:
                         R.append(s_)
                         added_to_R = True
                     for l in range(i, j):
-                        if pairs[seq[l - 1], seq[j - 1]] and j-l > self._min_loop_size:
+                        if self.base_pairing.pairs(seq[l - 1], seq[j - 1]) and j-l > self._min_loop_size:
                             s_ = SecondaryStructure(sigma=[(i, l-1), (l+1, j-1), *s.sigma], B=[*s.B, (l, j)])
                             if s_.maximum_bp(self._P) >= p_max - d:
                                 R.append(s_)

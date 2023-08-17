@@ -7,6 +7,7 @@ http://users.cecs.anu.edu.au/~bdm/data/graphs.html
 """
 
 import numpy as np
+from rna_folding.utils import canonical_adjacency_matrix
 
 """
 This is a dirty hack but the graph data is to big to be hosted on github, so
@@ -25,7 +26,8 @@ class BasePairing:
             n (list): Defines the names of the bases and thus the number of 
                         bases, i.e. number of nodes of the base-pairing graph.
             id (int): Defines which of the possible base-pairing graphs to
-                        choose.
+                        choose. If -1 then canonical base-pairing is used
+
 
         """
         self.bases = bases
@@ -33,7 +35,14 @@ class BasePairing:
         self.bases_to_id = dict(zip(self.bases, range(len(self.bases))))
         self.id = id
         self.n = len(bases)
-        self.A = self.get_adjacency_matrix(self.n, id)
+        if self.id == -1:
+            self.A = canonical_adjacency_matrix()
+            if self.bases != "AUGC":
+                raise(ValueError, f"If id is set to -1, canonical base-pairing"
+                      f" is assumed and bases should be 'AUGC' not "
+                      f"{self.bases}")
+        else:
+            self.A = self.get_adjacency_matrix(self.n, id)
         
     def get_adjacency_matrix(self, n, id):
         # file name format is graph{n}.adj
@@ -54,7 +63,6 @@ class BasePairing:
 
         return A
 
-        
     def pairs(self, A, B):
         """Returns True if A and B can pair according to the adjacency matrix 
         and False otherwise
