@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse
 
 from rna_folding.nussinov import BasePairMatrixNussinov

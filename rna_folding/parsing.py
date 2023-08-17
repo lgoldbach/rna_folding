@@ -44,4 +44,36 @@ def gpmap_to_dict(gpmap_file: str, genotype_file: str) -> dict:
                     gp_map[gt] = [db]
 
     return gp_map
-    
+
+def viennarna_to_gp_map_file(viennarna_output: str) -> dict:
+    """Takes an output file and parses it into dictionary 
+    {<genotype> (str): [phenotypes (str)]}. Intended for mappings to multiple 
+    phenotypes.    
+
+    Args:
+        viennarna_output (str): path to file with format:
+                                <seq1>
+                                <dot-bracket> <free energy>
+                                <seq2>
+                                <dot-bracket> <free energy>
+                                ...
+                                e.g:
+                                GGGAAACCC
+                                (((...))) (-1.20)
+                                AAAAAAAAA
+                                ......... (0.00)
+    Returns:
+        gpmap (dict): Dictionary that maps genotype (str) to list of one or 
+                        more phenotypes (str).
+
+    """
+    gp_map = {}
+    with open(viennarna_output, "r") as file:
+        for line in file:
+            gt = line.strip()
+            ph = next(file).split(" ")[0]
+            gp_map[gt] = ph
+
+    return gp_map
+
+        

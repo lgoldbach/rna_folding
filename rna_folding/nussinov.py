@@ -150,4 +150,3 @@ class BasePairMatrixNussinov:
                 R.append(s)  # continue with s next iteration (no infinite loop because each iteration we pop from s.sigma)
         return final_structures
 
-
