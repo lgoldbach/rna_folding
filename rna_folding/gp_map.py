@@ -8,10 +8,19 @@ class GenotypePhenotypeMap(nx.Graph):
     networkx functionalities
 
     """
-
-
     def __init__(self, genotypes: list = None, phenotypes: list = None, alphabet: list = None) -> None:
-        # build networkx
+        """Read genotype-phenotype data (optional) and generate hamming graph
+
+        Args:
+            genotypes (list, optional): List of genotypes. Defaults to None.
+            phenotypes (list, optional): List of phenotypes
+                        Assumes that the ith genotype maps to the ith 
+                        phenotype. Defaults to None.
+            alphabet (list, optional): List of the alphabet used for the 
+                        genotypes. Needed to built hamming graph. 
+                        Defaults to None.
+
+        """
         super().__init__(self)
         self.genotypes = genotypes
         self.phenotypes = phenotypes
@@ -26,6 +35,21 @@ class GenotypePhenotypeMap(nx.Graph):
 
     @classmethod
     def read_from_file(cls, path: str, alphabet: list):
+        """Read genotype-phenotype data from file
+
+        Args:
+            path (str): Path to g-p map file, assumes a csv file with one 
+                        comma-separated genotype-phenotype mapping per line, 
+                        e.g.:   AUGC ()()
+                                CCCC ....
+                                GUUC (..)
+            alphabet (list): list of all letters used in the genotype space.
+                             Order does not matter.
+
+        Returns:
+            GenotypePhenotypeMap: Class instance
+
+        """
         genotypes = None
         phenotypes = None
         gpm = cls(genotypes, phenotypes, alphabet)
@@ -33,12 +57,33 @@ class GenotypePhenotypeMap(nx.Graph):
 
     @classmethod
     def read_from_dict(cls, dict: dict, alphabet: list):
+        """Read genotype-phenotype data from file
+
+        Args:
+            dict (dict): Dictionary of genotype-phenotype mapping, 
+                         e.g.: { "AUGC": "()()",
+                                 "CCCC": "....",
+                                 "GUUC": "(..)" }
+
+            alphabet (list): list of all letters used in the genotype space.
+                             Order does not matter.
+
+        Returns:
+            GenotypePhenotypeMap: Class instance
+            
+        """
         genotypes = list(dict.keys())
         phenotypes = list(dict.values())
         gpm = cls(genotypes, phenotypes, alphabet)
         return gpm
 
     def add_hamming_edges(self):
+        """Compute all hamming edges for each genotype, i.e. add an edge 
+        between a genotype and all genotypes that differ by one letter.
+        
+        Note:
+            Current implementation assumes combinatorically complete g-p map
+        """
         for g in self.genotypes:
             for site, l in enumerate(g):
                 for m in self.alphabet:
@@ -47,6 +92,21 @@ class GenotypePhenotypeMap(nx.Graph):
                         self.add_edge(g, neighbor)
     
     def neutral_components(self, phenotypes: list = []) -> list:
+        """Compute all neutral components for given phenotypes. A neutral 
+        component is defined as a connected set of nodes that all map to the
+        same phenotype. A phenotype can have between one and #(phenotype) 
+        neutral components. 
+
+        Args:
+            phenotypes (list, optional): List of phenotypes for which neutral 
+            components will be returned. If none are given, neutral components 
+            for all phenotypes will be returned. Defaults to [].
+
+        Returns:
+            list: list of sets. The ith element in the list contains the 
+            neutral components (sets) of the ith phenotype
+            
+        """
         if not phenotypes:
             phenotypes = self.phenotype_set
         
