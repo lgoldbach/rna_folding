@@ -98,29 +98,57 @@ class GenotypePhenotypeMap(nx.Graph):
         neutral components. 
 
         Args:
-            phenotypes (list, optional): List of phenotypes for which neutral 
+            phenotypes (list, optional): List of phenotypes for which neutral
             components will be returned. If none are given, neutral components 
             for all phenotypes will be returned. Defaults to [].
 
         Returns:
             list: list of sets. The ith element in the list contains the 
             neutral components (sets) of the ith phenotype
-            
+
         """
         if not phenotypes:
             phenotypes = self.phenotype_set
         
         neutral_components = []
         for ph in phenotypes:
-            print(ph)
             nodes = [node for node, attr in self.nodes(data=True) if 
                      attr['phenotype'] == ph]
-            print(nodes)
             G_sub = self.subgraph(nodes)
             cc = nx.connected_components(G_sub)
             neutral_components.append(cc)
         return neutral_components
 
+    def phenotype_robustness(self, nodes: list) -> float:
+        """Compute robustness of given set of nodes. Defined as fraction of
+        neighboring nodes with a different phenotype averaged over the whole
+        set of nodes provided.
+        Note that this method does not check whether all provided nodes 
+        actually have the same phenotype or whether they are in the same
+        connected component but simply checks whether nodes have the same 
+        phenotypes as their neighbor.
+
+        Args:
+            nodes (list): List of nodes (str) to consides, e.g. ["AA", "AU"]
+
+        Returns:
+            float: Phenotype robustness.
+
+        """
+        fractions_of_identical_neighbors = []
+        for node in nodes:
+            total_neighb = 0
+            same_ph = 0
+            ref_ph = self.nodes[node]["phenotype"]
+            for neighbor in self.neighbors(node):
+                total_neighb += 1
+                if self.nodes[neighbor]["phenotype"] == ref_ph:
+                    same_ph += 1
+            fractions_of_identical_neighbors.append(same_ph / total_neighb)
+
+        robustness = np.mean(fractions_of_identical_neighbors)
+        return robustness
+        
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
@@ -158,7 +186,7 @@ if __name__ == "__main__":
 
     phenotypes = np.random.choice(phenotype_set, len(genotypes),
                                   p=p_distr_norm)
-    print(list(zip(genotypes, phenotypes)))
+    
     gp_dict = dict(zip(genotypes, phenotypes))
     GP = GenotypePhenotypeMap.read_from_dict(gp_dict, alphabet)
 
@@ -168,10 +196,17 @@ if __name__ == "__main__":
 
     fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
     labels = nx.get_node_attributes(GP, "phenotype")
-    print("X", labels)
     nx.draw(GP, with_labels=True, ax=ax1, pos=nx.circular_layout(GP), node_color=c_map)
     nx.draw(GP, labels=labels, ax=ax2, pos=nx.circular_layout(GP), node_color=c_map)
     plt.savefig("test.png")
 
-    cc = GP.neutral_components()
-    print([list(c) for c in cc])
+    cc_all = GP.neutral_components()
+    # print([list(c) for c in cc_all])
+    for ccs in cc_all:
+        for cc in ccs:
+            print(cc)
+            print(GP.phenotype_robustness(cc))
+
+
+
+
