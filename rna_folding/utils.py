@@ -1,4 +1,5 @@
 import numpy as np
+from itertools import product
 
 
 def canonical_base_pairs(A, B):
@@ -85,4 +86,19 @@ def count_bp(seq):
         if i == "(":
             bp_count += 1
     return bp_count
+
+
+def combinatorically_complete_genotypes(l, a):
+    """
+
+    Args:
+        l (int): Sequence length.
+        a (str): Alphabet as a continuous string, e.g. "AUGC".
+
+    Returns:
+        g (list): List of genotypes (str).
+
+    """
+    g = product(list(a), repeat=l)
+    return g
 
