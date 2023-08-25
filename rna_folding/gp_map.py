@@ -30,7 +30,6 @@ class GenotypePhenotypeMap(nx.Graph):
             self.phenotype_set = set(self.phenotypes)
             for g, p in zip(self.genotypes, self.phenotypes):
                 self.add_node(g, phenotype=p)
-
             self.add_hamming_edges()
 
     @classmethod
@@ -149,64 +148,3 @@ class GenotypePhenotypeMap(nx.Graph):
         robustness = np.mean(fractions_of_identical_neighbors)
         return robustness
         
-
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    l = 3  # sequence length
-    alphabet = "AU"
-    np.random.seed(12)
-    colors = ["blue", "red", "green", "yellow", "pink", "cyan", "purple"]
-
-    genotypes_tuple = combinatorically_complete_genotypes(l=l, a=alphabet)
-    genotypes = ["".join(g) for g in genotypes_tuple]
-    phenotypes = []
-
-    # make up some nonsense phenotypes
-    num_of_ph = 3
-    phenotype_set = []
-    ph_to_color = {}    
-    while len(phenotype_set) < num_of_ph:
-        ph = "".join(np.random.choice(["(", ".", ")"], l))
-        if ph not in phenotype_set:
-            ph_to_color[ph] = colors[len(phenotype_set)]
-            phenotype_set.append(ph)
-
-    p_distr = []
-    p = 1
-
-    for i in range(len(phenotype_set)):
-        p = p/2
-        p_distr.append(p)
-
-
-
-    p_sum = sum(p_distr)    
-    p_distr_norm = [p/p_sum for p in p_distr]
-    
-
-    phenotypes = np.random.choice(phenotype_set, len(genotypes),
-                                  p=p_distr_norm)
-    
-    gp_dict = dict(zip(genotypes, phenotypes))
-    GP = GenotypePhenotypeMap.read_from_dict(gp_dict, alphabet)
-
-    c_map = []
-    for node in GP.nodes:
-        c_map.append(ph_to_color[GP.nodes[node]["phenotype"]])
-
-    fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
-    labels = nx.get_node_attributes(GP, "phenotype")
-    nx.draw(GP, with_labels=True, ax=ax1, pos=nx.circular_layout(GP), node_color=c_map)
-    nx.draw(GP, labels=labels, ax=ax2, pos=nx.circular_layout(GP), node_color=c_map)
-    plt.savefig("test.png")
-
-    cc_all = GP.neutral_components()
-    # print([list(c) for c in cc_all])
-    for ccs in cc_all:
-        for cc in ccs:
-            print(cc)
-            print(GP.phenotype_robustness(cc))
-
-
-
-
