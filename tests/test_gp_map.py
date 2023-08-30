@@ -29,7 +29,14 @@ def test_connected_components():
         for c in nc_:
             nc.append(set(c))  # unpack generator objects
 
-        assert sorted(nc) == sorted(ref_nc[ph])
+        for c in ref_nc[ph]:
+            try:
+                nc.remove(c)
+            except ValueError:
+                
+                assert True == False, f"Neutral component {c} missing."
+        assert len(nc) == 0, f"Neutral components {nc} are incorrect."
+        
 
 def test_robustness():
     # define correct robustness values
