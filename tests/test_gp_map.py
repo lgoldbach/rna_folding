@@ -40,7 +40,7 @@ def test_connected_components():
 
 def test_robustness():
     # define correct robustness values
-    ref_robustness = {tuple(sorted({'UUU', 'UAU'})): 0.33333333333333,
+    ref_robustness = {tuple(sorted({'UUU', 'UAU'})): 0.333333333333333,
                       tuple(sorted({'AAU', 'AAA', 'AUU'})): 0.4444444444444444, 
                       tuple(sorted({'UUA'})): 0.0,
                       tuple(sorted({'AUA'})): 0.0,
