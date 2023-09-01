@@ -22,15 +22,14 @@ class GenotypePhenotypeMap(nx.Graph):
 
         """
         super().__init__(self)
-        self.genotypes = genotypes
-        self.phenotypes = phenotypes
+        self.genotypes = np.array(genotypes)
+        self.phenotypes = np.array(phenotypes)
         self.alphabet = alphabet
 
         if genotypes:
-            self.phenotype_set = set(self.phenotypes)
+            self.phenotype_set = list(set(self.phenotypes))
             for g, p in zip(self.genotypes, self.phenotypes):
                 self.add_node(g, phenotype=p)
-            self.add_hamming_edges()
 
     @classmethod
     def read_from_file(cls, path: str, alphabet: list):
@@ -49,8 +48,15 @@ class GenotypePhenotypeMap(nx.Graph):
             GenotypePhenotypeMap: Class instance
 
         """
-        genotypes = None
-        phenotypes = None
+        genotypes = []
+        phenotypes = []
+
+        with open(path, "r") as file:
+            for line in file:
+                genotype, phenotype = line.strip().split(' ')
+                genotypes.append(genotype)
+                phenotypes.append(phenotype)
+
         gpm = cls(genotypes, phenotypes, alphabet)
         return gpm
 
@@ -76,6 +82,19 @@ class GenotypePhenotypeMap(nx.Graph):
         gpm = cls(genotypes, phenotypes, alphabet)
         return gpm
 
+    def nodes_with_phenotype(self, phenotype: str) -> list:
+        """Get all nodes with a given phenotype
+
+        Args:
+            phenotype (str): Phenotype string
+
+        Returns:
+            list: list of node names
+        
+        """
+        nodes = self.genotypes[np.where(self.phenotypes == phenotype)[0]]
+        return nodes
+
     def add_hamming_edges(self):
         """Compute all hamming edges for each genotype, i.e. add an edge 
         between a genotype and all genotypes that differ by one letter.
@@ -84,12 +103,28 @@ class GenotypePhenotypeMap(nx.Graph):
             Current implementation assumes combinatorically complete g-p map
         """
         for g in self.genotypes:
-            for site, l in enumerate(g):
-                for m in self.alphabet:
-                    if m != l:
-                        neighbor = g[:site] + m + g[site + 1:]
-                        self.add_edge(g, neighbor)
+            for neighbor in self._neighbors(g):
+                self.add_edge(g, neighbor)
     
+    def _neighbors(self, node):
+        """Get all neighbors of a node. Either looks them up from existing
+        edges or generates them one the fly. Neighbors are defined as nodes
+        whose genotype differ in one positon.
+
+        Args:
+            node (str): Node descriptor (genotype), e.g. "AGCA"
+
+        Returns:
+            list: list of neighboring nodes (str)
+
+        """
+        neighbors = []
+        for site, wt_l in enumerate(node):
+            for l in self.alphabet:
+                if l != wt_l:
+                    neighbors.append(node[:site] + l + node[site + 1:])
+        return neighbors
+
     def neutral_components(self, phenotypes: list = []) -> list:
         """Compute all neutral components for given phenotypes. A neutral 
         component is defined as a connected set of nodes that all map to the
@@ -139,7 +174,7 @@ class GenotypePhenotypeMap(nx.Graph):
             total_neighb = 0
             same_ph = 0
             ref_ph = self.nodes[node]["phenotype"]
-            for neighbor in self.neighbors(node):
+            for neighbor in self._neighbors(node):
                 total_neighb += 1
                 if self.nodes[neighbor]["phenotype"] == ref_ph:
                     same_ph += 1

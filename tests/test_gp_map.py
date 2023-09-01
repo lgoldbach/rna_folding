@@ -11,6 +11,7 @@ def example_gp():
     gpm = GenotypePhenotypeMap(genotypes=genotypes,
                          phenotypes=phenotypes,
                          alphabet=alphabet)
+    gpm.add_hamming_edges()
     
     return gpm
 
@@ -33,8 +34,8 @@ def test_connected_components():
             try:
                 nc.remove(c)
             except ValueError:
-                
                 assert True == False, f"Neutral component {c} missing."
+
         assert len(nc) == 0, f"Neutral components {nc} are incorrect."
         
 
