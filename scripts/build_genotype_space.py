@@ -2,22 +2,7 @@
 
 import argparse
 import numpy as np
-from itertools import product
-
-
-def combinatorically_complete_genotypes(l, a):
-    """
-
-    Args:
-        l (int): Sequence length.
-        a (str): Alphabet as a continuous string, e.g. "AUGC".
-
-    Returns:
-        g (list): List of genotypes (str).
-
-    """
-    g = product(list(a), repeat=l)
-    return g
+from rna_folding.utils import combinatorically_complete_genotypes
 
 
 if __name__ ==  "__main__":

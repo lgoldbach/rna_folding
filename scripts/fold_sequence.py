@@ -5,6 +5,7 @@ import argparse
 
 from rna_folding.nussinov import BasePairMatrixNussinov
 from rna_folding.utils import bp_to_dotbracket
+from rna_folding.base_pairing import BasePairing
 
 
 if __name__ ==  "__main__":
@@ -19,7 +20,8 @@ if __name__ ==  "__main__":
 
     args = parser.parse_args()
 
-    P = BasePairMatrixNussinov(n=len(args.sequence))
+    pairing = BasePairing("AUGC", -1)
+    P = BasePairMatrixNussinov(n=len(args.sequence), base_pairing=pairing)
     P.fill_matrix(seq=args.sequence, min_loop_size=args.min_loop_size)
     strucs = P.traceback_subopt(seq=args.sequence, d=args.suboptimal, structures_max=args.structures_max)
     for s in strucs:

@@ -2,9 +2,9 @@
 
 #SBATCH --job-name=RNA12
 #SBATCH --nodes=1
-#SBATCH --array=1-50
+#SBATCH --array=1-51
 #SBATCH --time=02-00:00:00
-#SBATCH --output=/home/lgold/rna_folding/data/RNA12/alt_alphabets/four_letters/graph4_1
+#SBATCH --output=/home/lgold/rna_folding/data/RNA12/alt_alphabets/four_letters/graph4_1/output-%A_%a.out
 #SBATCH --cpus-per-task=1
 
 SCRIPT_DIR="/home/lgold/rna_folding/scripts"
