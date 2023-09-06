@@ -4,12 +4,8 @@ import time
 import numpy as np
 import argparse
 import RNA
-import pickle
-import matplotlib.pyplot as plt
 
-from rna_folding.parsing import gpmap_to_dict, viennarna_to_gp_map_file
-from rna_folding.utils import count_bp
-from rna_folding.evaluate import f1_score
+from rna_folding.parsing import gpmap_to_dict
 
 
 if __name__ ==  "__main__":

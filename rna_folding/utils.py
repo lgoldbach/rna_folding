@@ -102,3 +102,55 @@ def combinatorically_complete_genotypes(l, a):
     g = product(list(a), repeat=l)
     return g
 
+
+def dotbracket_to_genotype(dotbracket: str, 
+                           base_pair: str = "GC",
+                           random: bool = True,
+                           seed: int = None) -> str:
+    """Take a dot-bracket RNA phenotype and translate it into a sequence of
+    that is consistent with the given base-pairing.
+    E.g. (((...))) -> GGG...CCC
+
+    Args:
+        dotbracket (str): A RNA phenotype in dot-bracket notation, e.g. ((..))
+        base_pair (str): What base-pair to translate to. Limited to one pair.
+                         Default = "GC"
+        random (bool): If true, bases are picked at random. If False, bases are
+                       picked so that the first base given in <base_pair> will
+                       be assigned to all opening brackets and the second one
+                       to all closing brackets. The unpaired regions will be 
+                       assigned the first base.
+        seed (int): Provide random seed for assigning bases to positons.
+
+    Returns:
+        str: Genotype that is consistent with the base-pairing.
+    
+    """
+    if seed:
+        np.random.seed(seed)
+    stack = []
+    genotype = []
+    for site, db in enumerate(dotbracket):
+        if db == "(":
+            stack.append(site)
+            if random:
+                base = base_pair[np.random.choice([0, 1])]
+            else:
+                base = base_pair[0]
+        elif db == ")":
+            if random:
+                paired_site = stack.pop()
+                paired_base = genotype[paired_site]
+                base = base_pair[paired_base == base_pair[0]]  # get matching base
+            else:
+                base = base_pair[1]
+        elif db == ".":
+            if random:
+                base = base_pair[np.random.choice([0, 1])]
+            else:
+                base = base_pair[0]
+        genotype.append(base)
+    
+    return ''.join(genotype)
+
+
