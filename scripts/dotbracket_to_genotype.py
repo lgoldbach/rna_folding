@@ -12,7 +12,7 @@ if __name__ ==  "__main__":
                         "One per line")
     parser.add_argument("-a", "--alphabet", type=str,
                         help="Which alphabet to convert to, max. 2 letters, "
-                        "e.g. 'GC'", default="GC"
+                        "e.g. 'GC'", default="GC")
     parser.add_argument("-d", "--deterministic", default=True, type=bool,
                         help="Do not assign bases randomly.")
     parser.add_argument("-o", "--output", required=True, type=str, 

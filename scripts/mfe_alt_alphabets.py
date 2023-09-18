@@ -1,5 +1,32 @@
 #!/usr/bin/env python
 
+"""Compute the MFE for a gp_map with alternative alphabets. This includes 
+the following steps:
+For each sequence:
+    For each phenotype:
+1) Turn the genotype into an AU or GC genotype. This is done by assigning
+the positions of all opening and closing brackets a GC or AU base-pair and the
+unpaired position get either a random or the same base assigned.
+Then the MFE is computed for that sequence-structure pair.
+2) Take the minimum MFE
+
+e.g.:
+
+input: 
+LLKKMMMOO (((...))) ()().... 
+LLLKKKMMM (.......) ()()()()
+...
+
+step 1 (for line 1):
+ph        gt         mfe 
+(((...))) GGGGGGCCC  -10
+()()..... GCGCGGGGG  -5
+
+output:
+LLKKMMMOO (((...)))
+
+"""
+
 import time
 import numpy as np
 import argparse
