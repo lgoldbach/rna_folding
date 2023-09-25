@@ -1,5 +1,9 @@
 configfile: "./config.yaml"
-script_path = "/home/lgold/phd/research/projects/connectivity/rna_folding/scripts/"
+
+rule all:
+    input:
+        expand("gp_map_bp{base_pairing}.txt", 
+               base_pairing=config["mapping_params"]["base_pairing"])
 
 rule generate_genotype_space:
     output:
@@ -8,13 +12,33 @@ rule generate_genotype_space:
         alphabet=config["alphabet"],
         seq_len=config["sequence_lengths"]
     shell:
-        script_path + "build_genotype_space.py " 
+        "build_genotype_space.py " 
         "-a {params.alphabet} "
         "-l {params.seq_len} "
         "-o {output}"
 
+
 rule build_gp_map:
     input:
         "genotypes.txt"
-        
     output:
+        "gp_map_bp{base_pairing}.txt"
+    params:
+        graph_path=config["graph_path"],
+        min_loop_size=config["mapping_params"]["min_loop_size"],
+        suboptimal=config["mapping_params"]["suboptimal"],
+        structures_max=config["mapping_params"]["structures_max"],
+        base_pairing=config["mapping_params"]["base_pairing"],
+        bases=config["alphabet"]
+    shell:
+        "build_gp_map.py "
+        "-f {input} "
+        "-o {output} "
+        "-m {params.min_loop_size} "
+        "-s {params.suboptimal} "
+        "-z {params.structures_max} "
+        "-g {params.graph_path} "
+        "-b {params.bases} "
+        "-p {wildcards.base_pairing}"
+
+
