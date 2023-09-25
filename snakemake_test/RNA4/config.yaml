@@ -1,0 +1,12 @@
+script_path: /home/lgold/phd/research/projects/connectivity/rna_folding/scripts/
+
+sequence_lengths:
+  - 4
+
+alphabet:
+  - JKLM
+
+base_pairing_graphs:
+  - 1
+
+graph_path:

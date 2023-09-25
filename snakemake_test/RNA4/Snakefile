@@ -1,0 +1,20 @@
+configfile: "./config.yaml"
+script_path = "/home/lgold/phd/research/projects/connectivity/rna_folding/scripts/"
+
+rule generate_genotype_space:
+    output:
+        "genotypes.txt"
+    params:
+        alphabet=config["alphabet"],
+        seq_len=config["sequence_lengths"]
+    shell:
+        script_path + "build_genotype_space.py " 
+        "-a {params.alphabet} "
+        "-l {params.seq_len} "
+        "-o {output}"
+
+rule build_gp_map:
+    input:
+        "genotypes.txt"
+        
+    output:

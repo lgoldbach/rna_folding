@@ -7,6 +7,15 @@ from rna_folding.utils import bp_to_dotbracket
 from rna_folding.base_pairing import BasePairing
 
 
+"""
+This is a dirty hack but the graph data is too big to be hosted on github, so
+you need to hard-code the full path to the graph data here. If this ever
+becomes a real package I will find a solution to this but for now it doesn't 
+matter
+"""
+graph_path = "/home/lgold/phd/research/projects/connectivity/rna_folding/data/graphs/"
+
+
 if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", help="Input file with genotypes")
@@ -20,11 +29,17 @@ if __name__ ==  "__main__":
     parser.add_argument("-p", "--base_pairing", required=False, type=int, default=-1, help="Which base-pairing to choose. I.e. from the base-pairing simple graphs, which one to pick "
                         "e.g. for 4 bases there are 11 possible base-pairings, so possible input is any number between 1 and 11, If given -1 then it uses canonical base-pairing and AUGC bases")
     parser.add_argument("-b", "--bases", required=False, type=str, default="AUGC", help="Which bases do the genotypes contain, e.g. 'AUGC' for canonical RNA")
-
+    parser.add_argument("-g", "--graph_path", required=True, type=str, 
+                        default=graph_path, 
+                        help="Path to folder containing the base-pairing "
+                        "graphs files, e.g. graph4.adj. Check base_pairing.py "
+                        "for info on where these graphs come from.")
 
     args = parser.parse_args()
 
-    pairing = BasePairing(bases=args.bases, id=args.base_pairing)
+    pairing = BasePairing(bases=args.bases,
+                          graph_path=graph_path, 
+                          id=args.base_pairing)
     phenotypes = {}
     with open(args.file, "r") as file_in:
         for i, sequence in enumerate(file_in):
