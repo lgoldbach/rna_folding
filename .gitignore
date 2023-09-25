@@ -5,4 +5,4 @@ data
 *.png
 *.pdf
 *.jpeg
-.snakemake
+*.snakemake
