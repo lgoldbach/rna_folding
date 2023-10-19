@@ -6,3 +6,4 @@ data
 *.pdf
 *.jpeg
 *.snakemake*
+snakemake_test/RNA4

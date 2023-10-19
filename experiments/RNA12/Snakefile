@@ -132,9 +132,6 @@ rule plot_phenotype_distribution:
         "-d {input.ph_distr} "
         "-o {output} "
 
-rule get_canonical_reference:
-
-
 
 # rule plot_robustness_over_freq_all:
 #     input:

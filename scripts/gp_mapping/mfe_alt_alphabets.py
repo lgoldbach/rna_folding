@@ -45,7 +45,7 @@ if __name__ ==  "__main__":
                         "them")
     parser.add_argument("-r", "--phenotype_ref", required=True, type=str, 
                         help="Reference that defines the phenotype numbering, "
-                        "Simple file where each row contains on phenotype")
+                        "Simple file where each row contains one phenotype")
     parser.add_argument("-b", "--basepair", type=str,
                         help="Which base-pair to convert to, max. 1 pair "
                         "(2 letters), e.g. 'GC'", default="GC")
@@ -55,7 +55,6 @@ if __name__ ==  "__main__":
     parser.add_argument("-o", "--output", required=True, type=str, 
                         help="Output file")
     
-    print("Parse files ...")
     args = parser.parse_args()
     gp_map = gpmap_to_dict(args.gp_map, args.genotypes)
     L = len(list(gp_map.keys())[0])
@@ -68,7 +67,6 @@ if __name__ ==  "__main__":
     g_fe_map = {}
     g_mfe_map = {}
 
-    print("Compute MFE ...")
     start_time = time.time()
     for seq in gp_map:
         g_fe_map[seq] = []
@@ -84,8 +82,7 @@ if __name__ ==  "__main__":
         mfe_struc = gp_map[seq][mfe_struc_id]  # get mfestructure
         
         g_mfe_map[seq] = ph_ref[mfe_struc]  # get ph id of structure
-        
-    print("Write output to ...")
+    
     with open(args.output, "w") as file:
         for seq in g_mfe_map:
             file.write(seq + " " + str(g_mfe_map[seq]) + "\n")

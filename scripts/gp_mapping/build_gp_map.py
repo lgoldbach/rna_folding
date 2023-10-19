@@ -2,9 +2,8 @@
 
 import argparse
 
-from rna_folding.nussinov import BasePairMatrixNussinov
-from rna_folding.utils import bp_to_dotbracket
 from rna_folding.base_pairing import BasePairing
+from rna_folding.mapping_functions import gp_mapper, nussinov
 
 
 """
@@ -36,26 +35,16 @@ if __name__ ==  "__main__":
                         "for info on where these graphs come from.")
 
     args = parser.parse_args()
-
+    
     pairing = BasePairing(bases=args.bases,
                           graph_path=graph_path, 
                           id=args.base_pairing)
-    phenotypes = {}
-    with open(args.file, "r") as file_in:
-        for i, sequence in enumerate(file_in):
-            seq = sequence.strip()
-            P = BasePairMatrixNussinov(n=len(seq), base_pairing=pairing)
-            P.fill_matrix(seq=seq, min_loop_size=args.min_loop_size)
-            strucs = P.traceback_subopt(seq=seq, d=args.suboptimal, structures_max=args.structures_max)
-            for s in strucs:
-                db = bp_to_dotbracket(s.B, l=len(seq))
-                try:
-                    phenotypes[db].append(i)
-                except KeyError:
-                    phenotypes[db] = [i]
+    
+    mapping = lambda seq: nussinov(seq, 
+                                   base_pairing=pairing, 
+                                   min_loop_size=args.min_loop_size, 
+                                   suboptimal=args.suboptimal, 
+                                   structures_max=args.structures_max)
 
-    with open(args.output, "w") as file_out:
-        for p in phenotypes:
-            line = p + " " + " ".join(map(str, phenotypes[p])) + "\n"
-            file_out.write(line)
-    file_out.close()
+    # generate g-p map and save to output file
+    gp_mapper(input=args.input, output=args.output, mapping_function=mapping)

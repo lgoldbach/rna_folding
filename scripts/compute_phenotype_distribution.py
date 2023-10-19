@@ -37,5 +37,6 @@ if __name__ ==  "__main__":
     phenotypes = gp_map[:, 1].astype(int)  # get phenotype column
 
     values, counts = np.unique(phenotypes, return_counts=True)  # count
+    stack = np.stack((values, counts), axis=1)
 
-    np.savetxt(args.output, counts.astype(int), delimiter=" ", fmt="%i")  # write to csv
+    np.savetxt(args.output, stack.astype(int), delimiter=" ", fmt="%i")  # write to csv

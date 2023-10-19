@@ -3,7 +3,7 @@ import networkx as nx
 from rna_folding.utils import combinatorically_complete_genotypes
 
 
-class GenotypePhenotypeMap(nx.Graph):
+class GenotypePhenotypeGraph(nx.Graph):
     """Storing genotype-phenotype map data as a graph and wrap 
     networkx functionalities
 
