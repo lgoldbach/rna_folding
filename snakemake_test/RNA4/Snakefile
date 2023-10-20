@@ -32,7 +32,7 @@ rule generate_genotype_space:
         "-l {params.seq_len} "
         "-o {output}"
 
-rule build_nussinov_gp_map:
+rule mfe_gp_map:
     input:
         "genotypes.txt"
     output:
@@ -42,17 +42,21 @@ rule build_nussinov_gp_map:
         min_loop_size=config["mapping_params"]["min_loop_size"],
         suboptimal=config["mapping_params"]["suboptimal"],
         structures_max=config["mapping_params"]["structures_max"],
-        bases=config["alphabet"]
+        alphabet=config["alphabet"],
+        base_pair=config["mfe_params"]["base_pair"],
+        deterministic=config["mfe_params"]["deterministic"]
     shell:
-        "build_gp_map.py "
-        "-f {input} "
+        "nussinov_mfe_gp_mapping.py "
+        "-i {input} "
         "-o {output} "
         "-m {params.min_loop_size} "
         "-s {params.suboptimal} "
         "-z {params.structures_max} "
         "-g {params.graph_path} "
-        "-b {params.bases} "
-        "-p {wildcards.base_pairing}"
+        "-a {params.alphabet} "
+        "-p {wildcards.base_pairing} "
+        "-b {params.base_pair} "
+        "{params.deterministic} "
 
 # Concats all gp maps, extracts all phenotypes and creates a unique list
 # The position in this list will define the id of each phenotype for the rest
@@ -68,41 +72,25 @@ rule extract_phenotype_list:
         "awk '{{print $1}}' {input} | sort | uniq > {output} && "
         "rm tmp_phenotypes"
 
-rule mfe_gp_map:
-    input:
-        gp_map="bp_graph{base_pairing}/gp_map.txt",
-        genotypes="genotypes.txt",
-        phenotypes="phenotypes.txt"
-    output:
-        "bp_graph{base_pairing}/mfe_gp_map.txt"
-    params:
-        base_pair=config["mfe_params"]["base_pair"],
-        deterministic=config["mfe_params"]["deterministic"]
-    shell:
-        "mfe_alt_alphabets.py "
-        "-g {input.genotypes} "
-        "-r {input.phenotypes} "
-        "-m {input.gp_map} "
-        "-b {params.base_pair} "
-        "{params.deterministic} "
-        "-o {output}"
 
 rule compute_robustness:
     input:
-        "{graph_dir}/mfe_gp_map.txt"
+        gp_map="{graph_dir}/gp_map.txt",
+        genotypes="genotypes.txt"
     output:
         "{graph_dir}/phenotype_robustness.txt"
     params:
         alphabet=config["alphabet"]
     shell:
         "compute_robustness.py "
-        "-f {input} "
+        "-f {input.gp_map} "
+        "-g {input.genotypes} "
         "-a {params.alphabet} "
         "-o {output}"
 
 rule compute_phenotype_distribution:
     input:
-        "{graph_dir}/mfe_gp_map.txt"
+        "{graph_dir}/gp_map.txt"
     output:
         "{graph_dir}/phenotype_distribution.txt"
     shell:
@@ -132,7 +120,8 @@ rule plot_phenotype_distribution:
         "-d {input.ph_distr} "
         "-o {output} "
 
-rule get_canonical_reference:
+# rule get_canonical_reference:
+
 
 
 

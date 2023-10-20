@@ -10,6 +10,10 @@ if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", help="Input genotype-phenotype map "
                         "file", required=True)
+    parser.add_argument("-g", "--genotypes", help="Reference file that "
+                        "contains the ith genotype on the ith line. Used to "
+                        "map the numeric genotypes back to the sequences ", 
+                        required=True)
     parser.add_argument("-a", "--alphabet", help="Define the alphabet used in "
                         "the genotype map, e.g. -a AUGC", required=True)
     parser.add_argument("-o", "--output", help="File output for robustness",
@@ -18,21 +22,16 @@ if __name__ ==  "__main__":
 
     args = parser.parse_args()
     
-    # currentDateAndTime = datetime.now()
-    # print(f"Build Genotype-Phenotype Map ({currentDateAndTime.strftime('%H:%M:%S')})")
-    gpm = GenotypePhenotypeGraph.read_from_file(path=args.file, 
+    gpm = GenotypePhenotypeGraph.read_from_ph_to_gt_file(path=args.file, 
+                                              genotype_ref_path=args.genotypes,
                                               alphabet=args.alphabet)
 
-    # currentDateAndTime = datetime.now()
-    # print(f"Compute neutral components ({currentDateAndTime.strftime('%H:%M:%S')})")
     ncs = []
     for ph in gpm.phenotype_set:
         ncs.append(gpm.nodes_with_phenotype(ph))
 
     robustnesses = []
     for i, nc in enumerate(ncs):
-        # currentDateAndTime = datetime.now()
-        # print(f"Compute robustness of NC {i} ({currentDateAndTime.strftime('%H:%M:%S')})")
         robustnesses.append(gpm.phenotype_robustness(nc))
 
     with open(args.output, "w") as outfile:

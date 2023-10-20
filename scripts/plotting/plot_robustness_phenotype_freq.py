@@ -16,25 +16,31 @@ if __name__ ==  "__main__":
     
     args = parser.parse_args()
 
-    data = []
-    robus = np.loadtxt(args.robustness)
-    distr = np.loadtxt(args.phenotype_dist)
+    robus = {}
+    with open(args.robustness, "r") as file:
+        for line_ in file:
+            line = line_.strip().split(" ")
+            robus[line[0]] = float(line[1])
+    
+    distr = {}
+    with open(args.phenotype_dist, "r") as file:
+        for line_ in file:
+            line = line_.split(" ")
+            distr[line[0]] = int(line[1])
 
-    # sort based on first column (pheno. IDs) so both arrays are in same order
-    robus = robus[robus[:, 0].argsort()]
-    distr = distr[distr[:, 0].argsort()]
-
-    # get relevant column with robustness/ph. distr values respectively
-    robus = robus[:, 1]
-    distr = distr[:, 1]
-
-    # turn phenotype counts into log frequency
-    distr /= np.sum(distr)
-    distr = np.log10(distr)
-
+    phenotype_count_sum = sum(distr.values())
+    x = []
+    y = []
+    for ph in robus:
+        y.append(robus[ph])
+        # turn phenotype counts into log frequency
+        d = distr[ph]/phenotype_count_sum
+        d = np.log10(d)
+        x.append(d)
+    
     fig, ax = plt.subplots()
 
-    ax.scatter(distr, robus, s=5, alpha=0.5)
+    ax.scatter(x, y, s=5, alpha=0.5)
 
     ax.set_xlabel("Phenotype frequency (log10)")
     ax.set_ylabel("Phenotype robustness")

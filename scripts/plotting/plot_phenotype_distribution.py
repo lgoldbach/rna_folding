@@ -16,10 +16,8 @@ if __name__ ==  "__main__":
 
     data = []
     # load data and get second column (fist only contains phenotype IDs)
-    distr = np.loadtxt(args.phenotype_dist)[:,1]
-    print(distr)
+    distr = np.loadtxt(args.phenotype_dist, dtype=str)[:,1].astype(int)
     distr = np.sort(np.log10(distr))[::-1]
-    print(distr)
     x = range(distr.shape[0])
 
     fig, ax = plt.subplots()

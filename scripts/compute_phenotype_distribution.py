@@ -25,18 +25,28 @@ import numpy as np
 
 if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--file", help="Input genotype-phenotype map"
-                        "file", required=True)
+    parser.add_argument("-f", "--file", help="Input genotype-phenotype map in "
+                        "ph-to-gt format, i.e. assumes a csv file where each "
+                        "phenotype is followed by all the genotypes that map "
+                        "to it, separated by spaces. Assumes one-to-one "
+                        "mapping. "
+                        "e.g.:   ()() 10 4 2 1 "
+                        "        .... 3 5 6 "
+                        "        (..) 7 8 9 ")
     parser.add_argument("-o", "--output", help="Output file"
                         "file", required=True)
 
     args = parser.parse_args()
 
-    gp_map = np.genfromtxt(args.file, delimiter=" ")  # read data
 
-    phenotypes = gp_map[:, 1].astype(int)  # get phenotype column
-
-    values, counts = np.unique(phenotypes, return_counts=True)  # count
-    stack = np.stack((values, counts), axis=1)
-
-    np.savetxt(args.output, stack.astype(int), delimiter=" ", fmt="%i")  # write to csv
+    with open(args.file, "r") as file:
+        with open(args.output, "w") as outfile:
+            for line_ in file:
+                line = line_.split(" ")
+                # count number of genotypes that map to this phenotype
+                # -1 to exclude the phenotype at the start of the line
+                count = len(line) - 1
+                outfile.write(line[0] + " " + str(count) + "\n")
+    file.close()
+    outfile.close()
+        
