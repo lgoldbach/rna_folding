@@ -3,7 +3,7 @@ import networkx as nx
 from rna_folding.utils import combinatorically_complete_genotypes
 
 
-class GenotypePhenotypeMap(nx.Graph):
+class GenotypePhenotypeGraph(nx.Graph):
     """Storing genotype-phenotype map data as a graph and wrap 
     networkx functionalities
 
@@ -56,6 +56,45 @@ class GenotypePhenotypeMap(nx.Graph):
                 genotype, phenotype = line.strip().split(' ')
                 genotypes.append(genotype)
                 phenotypes.append(phenotype)
+
+        gpm = cls(genotypes, phenotypes, alphabet)
+        return gpm
+
+    @classmethod
+    def read_from_ph_to_gt_file(cls, path: str, genotype_ref_path: str, 
+                                alphabet: list):
+        """Read genotype-phenotype data from file
+
+        Args:
+            path (str): Path to g-p map file, assumes a csv file where each 
+                        phenotype is followed by all the genotypes that map to
+                        it, separated by spaces. Assumes one-to-one mapping.
+                        e.g.:   ()() 10 4 2 1
+                                .... 3 5 6
+                                (..) 7 8 9
+            genotype_ref_path (str): Path to genotype reference where the genotype 
+                        on the ith line corresponds to the numbering of the 
+                        gp_map file (path).
+            alphabet (list): list of all letters used in the genotype space.
+                             Order does not matter.
+        Returns:
+            GenotypePhenotypeMap: Class instance
+
+        """
+        genotypes = []
+        phenotypes = []
+
+        with open(genotype_ref_path, "r") as gt_file:
+            genotype_ref = [line.strip() for line in gt_file]
+            
+
+        with open(path, "r") as file:
+            for line in file:
+                line_ = line.strip().split(' ')
+                phenotype = line_[0]
+                for genotype in line_[1:]:
+                    genotypes.append(genotype_ref[int(genotype)])  # num to seq
+                    phenotypes.append(phenotype)
 
         gpm = cls(genotypes, phenotypes, alphabet)
         return gpm

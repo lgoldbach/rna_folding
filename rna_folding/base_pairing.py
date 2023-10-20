@@ -9,17 +9,9 @@ http://users.cecs.anu.edu.au/~bdm/data/graphs.html
 import numpy as np
 from rna_folding.utils import canonical_adjacency_matrix
 
-"""
-This is a dirty hack but the graph data is to big to be hosted on github, so
-you need to hard-code the full path to the graph data here. If this ever
-becomes a real package I will find a solution to this but for now it doesn't 
-matter
-"""
-graph_path = "/home/lgold/phd/research/projects/connectivity/rna_folding/data/graphs/"
-
 
 class BasePairing:
-    def __init__(self, bases, id) -> None:
+    def __init__(self, bases, graph_path, id) -> None:
         """Initialize base-pairing object
 
         Args:
@@ -27,10 +19,13 @@ class BasePairing:
                         bases, i.e. number of nodes of the base-pairing graph.
             id (int): Defines which of the possible base-pairing graphs to
                         choose. If -1 then canonical base-pairing is used
+            graph_path (str): Path to folder containing the base-pairing 
+                        graph's adjacency matrix files.
 
 
         """
         self.bases = bases
+        self.graph_path = graph_path
         # map each base to its id (position in list) for quick look-up
         self.bases_to_id = dict(zip(self.bases, range(len(self.bases))))
         self.id = id
@@ -46,7 +41,7 @@ class BasePairing:
         
     def get_adjacency_matrix(self, n, id):
         # file name format is graph{n}.adj
-        file_path = graph_path + "graph" + str(n) + ".adj"
+        file_path = self.graph_path + "graph" + str(n) + ".adj"
         with open(file_path, "r") as file:
             for line in file:  # loop over lines until we find right graph
                 # Graph header format: Graph 3, order 4.

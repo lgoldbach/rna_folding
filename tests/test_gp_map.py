@@ -1,6 +1,6 @@
 import pytest
 
-from rna_folding.gp_map import GenotypePhenotypeMap
+from rna_folding.gp_map import GenotypePhenotypeGraph
 
 
 def example_gp():
@@ -8,7 +8,7 @@ def example_gp():
     phenotypes = [')..', ')..', ')((', ')..', ')((', ').(', ')..', ').(']
     alphabet = ["A", "U"]
 
-    gpm = GenotypePhenotypeMap(genotypes=genotypes,
+    gpm = GenotypePhenotypeGraph(genotypes=genotypes,
                          phenotypes=phenotypes,
                          alphabet=alphabet)
     gpm.add_hamming_edges()
