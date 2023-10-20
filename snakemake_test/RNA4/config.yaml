@@ -4,7 +4,7 @@ sequence_lengths:
 alphabet:
   - JKLM
 
-graph_path: /home/lgold/phd/research/projects/connectivity/rna_folding/snakemake_test/RNA4/
+graph_path: /home/lgold/phd/research/projects/connectivity/rna_folding/data/graphs/
 
 mapping_params:
   min_loop_size: 0

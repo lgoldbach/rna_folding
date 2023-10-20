@@ -5,13 +5,11 @@ of phenotypes (can be of size one as well)
 """
 import numpy as np
 from typing import Callable
-from abc import ABC, abstractmethod
 
 from rna_folding.base_pairing import BasePairing
 from rna_folding.nussinov import BasePairMatrixNussinov
 from rna_folding.utils import bp_to_dotbracket, dotbracket_to_genotype
 import RNA
-
 
 
 def gp_mapper(input: str, output: str, mapping_function: Callable):

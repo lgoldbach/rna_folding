@@ -7,3 +7,4 @@ data
 *.jpeg
 *.snakemake*
 snakemake_test/RNA4
+experiments
