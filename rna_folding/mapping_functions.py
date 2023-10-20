@@ -49,6 +49,7 @@ def gp_mapper(input: str, output: str, mapping_function: Callable):
             file_out.write(line)
     file_out.close()
 
+
 def nussinov(genotype: str, 
              base_pairing: BasePairing, 
              min_loop_size: int, 

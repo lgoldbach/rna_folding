@@ -16,15 +16,22 @@ if __name__ ==  "__main__":
 
     data = []
     # load data and get second column (fist only contains phenotype IDs)
-    distr = np.loadtxt(args.phenotype_dist, dtype=str)[:,1].astype(int)
-    distr = np.sort(np.log10(distr))[::-1]
+    file_data = np.loadtxt(args.phenotype_dist, dtype=str)
+    phenotypes = file_data[:,0]
+    distr = file_data[:,1].astype(int)
+    distr = np.log10(distr)
+    order = np.argsort(distr)[::-1]
+    distr = distr[order]
+    phenotypes = phenotypes[order]
+
+
     x = range(distr.shape[0])
 
     fig, ax = plt.subplots()
     ax.bar(x, distr)
-
-    ax.set_xlabel("Rank")
+    ax.set_xticks(x, phenotypes, rotation=45, ha='right')
+    ax.set_xlabel("Phenotypes")
     ax.set_ylabel("Phenotype count (log10)")
     ax.set_title("Phenotype distribution")
-
+    plt.tight_layout()
     plt.savefig(args.output, format="pdf", dpi=30)

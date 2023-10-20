@@ -11,6 +11,7 @@ rule all:
                base_pairing=config["mapping_params"]["base_pairing"]),
         expand("bp_graph{base_pairing}/phenotype_distribution.pdf", 
                base_pairing=config["mapping_params"]["base_pairing"]),
+        "phenotype_robustness_freq.pdf"
 
 rule create_subdirectories:
     priority: 1
@@ -100,14 +101,35 @@ rule compute_phenotype_distribution:
 
 rule plot_robustness_over_freq_single:
     input:
-        ph_distr="{graph_dir}/phenotype_distribution.txt",
-        ph_rob="{graph_dir}/phenotype_robustness.txt"
+        ph_distr="bp_graph{base_pairing}/phenotype_distribution.txt",
+        ph_rob="bp_graph{base_pairing}/phenotype_robustness.txt"
     output:
-        "{graph_dir}/phenotype_robustness_freq.pdf"
+        "bp_graph{base_pairing}/phenotype_robustness_freq.pdf"
     shell:
         "plot_robustness_phenotype_freq.py "
         "-d {input.ph_distr} "
         "-r {input.ph_rob} "
+        "-l {wildcards.base_pairing} "
+        "-o {output} "
+
+rule plot_robustness_over_freq_all:
+    input:
+        ph_distr=expand("bp_graph{bp}/phenotype_distribution.txt", bp=config["mapping_params"]["base_pairing"]),
+        ph_rob=expand("bp_graph{bp}/phenotype_robustness.txt", bp=config["mapping_params"]["base_pairing"])
+    output:
+        "phenotype_robustness_freq.pdf"
+    params:
+        # have to join the inputs as a comma-separated to be recognized as one
+        # argument by the shell script. argparse then processes the list (see 
+        # script).
+        bp_label=",".join([str(bp) for bp in config["mapping_params"]["base_pairing"]]),
+        ph_distr=",".join(expand("bp_graph{bp}/phenotype_distribution.txt", bp=config["mapping_params"]["base_pairing"])),
+        ph_rob=",".join(expand("bp_graph{bp}/phenotype_robustness.txt", bp=config["mapping_params"]["base_pairing"]))
+    shell:
+        "plot_robustness_phenotype_freq.py "
+        "-d {params.ph_distr} "
+        "-r {params.ph_rob} "
+        "-l {params.bp_label} "
         "-o {output} "
 
 rule plot_phenotype_distribution:
@@ -121,18 +143,3 @@ rule plot_phenotype_distribution:
         "-o {output} "
 
 # rule get_canonical_reference:
-
-
-
-
-# rule plot_robustness_over_freq_all:
-#     input:
-#         ph_distr=expand("{graph_dir}/phenotype_distribution.txt",
-#         ph_rob=expand"{graph_dir}/phenotype_robustness.txt"
-#     output:
-#         "{graph_dir}/phenotype_robustness_freq.pdf"
-#     script:
-#         "robustness_phenotype_freq.py "
-#         "-d {input.ph_distr} "
-#         "-r {input.ph_rob} "
-#         "-p {output}"
