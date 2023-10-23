@@ -1,3 +1,0 @@
-KeyError in file /home/lgold/phd/research/projects/connectivity/rna_folding/data/RNA4/Snakefile, line 8:
-'alphabet_sizes'
-  File "/home/lgold/phd/research/projects/connectivity/rna_folding/data/RNA4/Snakefile", line 8, in <module>
