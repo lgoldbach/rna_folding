@@ -54,11 +54,13 @@ if __name__ ==  "__main__":
             
         ax.scatter(x, y, s=5, alpha=0.5, label=l)
 
+    ax.set_ylim(top=1)
     if args.plot_null_expectation:
         expec = []
         x_expec = []
-        exp_of_xlim = 10**ax.get_xlim()[1]
-        for freq in np.arange(0, exp_of_xlim, 0.01):
+        exp_of_xlim_max = 10**ax.get_xlim()[1]
+        exp_of_xlim_min = 10**ax.get_xlim()[0]
+        for freq in np.arange(exp_of_xlim_min, 1, 0.01):
             x_expec.append(np.log10(freq))
             expec.append(freq)
         ax.plot(x_expec, expec, color="grey", ls="--", lw="1")

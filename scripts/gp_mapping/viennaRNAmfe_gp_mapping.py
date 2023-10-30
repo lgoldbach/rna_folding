@@ -2,7 +2,6 @@
 
 import argparse
 
-from rna_folding.base_pairing import BasePairing
 from rna_folding.mapping_functions import gp_mapper, viennaRNA_mfe
 
 

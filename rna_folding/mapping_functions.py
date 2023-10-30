@@ -70,7 +70,6 @@ def nussinov(genotype: str,
     P.fill_matrix(seq=genotype, min_loop_size=min_loop_size)
     strucs = P.traceback_subopt(seq=genotype, d=suboptimal,
                                 structures_max=structures_max)
-    
     phenotypes = [bp_to_dotbracket(s.B, l=len(genotype)) for s in strucs]
 
     return phenotypes
@@ -83,7 +82,7 @@ def nussinov_mfe(genotype: str,
                  structures_max: int,
                  seed: int,
                  base_pair: str = "GC",
-                 deterministic: bool = False) -> list:
+                 deterministic: bool = False)-> list:
     """Nussinov + mfe ranking genotype-phenotype mapping wrapper.
     Candidate phenotypes are generated using Nussinov's algorithm which are
     then mapped to a canonical genotype and scored using viennaRNA package
@@ -118,8 +117,12 @@ def nussinov_mfe(genotype: str,
         g_fe_map.append(RNA.eval_structure_simple(seq_canon, ph))
     
     mfe_ph_id = np.argmin(g_fe_map)  # get index of mfe phenotype
-    mfe_ph = phenotypes[mfe_ph_id]  # get mfe phenotype
+    if g_fe_map[mfe_ph_id] >= 0:  # if energy is above 0
+        mfe_ph = "."*len(phenotypes[mfe_ph_id])  # phenotype is unf.
+    else:
+        mfe_ph = phenotypes[mfe_ph_id]  # get mfe phenotype
     
+    print(g_fe_map, phenotypes, mfe_ph)
     return [mfe_ph]
 
 
