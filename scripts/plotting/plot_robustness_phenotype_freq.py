@@ -15,8 +15,11 @@ if __name__ ==  "__main__":
                         "distribution file", required=True, type=list_of_strings)
     parser.add_argument("-l", "--label", help="Label for data, e.g. graph ids "
                         , required=True, type=list_of_strings)
+    parser.add_argument("-e", "--plot_null_expectation", help="Plot null "
+                        "expectation of robustness ", required=False, 
+                        type=bool, default=False)
     parser.add_argument("-o", "--output", help="Output file name "
-                        "(should end in .pdf)", required=True)
+                        "(should end in .pdf)", required=True, type=str)
     
     args = parser.parse_args()
 
@@ -41,11 +44,26 @@ if __name__ ==  "__main__":
         for ph in robus:
             y.append(robus[ph])
             # turn phenotype counts into log frequency
+            try: 
+                a = distr[ph]
+            except KeyError:
+                print(ph, "\n", len(distr.keys()), len(robus.keys()))
             d = distr[ph]/phenotype_count_sum
             d = np.log10(d)
             x.append(d)
+            
         ax.scatter(x, y, s=5, alpha=0.5, label=l)
-        
+
+    ax.set_ylim(top=1)
+    if args.plot_null_expectation:
+        expec = []
+        x_expec = []
+        exp_of_xlim_max = 10**ax.get_xlim()[1]
+        exp_of_xlim_min = 10**ax.get_xlim()[0]
+        for freq in np.arange(exp_of_xlim_min, 1, 0.01):
+            x_expec.append(np.log10(freq))
+            expec.append(freq)
+        ax.plot(x_expec, expec, color="grey", ls="--", lw="1")
         
     ax.set_xlabel("Phenotype frequency (log10)")
     ax.set_ylabel("Phenotype robustness")

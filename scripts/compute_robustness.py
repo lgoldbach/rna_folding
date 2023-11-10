@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 import argparse
-from itertools import chain
-from datetime import datetime
 
 from rna_folding.gp_map import GenotypePhenotypeGraph
 
