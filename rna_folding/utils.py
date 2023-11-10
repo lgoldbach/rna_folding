@@ -153,4 +153,41 @@ def dotbracket_to_genotype(dotbracket: str,
     
     return ''.join(genotype)
 
+def dotbracket_to_genotype_random(dotbracket: str,
+                           base_pairs: str = ["AU", "GC"],
+                           seed: int = None) -> str:
+    """Take a dot-bracket RNA phenotype and translate it into a sequence of
+    that is consistent with the given base-pairing.
+    E.g. (((...))) -> GGG...CCC
 
+    Args:
+        dotbracket (str): A RNA phenotype in dot-bracket notation, e.g. ((..))
+        base_pairs (list): List of base-pairs, default: ["AU", "GC", "GU"].
+        seed (int): Provide random seed for assigning bases to positons.
+
+    Returns:
+        str: Genotype that is consistent with the base-pairing.
+
+    """
+    if seed:
+        np.random.seed(seed)
+
+    bases = list("".join(base_pairs))
+    complement_stack = []
+
+    genotype = ""
+    for site, db in enumerate(dotbracket):
+        if db == "(":
+            base_pair = np.random.choice(base_pairs)  # pick pair
+            b1 = np.random.choice([0, 1])  # pick base from pair
+            b2 = b1 == 0  # get complementary
+            base = base_pair[b1]
+            complement_stack.append(base_pair[b2])  # store complementary on stack
+        elif db == ")":
+            base = complement_stack.pop()
+        elif db == ".":
+            base = np.random.choice(bases)
+        else:
+            raise ValueError(f"Unknown character in dotbracket: {db}")
+        genotype += base
+    return genotype

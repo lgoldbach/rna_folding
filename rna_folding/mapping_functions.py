@@ -8,7 +8,7 @@ from typing import Callable
 
 from rna_folding.base_pairing import BasePairing
 from rna_folding.nussinov import BasePairMatrixNussinov
-from rna_folding.utils import bp_to_dotbracket, dotbracket_to_genotype
+from rna_folding.utils import bp_to_dotbracket, dotbracket_to_genotype, dotbracket_to_genotype_random
 import RNA
 
 
@@ -122,8 +122,53 @@ def nussinov_mfe(genotype: str,
     else:
         mfe_ph = phenotypes[mfe_ph_id]  # get mfe phenotype
     
-    print(g_fe_map, phenotypes, mfe_ph)
     return [mfe_ph]
+
+
+def debug_nussinov_mfe(genotype: str,
+                 base_pairing: BasePairing,
+                 min_loop_size: int,
+                 suboptimal: int,
+                 structures_max: int,
+                 seed: int,
+                 base_pair: str = "GC",
+                 deterministic: bool = False) -> list:
+    """Nussinov + mfe ranking genotype-phenotype mapping wrapper.
+    Candidate phenotypes are generated using Nussinov's algorithm which are
+    then mapped to a canonical genotype and scored using viennaRNA package
+
+    Args:
+        genotype (str): genotype to be mapped
+        base_pairing (BasePairing): An BasePairing object defining pairing ules
+        min_loop_size (int): minimum size that RNA loops must have
+        suboptimal (int): How many base-pairs off from optimum are allowed
+        structures_max (int): How many structures to generate at most
+        base_pair (str): Which base-pair is used for MFE calc., either "GC" or "AU".
+        seed (int): Random seed to use for generation of canonical genotype
+        deterministic (bool): If True, always use G to for unpaired sites, else
+        randomly pick G or C, if "GC" is given as base-pair
+
+    Returns:
+        list: List of phenotypes that the genotypes maps to
+
+    """
+    phenotypes = nussinov(genotype=genotype, base_pairing=base_pairing,
+                          min_loop_size=min_loop_size, suboptimal=suboptimal,
+                          structures_max=structures_max)
+
+    g_fe_map = []
+
+    for ph in phenotypes:
+        # turn into a canonical alphabet
+        seq_canon = dotbracket_to_genotype_random(dotbracket=ph)
+        g_fe_map.append(RNA.eval_structure_simple(seq_canon, ph))
+    mfe_ph_id = np.argmin(g_fe_map)  # get index of mfe phenotype
+    if g_fe_map[mfe_ph_id] >= 0:  # if energy is above 0
+        mfe_ph = "." * len(phenotypes[mfe_ph_id])  # phenotype is unf.
+    else:
+        mfe_ph = phenotypes[mfe_ph_id]  # get mfe phenotype
+
+    return [mfe_ph], phenotypes, g_fe_map
 
 
 def viennaRNA_mfe(genotype: str) -> list:
