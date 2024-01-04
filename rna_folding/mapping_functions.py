@@ -8,7 +8,7 @@ from typing import Callable
 
 from rna_folding.base_pairing import BasePairing
 from rna_folding.nussinov import BasePairMatrixNussinov
-from rna_folding.utils import bp_to_dotbracket, dotbracket_to_genotype, dotbracket_to_genotype_random
+from rna_folding.utils import bp_to_dotbracket, dotbracket_to_genotype, dotbracket_to_genotype_random, dict_to_gpmap
 import RNA
 
 
@@ -26,7 +26,7 @@ def gp_mapper(input: str, output: str, mapping_function: Callable):
         None
     
     """
-    phenotypes = {}
+    ph_to_gt = {}
 
     # Read genotypes and map to phenotypes
     with open(input, "r") as file_in:
@@ -36,17 +36,13 @@ def gp_mapper(input: str, output: str, mapping_function: Callable):
             # add sequence ID to the phenotype that they map to
             for ph in phenotypes_:
                 try:
-                    phenotypes[ph].append(i)
+                    ph_to_gt[ph].append(i)
                 except KeyError:
-                    phenotypes[ph] = [i]
+                    ph_to_gt[ph] = [i]
 
     # Write to output file (line example: "{ph} {gt_id} {gt_id} {gt_id}\n"
-    with open(output, "w") as file_out:
-        for p in phenotypes:
-            line = p + " " + " ".join(map(str, phenotypes[p])) + "\n"
-            file_out.write(line)
-    file_out.close()
-
+    dict_to_gpmap(ph_to_gt=ph_to_gt, file=output)
+    
 
 def nussinov(genotype: str, 
              base_pairing: BasePairing, 
@@ -70,6 +66,11 @@ def nussinov(genotype: str,
     P.fill_matrix(seq=genotype, min_loop_size=min_loop_size)
     strucs = P.traceback_subopt(seq=genotype, d=suboptimal,
                                 structures_max=structures_max)
+    # print(genotype)
+    # for s in strucs:
+    #     print(bp_to_dotbracket(s.B, l=len(genotype)))
+    #     for pair in s.B:
+    #         print(genotype[pair[0]-1], genotype[pair[1]-1])
     phenotypes = [bp_to_dotbracket(s.B, l=len(genotype)) for s in strucs]
 
     return phenotypes
@@ -183,3 +184,42 @@ def viennaRNA_mfe(genotype: str) -> list:
     mfe_ph, mfe = RNA.fold(genotype)
 
     return [mfe_ph]
+
+
+def nussinov_canonical_fe(genotype: str, 
+                 base_pairing: BasePairing, 
+                 min_loop_size: int, 
+                 suboptimal: int, 
+                 structures_max: int) -> list:
+    """Nussinov + free energy calc genotype-phenotype mapping wrapper.
+    Candidate phenotypes are generated using Nussinov's algorithm which are
+    then mapped to a canonical genotype and scored using viennaRNA package.
+    Only works for the canonical alphabet for now
+
+    Args:
+        genotype (str): genotype to be mapped
+        base_pairing (BasePairing): An BasePairing object defining pairing ules
+        min_loop_size (int): minimum size that RNA loops must have
+        suboptimal (int): How many base-pairs off from optimum are allowed
+        structures_max (int): How many structures to generate at most
+
+    Returns:
+        list: (List of phenotypes where phenotype is a comma-separated string 
+                containing dotbracket phenotype and free energy, e.g.:
+                ["(((...))),-2.4", "(..).....,8.5", ...] 
+                list is sorted by free energy, low to high
+        
+    """
+    phenotypes = nussinov(genotype=genotype, base_pairing=base_pairing, 
+                            min_loop_size=min_loop_size, suboptimal=suboptimal, 
+                            structures_max=structures_max)
+
+    energies = []
+    for ph in phenotypes:
+        # turn into a canonical alphabet
+        energies.append(RNA.eval_structure_simple(genotype, ph))
+    
+    # sort both lists based energy values (low to high)
+    sorted_gf_map = [p+","+str(np.round(e, 2)) for e, p in sorted(zip(energies, phenotypes), key=lambda pair: pair[0])]
+
+    return sorted_gf_map

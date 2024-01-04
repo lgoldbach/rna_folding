@@ -191,3 +191,20 @@ def dotbracket_to_genotype_random(dotbracket: str,
             raise ValueError(f"Unknown character in dotbracket: {db}")
         genotype += base
     return genotype
+
+
+def dict_to_gpmap(ph_to_gt: dict, file: str) -> None:
+    """Take a dict that maps phenotype to list of genotypes and save it
+    as a space-separated "c"sv file, where each line looks like this:
+    "{ph} {gt_id} {gt_id} {gt_id}"
+
+    Args:
+        ph_to_gt (dict): _description_
+        file (str): _description_
+    """
+    # Write to output file (
+    with open(file, "w") as file_out:
+        for p in ph_to_gt:
+            line = p + " " + " ".join(map(str, ph_to_gt[p])) + "\n"
+            file_out.write(line)
+    file_out.close()

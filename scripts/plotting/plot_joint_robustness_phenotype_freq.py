@@ -9,10 +9,8 @@ def list_of_strings(arg):
 
 if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-r", "--robustness", help="Path to phenotype "
-                        "robustness file", required=True, type=list_of_strings)
-    parser.add_argument("-d", "--phenotype_dist", help="Path to phenotype "
-                        "distribution file", required=True, type=list_of_strings)
+    parser.add_argument("-d", "--robust_distr", help="Path to robustness x phenotype data where column 1 is rob. and column 2 is phenotype freq ",
+                         required=True, type=list_of_strings)
     parser.add_argument("-l", "--label", help="Label for data, e.g. graph ids "
                         , required=True, type=list_of_strings)
     parser.add_argument("-e", "--plot_null_expectation", help="Plot null "
@@ -25,35 +23,20 @@ if __name__ ==  "__main__":
 
     fig, ax = plt.subplots()
 
-    for robust_in, dist_in, l in zip(args.robustness, args.phenotype_dist, args.label):
-        robus = {}
-        with open(robust_in, "r") as file:
-            for line_ in file:
-                line = line_.strip().split(" ")
-                robus[line[0]] = float(line[1])
-        
-        distr = {}
-        with open(dist_in, "r") as file:
-            for line_ in file:
-                line = line_.split(" ")
-                distr[line[0]] = int(line[1])
-
-        phenotype_count_sum = sum(distr.values())
+    for file, l in zip(args.robust_distr, args.label):
         x = []
         y = []
-        for ph in robus:
-            y.append(robus[ph])
-            # turn phenotype counts into log frequency
-            try: 
-                a = distr[ph]
-            except KeyError:
-                print(ph, "\n", len(distr.keys()), len(robus.keys()))
-            d = distr[ph]/phenotype_count_sum
-            d = np.log10(d)
-            x.append(d)
-            
-        ax.scatter(x, y, s=5, alpha=0.5, label=l)
-
+        with open(file, "r") as f:
+            for line in f:
+                rob, dist = line.strip().split(" ")
+                y.append(float(rob))
+                x.append(np.log10(float(dist)))
+        
+        coeff = np.polyfit(x, y, 2)
+        p = np.poly1d(coeff)
+        xp = np.linspace(np.min(x)*0.95, np.max(x)*1.05, 100)
+        ax.plot(xp, p(xp), label=l)
+        # ax.scatter(x, y, s=5, alpha=0.5, label=l)
     ax.set_ylim(bottom=-0.05, top=1)
     ax.set_xlim(left=-8, right=0)
     if args.plot_null_expectation:
