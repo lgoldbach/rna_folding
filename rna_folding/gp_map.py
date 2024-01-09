@@ -202,7 +202,7 @@ class GenotypePhenotypeGraph(nx.Graph):
         phenotypes as their neighbor.
 
         Args:
-            nodes (list): List of nodes (str) to consides, e.g. ["AA", "AU"]
+            nodes (list): List of nodes (str) to consider, e.g. ["AA", "AU"]
 
         Returns:
             float: Phenotype robustness.
