@@ -24,15 +24,9 @@ if __name__ ==  "__main__":
                                               genotype_ref_path=args.genotypes,
                                               alphabet=args.alphabet)
 
-    ncs = []
-    for ph in gpm.phenotype_set:
-        ncs.append(gpm.nodes_with_phenotype(ph))
-
-    robustnesses = []
-    for i, nc in enumerate(ncs):
-        robustnesses.append(gpm.phenotype_robustness(nc))
+    # simply get the average robustness over all genotypes
+    gt_robustness = gpm.phenotype_robustness(gpm.genotypes)
 
     with open(args.output, "w") as outfile:
-        for ph, r in zip(gpm.phenotype_set, robustnesses):
-            outfile.write(ph + " " + str(r) + "\n")
+        outfile.write(f"{gt_robustness}")
     
