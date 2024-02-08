@@ -164,7 +164,7 @@ class GenotypePhenotypeGraph(nx.Graph):
                     neighbors.append(node[:site] + l + node[site + 1:])
         return neighbors
 
-    def neutral_components(self, phenotypes: list = []) -> list:
+    def neutral_components(self, phenotypes: list = [], return_ids=False) -> list:
         """Compute all neutral components for given phenotypes. A neutral 
         component is defined as a connected set of nodes that all map to the
         same phenotype. A phenotype can have between one and #(phenotype) 
@@ -174,6 +174,8 @@ class GenotypePhenotypeGraph(nx.Graph):
             phenotypes (list, optional): List of phenotypes for which neutral
             components will be returned. If none are given, neutral components 
             for all phenotypes will be returned. Defaults to [].
+            return_ids (bool): If true, genotypes will be returnes as numerical
+                ids and not as full sequence. This saves memory for large maps.
 
         Returns:
             list: list of sets. The ith element in the list contains the 
@@ -191,10 +193,14 @@ class GenotypePhenotypeGraph(nx.Graph):
             cc = nx.connected_components(G_sub)
             # translate the components from full sequences to numeric id
             # for memory efficiency
-            cc_id = []
-            for c in cc:
-                cc_id.append({self.nodes[node]["id"] for node in c})
-            neutral_components.append(cc_id)
+            if return_ids:
+                final_cc = []
+                for c in cc:
+                    final_cc.append({self.nodes[node]["id"] for node in c})
+            else:
+                final_cc = cc
+                
+            neutral_components.append(final_cc)
         return neutral_components
 
     def phenotype_robustness(self, nodes: list) -> float:

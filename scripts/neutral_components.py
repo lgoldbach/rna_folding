@@ -21,7 +21,7 @@ if __name__ ==  "__main__":
         gpm.add_hamming_edges()
         pickle.dump(gpm, open(args.file, "wb")) 
 
-    nc = gpm.neutral_components()
+    nc = gpm.neutral_components(return_ids=True)
 
     nc_l = [list(i) for i in nc]
     pickle.dump(nc_l, open(args.output, "wb"))
