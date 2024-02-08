@@ -22,8 +22,8 @@ if __name__ ==  "__main__":
     args = parser.parse_args()
     
     data_full = np.loadtxt(args.input)
-    data_split = np.split(data_full, data_full.size/6)
-    data_resh = np.reshape(data_full, (data_full.size//6, 6)).T
+    data_split = np.split(data_full, data_full.size/args.sample_size)
+    data_resh = np.reshape(data_full, (data_full.size//args.sample_size, args.sample_size)).T
     means = np.mean(data_resh, axis=0)
     means_argsort = np.argsort(means)
 
@@ -45,7 +45,6 @@ if __name__ ==  "__main__":
     ax.set_title("Average genotype robustness and scatter of samples")
     plt.tight_layout()
     plt.savefig(args.output, format="pdf", dpi=15)
-
 
     F, p = f_oneway(*data_split)
     tukey_res = tukey_hsd(*data_split)
@@ -73,7 +72,6 @@ if __name__ ==  "__main__":
             colors.append("black")
 
     pos = nx.spring_layout(G)
-    print(G.nodes)
     nx.draw_networkx_nodes(G, pos=pos)
     nx.draw_networkx_labels(G, pos=pos, labels=dict(zip(G.nodes, range(2, 12))))
     nx.draw_networkx_edges(G, pos, edgelist=edges, edge_color=colors, width=weights, ax=ax2)

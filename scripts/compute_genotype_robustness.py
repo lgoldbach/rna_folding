@@ -28,5 +28,5 @@ if __name__ ==  "__main__":
     gt_robustness = gpm.phenotype_robustness(gpm.genotypes)
 
     with open(args.output, "w") as outfile:
-        outfile.write(f"{gt_robustness}")
+        outfile.write(f"{gt_robustness}\n")
     

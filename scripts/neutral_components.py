@@ -9,20 +9,20 @@ if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", help="Input genotype-phenotype map "
                         "file", required=True)
-    parser.add_argument("-o", "--output", help="File output for robustness",
+    parser.add_argument("-o", "--output", help="File output for neutral components",
                         required=True)
     
 
     args = parser.parse_args()
     
     gpm = pickle.load(open(args.file, "rb"))
+    # if edges are not added, add them and save updated gpm in pickle file
+    if not gpm.edges:
+        gpm.add_hamming_edges()
+        pickle.dump(gpm, open(args.file, "wb")) 
 
-    for ph in gpm.phenotype_set:
-        neutral_set = gpm.nodes_with_phenotype(ph)
-        G_neutral_set = nx.induced_subgraph(gpm, neutral_set)
-        print(list(nx.connected_components(G_neutral_set)))
+    nc = gpm.neutral_components()
 
-    # with open(args.output, "w") as outfile:
-    #     for ph, r in zip(gpm.phenotype_set, robustnesses):
-    #         outfile.write(ph + " " + str(r) + "\n")
+    nc_l = [list(i) for i in nc]
+    pickle.dump(nc_l, open(args.output, "wb"))
     

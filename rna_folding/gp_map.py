@@ -28,8 +28,8 @@ class GenotypePhenotypeGraph(nx.Graph):
 
         if genotypes:
             self.phenotype_set = list(set(self.phenotypes))
-            for g, p in zip(self.genotypes, self.phenotypes):
-                self.add_node(g, phenotype=p)
+            for i, (g, p) in enumerate(zip(self.genotypes, self.phenotypes)):
+                self.add_node(g, phenotype=p, id=i)
 
     @classmethod
     def read_from_file(cls, path: str, alphabet: list):
@@ -189,7 +189,12 @@ class GenotypePhenotypeGraph(nx.Graph):
                      attr['phenotype'] == ph]
             G_sub = self.subgraph(nodes)
             cc = nx.connected_components(G_sub)
-            neutral_components.append(cc)
+            # translate the components from full sequences to numeric id
+            # for memory efficiency
+            cc_id = []
+            for c in cc:
+                cc_id.append({self.nodes[node]["id"] for node in c})
+            neutral_components.append(cc_id)
         return neutral_components
 
     def phenotype_robustness(self, nodes: list) -> float:
