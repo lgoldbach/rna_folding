@@ -2,6 +2,7 @@
 
 import argparse
 import pickle
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -10,34 +11,61 @@ if __name__ ==  "__main__":
     parser.add_argument("--files", nargs="+")
     parser.add_argument("-o", "--output", help="File output for neutral components",
                         required=True)
+    parser.add_argument("-n", "--num_of_ranks", help="Number of rankings per bp rule",
+                        required=True)
     
-
     args = parser.parse_args()
 
-    fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10,5))
+    fig, axes = plt.subplots(nrows=3, ncols=int(len(args.files)/int(args.num_of_ranks)), 
+                             figsize=(2*int(args.num_of_ranks), 10), sharex="col", sharey="row")
 
-    for i, file in enumerate(args.files):  # loop over rankings
-        ncs_per_ph = pickle.load(open(file, "rb"))
-        ncs_count_per_ph = [len(ncs) for ncs in ncs_per_ph]
-        for count in ncs_count_per_ph:
-            ax1.scatter(i, count, alpha=0.5)
 
-        ncs_max_per_ph = []
-        for ncs in ncs_per_ph:
-            ncs_sizes = []
-            for nc in ncs:
-                ncs_sizes.append(len(nc))
-            ncs_max_per_ph.append(max(ncs_sizes))
+    for i in range(0, int(len(args.files)/int(args.num_of_ranks))):
+        files_per_bprule = args.files[i*int(args.num_of_ranks):i*int(args.num_of_ranks)+int(args.num_of_ranks)]
+        for rank, file in enumerate(files_per_bprule):  # loop over rankings
+            # AX1
+            ncs_per_ph = pickle.load(open(file, "rb"))
+            ncs_count_per_ph = [len(ncs) for ncs in ncs_per_ph]
+            for count in ncs_count_per_ph:
+                axes[0][i].scatter(rank, count, alpha=0.5)
+            
+            if rank == 0:
+                axes[0][i].set_title(f"bp rule {i}")
+            if i == 0:
+                axes[0][i].set_ylabel("Number of connected components\nfor different phenotypes")
+            
+            # AX2
+            ncs_max_per_ph = []
+            ncs_sizes_all = []
+            for ncs in ncs_per_ph:
+                ncs_sizes = []
+                for nc in ncs:
+                    ncs_sizes.append(len(nc))
+                    ncs_sizes_all.append(len(nc))
+                ncs_max_per_ph.append(max(ncs_sizes))
 
-        for max_nc in ncs_max_per_ph:
-            ax2.scatter(i, max_nc, alpha=0.5)
+            if i == 0:
+                axes[1][i].set_ylabel("Size of largest of connected components\nfor different phenotypes")
 
-    ax1.set_title("Number of neutral components per phenotype")
-    ax1.set_xlabel("Rankings")
-    ax1.set_ylabel("Number of connected components\nfor different phenotypes")
-    ax2.set_title("Largest neutral components per phenotype")
-    ax2.set_xlabel("Rankings")
-    ax2.set_ylabel("Size of largest of connected components\nfor different phenotypes")
+            for max_nc in ncs_max_per_ph:
+                axes[1][i].scatter(rank, max_nc, alpha=0.5)
+
+            # AX3
+            axes[2][i].scatter(rank, np.mean(ncs_sizes_all), marker="o", label="mean" if rank==0 else "", color="black")
+            axes[2][i].scatter(rank, np.median(ncs_sizes_all), marker="x", label="median" if rank==0 else "", color="red")
+            axes[2][i].legend()
+            if i == 0:
+                axes[2][i].set_ylabel("Mean/median neutral component size")
+    
+    # set ticklabels from 1 to number of rankings
+    labels = [str(i) for i in range(1, int(args.num_of_ranks)+1)]
+    for ax in axes[-1]:
+        ax.set_xlabel("Rankings")
+        ax.set_xticks(list(range(0, int(args.num_of_ranks))), labels=labels)
+
+        
+
+    plt.tight_layout()
     plt.savefig(args.output, format="pdf")
 
 
