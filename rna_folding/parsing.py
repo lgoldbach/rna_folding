@@ -47,6 +47,7 @@ def gpmap_to_dict(gpmap_file: str, genotype_file: str = None) -> dict:
 
     return gp_map
 
+
 def viennarna_to_gp_map_file(viennarna_output: str) -> dict:
     """Takes an output file and parses it into dictionary 
     {<genotype> (str): [phenotypes (str)]}. Intended for mappings to multiple 

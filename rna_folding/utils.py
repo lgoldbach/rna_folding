@@ -208,3 +208,32 @@ def dict_to_gpmap(ph_to_gt: dict, file: str) -> None:
             line = p + " " + " ".join(map(str, ph_to_gt[p])) + "\n"
             file_out.write(line)
     file_out.close()
+
+
+def ranked_ph_log_distribution(ph_distr_file) -> tuple:
+    """Rank phenotypes by their count and return log10 frequency
+
+    Args:
+        ph_distr_file (str): file containing phenotypes and their count, e.g.:
+                                ph1 19229
+                                ph2 123123123
+                                ph3 212
+                                ...
+    Returns:
+        (phenotypes, distr): phenotypes: Phenotypes in descending order of 
+                                         their frequency
+                             distr: Frequencies in descending order. (matches
+                                    order of phenotype
+
+    """
+    # load data and get second column (fist only contains phenotype IDs)
+    file_data = np.loadtxt(ph_distr_file, dtype=str)
+    if file_data.ndim == 1:  # in case there is only one phenotype
+        file_data = np.expand_dims(file_data, axis=0)
+    phenotypes = file_data[:,0]
+    distr = file_data[:,1].astype(int)
+    distr = np.log10(distr)
+    order = np.argsort(distr)[::-1]
+    distr = distr[order]
+    phenotypes = phenotypes[order]
+    return phenotypes, distr
