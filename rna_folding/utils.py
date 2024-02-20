@@ -227,13 +227,35 @@ def ranked_ph_log_distribution(ph_distr_file) -> tuple:
 
     """
     # load data and get second column (fist only contains phenotype IDs)
-    file_data = np.loadtxt(ph_distr_file, dtype=str)
-    if file_data.ndim == 1:  # in case there is only one phenotype
-        file_data = np.expand_dims(file_data, axis=0)
-    phenotypes = file_data[:,0]
-    distr = file_data[:,1].astype(int)
+    
+    phenotypes, distr = load_phenotype_and_metric_from_file(ph_distr_file)
+    distr = distr / np.sum(distr)
     distr = np.log10(distr)
+
     order = np.argsort(distr)[::-1]
     distr = distr[order]
     phenotypes = phenotypes[order]
+    return phenotypes, distr
+
+
+def load_phenotype_and_metric_from_file(file: str, dtype=float):
+    """Take a file in the common phenotype (col1) metric (col2) data-type 
+    I am using and reat it as two array.
+    Example file:
+    ((...)) 0.8
+    (.....) 0.7
+    ...
+
+    Args:
+        file (str): Path to the file
+
+    Retruns:
+        phentypes, data
+    """
+    file_data = np.loadtxt(file, dtype=str)
+    if file_data.ndim == 1:  # in case there is only one phenotype
+        file_data = np.expand_dims(file_data, axis=0)
+    phenotypes = file_data[:,0]
+    distr = file_data[:,1].astype(dtype)
+
     return phenotypes, distr

@@ -35,8 +35,8 @@ if __name__ ==  "__main__":
         coeff = np.polyfit(x, y, 2)
         p = np.poly1d(coeff)
         xp = np.linspace(np.min(x)*0.95, np.max(x)*1.05, 100)
-        ax.plot(xp, p(xp), label=l)
-        # ax.scatter(x, y, s=5, alpha=0.5, label=l)
+        # ax.plot(xp, p(xp), label=l)
+        ax.scatter(x, y, s=5, alpha=0.5, label=l)
     ax.set_ylim(bottom=-0.05, top=1)
     ax.set_xlim(left=-8, right=0)
     if args.plot_null_expectation:

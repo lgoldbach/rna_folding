@@ -29,15 +29,17 @@ rule all:
         # #        rankings=config["rankings"]),
         # expand("bp_graph{base_pairing}/phenotype_distribution_robustness.txt", 
         #        base_pairing=config["mapping_params"]["base_pairing"]),
-        # "phenotype_robustness_freq_all_bp.pdf",
         # expand("bp_graph{base_pairing}/ranking{rankings}/average_genotype_robustness.txt", 
         #         base_pairing=config["mapping_params"]["base_pairing"], 
         #         rankings=config["rankings"]),
         # expand("bp_graph{base_pairing}/neutral_component_summary.pdf", 
         #         base_pairing=config["mapping_params"]["base_pairing"], 
         #         rankings=config["rankings"]),
-        "analysis/genotype_robustness_distributions.pdf",
-        "analysis/phenotype_bias.pdf"
+        # "analysis/genotype_robustness_distributions.pdf",
+        # "analysis/phenotype_bias_violin.pdf",
+        # "analysis/phenotype_robustness_violin.pdf",
+        "analysis/phenotype_bias.pdf",
+        "analysis/phenotype_robustness_freq_all_bp.pdf"
 
 rule create_subdirectories:
     priority: 1
@@ -254,7 +256,7 @@ rule plot_joint_robustness_over_freq_between_bp:
     input:
         ph_rob_x_distr=expand("bp_graph{base_pairing}/phenotype_distribution_robustness.txt", base_pairing=config["mapping_params"]["base_pairing"]),
     output:
-        "phenotype_robustness_freq_all_bp.pdf"
+        "analysis/phenotype_robustness_freq_all_bp.pdf"
     params:
         # have to join the inputs as a comma-separated to be recognized as one
         # argument by the shell script. argparse then processes the list (see 
@@ -325,7 +327,22 @@ rule neutral_component_summary_plots:
         "--files {input} "
         "-o {output} "
 
-rule phenotype_distr_plot_across_bp_rules:
+rule phenotype_distr_plot_across_bp_rules_violin:
+    input:
+        expand("bp_graph{base_pairing}/ranking{rankings}/phenotype_distribution.txt", 
+                rankings=config["rankings"], 
+                base_pairing=config["mapping_params"]["base_pairing"])
+    output:
+        "analysis/phenotype_bias_violin.pdf"
+    params:
+        num_of_ranks=len(config["rankings"])
+    shell:
+        "plot_phenotype_distribution_across_bprules_violin.py "
+        "--files {input} "
+        "-n {params.num_of_ranks} "
+        "-o {output} "
+
+rule phenotype_distr_plot_across_bp_rules_rank:
     input:
         expand("bp_graph{base_pairing}/ranking{rankings}/phenotype_distribution.txt", 
                 rankings=config["rankings"], 
@@ -336,6 +353,21 @@ rule phenotype_distr_plot_across_bp_rules:
         num_of_ranks=len(config["rankings"])
     shell:
         "plot_phenotype_distribution_across_bprules.py "
+        "--files {input} "
+        "-n {params.num_of_ranks} "
+        "-o {output} "
+
+rule phenotype_robustness_plot_across_bp_rules_violin:
+    input:
+        expand("bp_graph{base_pairing}/ranking{rankings}/phenotype_robustness.txt", 
+                rankings=config["rankings"], 
+                base_pairing=config["mapping_params"]["base_pairing"])
+    output:
+        "analysis/phenotype_robustness_violin.pdf"
+    params:
+        num_of_ranks=len(config["rankings"])
+    shell:
+        "plot_phenotype_robustness_across_bprules_violin.py "
         "--files {input} "
         "-n {params.num_of_ranks} "
         "-o {output} "
