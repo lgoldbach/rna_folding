@@ -1,0 +1,196 @@
+configfile: "./config.yaml"
+
+# define the directories to be created (.mkdir_placeholder) simply serves
+# to trick snakemake into making the creation of directories its own job
+
+rule all:
+    input:
+        expand("analysis/phenotype_robustness_distributions_rank{rank}.pdf", rank=config["rankings"])
+
+rule create_subdirectories:
+    priority: 1
+    output:
+        temp("{path}/.mkdir_placeholder")  # temp -> this file will be deleted when all jobs are done
+    shell:
+        "mkdir -p {wildcards.path} && "  # create directory
+        "touch {output}"  # make file (only to satisfy condition)
+
+rule generate_genotype_space:
+    output:
+        "genotypes.txt"
+    params:
+        alphabet=config["alphabet"],
+        seq_len=config["sequence_lengths"]
+    shell:
+        "build_genotype_space.py " 
+        "-a {params.alphabet} "
+        "-l {params.seq_len} "
+        "-o {output}"
+
+rule nussinov_gp_map:
+    input:
+        "genotypes.txt"
+    output:
+        "bp_graph{base_pairing,[0-9]+}/gp_map.txt"  # regex to constrain to numbers and prevent matching subdirectory gp_map.txt
+    params:
+        graph_path=config["graph_path"],
+        min_loop_size=config["mapping_params"]["min_loop_size"],
+        suboptimal=config["mapping_params"]["suboptimal"],
+        structures_max=config["mapping_params"]["structures_max"],
+        alphabet=config["alphabet"],
+    shell:
+        "nussinov_gp_mapping.py "
+        "-i {input} "
+        "-o {output} "
+        "-m {params.min_loop_size} "
+        "-s {params.suboptimal} "
+        "-z {params.structures_max} "
+        "-g {params.graph_path} "
+        "-a {params.alphabet} "
+        "-p {wildcards.base_pairing} "
+
+# Concats all gp maps, extracts all phenotypes and creates a unique list
+# The position in this list will define the id of each phenotype for the rest
+# of the snakemake pipeline.
+rule extract_phenotype_list:
+    input:
+        "bp_graph{base_pairing,[0-9]+}/gp_map.txt"
+    output:
+        "bp_graph{base_pairing,[0-9]+}/phenotypes.txt"
+    shell:
+        "cat {input} > bp_graph{wildcards.base_pairing}/tmp_phenotypes && " 
+        "awk '{{print $1}}' {input} | sort | uniq > {output} && "
+        "rm bp_graph{wildcards.base_pairing}/tmp_phenotypes"
+
+rule extract_meta_list_of_phenotypes:
+    input:
+        expand("bp_graph{bp}/phenotypes.txt", bp=config["mapping_params"]["base_pairing"])
+    output:
+        "phenotypes.txt"
+    shell:
+        "cat {input} > tmp_phenotypes && " 
+        "awk '{{print $1}}' {input} | sort | uniq > {output} && "
+        "rm tmp_phenotypes"
+
+# take phenotype file and randomly shuffle it using shuf function
+rule create_rankings:
+    input:
+        "phenotypes.txt"
+    output:
+        "phenotype_ranking{rank}.txt"
+    shell:
+        "shuf {input} > {output} "
+
+rule flatten_gp_map:
+    input:
+        gp_map="{bp_graph_path}/gp_map.txt",
+        ranking="phenotype_ranking{rank}.txt"
+    output:
+        "{bp_graph_path}/ranking{rank}/gp_map.txt"
+    shell:
+        "flatten_gp_map.py "
+        "-i {input.gp_map} "
+        "-r {input.ranking} "
+        "-o {output} "
+
+rule build_gpmap_python_object:
+    input:
+        gp_map="{bp_graph_dir}/{rank}/gp_map.txt",
+        genotypes="genotypes.txt"
+    output:
+        "{bp_graph_dir}/{rank}/gp_map.pickle",
+    params:
+        alphabet=config["alphabet"]
+    shell:
+        "build_gpmap_pickle.py "
+        "-f {input.gp_map} "
+        "-g {input.genotypes} "
+        "-a {params.alphabet} "
+        "-o {output}"
+
+rule compute_robustness:
+    input:
+        gp_map="{bp_graph_dir}/{rank}/gp_map.pickle",
+    output:
+        "{bp_graph_dir}/{rank}/phenotype_robustness.txt"
+    shell:
+        "compute_robustness.py "
+        "-f {input.gp_map} "
+        "-o {output}"
+
+rule compute_phenotype_distribution:
+    input:
+        gp_map="{bp_graph_path}/{rank}/gp_map.txt"
+    output:
+        "{bp_graph_path}/{rank}/phenotype_distribution.txt"
+    shell:
+        "compute_phenotype_distribution.py "
+        "-f {input} "
+        "-o {output} "
+
+rule plot_robustness_over_freq_single:
+    input:
+        ph_distr="{bp_graph_path}/{rank}/phenotype_distribution.txt",
+        ph_rob="{bp_graph_path}/{rank}/phenotype_robustness.txt"
+    output:
+        "{bp_graph_path}/{rank}/phenotype_robustness_freq.pdf"
+    shell:
+        "plot_robustness_phenotype_freq.py "
+        "-d {input.ph_distr} "
+        "-r {input.ph_rob} "
+        "-l {wildcards.rank} "
+        "-e True "
+        "-o {output} "
+
+rule plot_robustness_over_freq_all:
+    input:
+        ph_distr=expand("{{bp_graph_path}}/ranking{rank}/phenotype_distribution.txt", rank=config["rankings"]),
+        ph_rob=expand("{{bp_graph_path}}/ranking{rank}/phenotype_robustness.txt", rank=config["rankings"])
+    output:
+        "{bp_graph_path}/phenotype_robustness_freq_all.pdf"
+    params:
+        # have to join the inputs as a comma-separated to be recognized as one
+        # argument by the shell script. argparse then processes the list (see 
+        # script).
+        rank_label=",".join([str(r) for r in config["rankings"]]),
+        ph_distr=",".join(expand("{{bp_graph_path}}/ranking{rank}/phenotype_distribution.txt", rank=config["rankings"])),
+        ph_rob=",".join(expand("{{bp_graph_path}}/ranking{rank}/phenotype_robustness.txt", rank=config["rankings"]))
+    shell:
+        "plot_robustness_phenotype_freq.py "
+        "-d {params.ph_distr} "
+        "-r {params.ph_rob} "
+        "-l {params.rank_label} "
+        "-e True "
+        "-o {output} "
+
+rule plot_phenotype_distribution:
+    input:
+        ph_distr="{bp_graph_path}/{rank}/phenotype_distribution.txt"
+    output:
+        "{bp_graph_path}/{rank}/phenotype_distribution.pdf"
+    shell:
+        "plot_phenotype_distribution.py "
+        "-d {input.ph_distr} "
+        "-o {output} "
+
+rule join_robustness_and_phenotype_distr:
+    input:
+        rob=expand("{{bp_graph_path}}/ranking{{rank}}/phenotype_robustness.txt", rank=config["rankings"]),
+        distr=expand("{{bp_graph_path}}/ranking{{rank}}/phenotype_distribution.txt", rank=config["rankings"])
+    output:
+        "{bp_graph_path}/ranking{rank}/phenotype_robustness_distribution.txt"
+    shell:
+        "join_robustness_and_phenotype_distr.py "
+        "-r {input.rob} "
+        "-d {input.distr} "
+        "-o {output} "
+
+rule plot_phenotype_robustness_distribution:
+    input:
+        expand("bp_graph{bp}/ranking{{rank}}/phenotype_robustness_distribution.txt", bp=config["mapping_params"]["base_pairing"])
+    output:
+        "analysis/phenotype_robustness_distributions_rank{rank}.pdf"
+    shell:
+        "plot_phenotype_robustness_distribution.py "
+        "-f {input} "
+        "-o {output} "
