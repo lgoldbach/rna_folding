@@ -5,7 +5,10 @@ configfile: "./config.yaml"
 
 rule all:
     input:
-        expand("analysis/phenotype_robustness_distributions_rank{rank}.pdf", rank=config["rankings"])
+        expand("bp_graph{base_pairing}/ranking{rankings}/analysis/.mkdir_placeholder", 
+               base_pairing=config["mapping_params"]["base_pairing"],
+               rankings=config["rankings"]),
+        expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_robustness_distributions.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"])
 
 rule create_subdirectories:
     priority: 1
@@ -185,12 +188,29 @@ rule join_robustness_and_phenotype_distr:
         "-d {input.distr} "
         "-o {output} "
 
-rule plot_phenotype_robustness_distribution:
+# rule plot_phenotype_robustness_distribution:
+#     input:
+#         expand("bp_graph{bp}/ranking{{rank}}/phenotype_robustness_distribution.txt", bp=config["mapping_params"]["base_pairing"])
+#     output:
+#         "analysis/phenotype_robustness_distributions_rank{rank}.pdf"
+#     shell:
+#         "plot_phenotype_robustness_distribution.py "
+#         "-f {input} "
+#         "-o {output} "
+
+
+rule plot_phenotype_robustness_distribution_to_single_ref:
     input:
-        expand("bp_graph{bp}/ranking{{rank}}/phenotype_robustness_distribution.txt", bp=config["mapping_params"]["base_pairing"])
+        query="bp_graph{query_bp}/ranking{rank}/phenotype_robustness_distribution.txt",
+        ref=expand("bp_graph{ref_bp}/ranking{{rank}}/phenotype_robustness_distribution.txt", ref_bp=config["ref_bp_rule"])        
     output:
-        "analysis/phenotype_robustness_distributions_rank{rank}.pdf"
+        "bp_graph{query_bp}/ranking{rank}/analysis/phenotype_robustness_distributions.pdf"
+    params:
+        ref=config["ref_bp_rule"]
     shell:
         "plot_phenotype_robustness_distribution.py "
-        "-f {input} "
+        "-f {input.query} "
+        "-r {input.ref} "
+        "-b {wildcards.query_bp} "
+        "-i {params.ref} "
         "-o {output} "
