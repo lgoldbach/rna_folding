@@ -18,7 +18,9 @@ genotype ID.
 """
 
 import argparse
-
+# import sys
+# from pympler.asizeof import asizeof
+# import os, psutil
 
 def count_lines(file: str) -> int:
     """Count lines of file
@@ -31,37 +33,31 @@ def count_lines(file: str) -> int:
     """
     with open(file , "r") as f:
         line_count = len(f.readlines())
+    f.close()
     return line_count
 
 
 if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-n", "--filename", required=True, type=str, 
-                        help="Filename of all g-p maps. Has to be identical" 
-                        "except for number")
-    parser.add_argument("-r", "--range", required=True, type=str, 
-                        help="Number range (closed interval) for filename"
-                        "suffix. E.g: 1-50. No leading zeros")
-    parser.add_argument("-g", "--genotype_reference", required=True, type=str, 
-                        help="Name of corresponding genotypes files (needed to"
-                        "get correct genotype ids)")
-    parser.add_argument("-o", "--out", required=False, type=str, 
+    parser.add_argument("-i", "--inputs", required=True, type=str, 
+                        help="Filenames of all g-p maps", nargs="+")
+    parser.add_argument("-g", "--genotype_files", required=True, type=str,
+                        help="List of genotype files in order", nargs="+")
+    parser.add_argument("-o", "--out", required=False, type=str,
                         help="Name of output file")
 
     args = parser.parse_args()
 
-    # turn range argument string into tuple
-    suffix_range = list((int(i) for i in args.range.split("-")))
-
     gp_map = {}  # dictionary that will hold merged data
 
-    # Each file starts counting genotypes from one. So we need to keep
+    # Each file starts counting genotypes at 0, so every file will have
+    # genotype 0, 1, 2, ... . So we need to keep
     # track of how many genotypes have been processed already and then
     # add that number to the genotype ID.
     genotype_count = 0
+    line_counts = [count_lines(fi) for fi in args.genotype_files]
 
-    for i in range(suffix_range[0], suffix_range[1]+1):  # +1->closed interval
-        filename = args.filename + str(i)  # make filename
+    for i, filename in enumerate(args.inputs): 
         with open(filename , "r") as file:
             for line in file:
                 line_split = line.strip().split(" ")
@@ -74,9 +70,12 @@ if __name__ ==  "__main__":
                         gp_map[phenotype].append(gt_id)
                     else:
                         gp_map[phenotype] = [gt_id]
-
+            # print("A", asizeof(gp_map))
+            file.close()
         # Counts how many genotypes were processed in this round
-        genotype_count += count_lines(args.genotype_reference + str(i))
+        genotype_count += line_counts[i]
+        # process = psutil.Process()
+        # print("B", process.memory_info().rss)  # in bytes
 
     with open(args.out, "w") as file_out:
         for p in gp_map:

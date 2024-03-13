@@ -33,7 +33,7 @@ if __name__ ==  "__main__":
     mapping = lambda seq: nussinov(seq, 
                                    base_pairing=pairing, 
                                    min_loop_size=args.min_loop_size, 
-                                   suboptimal=args.suboptimal, 
+                                   suboptimal=args.suboptimal,
                                    structures_max=args.structures_max)
 
     # generate g-p map and save to output file

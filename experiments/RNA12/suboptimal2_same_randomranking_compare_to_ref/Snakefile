@@ -30,6 +30,61 @@ rule generate_genotype_space:
         "-l {params.seq_len} "
         "-o {output}"
 
+# rule split_gp_map:
+#     input:
+#         "genotypes.txt"
+#     output:
+#         temp("genotypes{id}")
+#     params:
+#         split_n=config["parallelization"]["nussinov_splits"]
+#     shell:
+#         # Since the nussinov rule will invoke the split_gp_map rule for each output individually,
+#         # but we only need to run it once to create all the genotype{id}.txt files,
+#         # we check whether the currently requested output has already been created,
+#         # if yes, we only touch it, if no, we generate all at once.
+#         # this is a bit unsnakemake but I don't see another option
+#         "LINE_COUNT=$(($(wc -l < {input}) + $(({params.split_n}-1)) )) && "  # plus $(({params.split_n}-1)) to round up. #Line/(#chunks-1)=#lines per chunk
+#         "SPLIT_SIZE=$(($LINE_COUNT / {params.split_n})) && "  # compute size per split, i.e. lines per file
+#         "if [ -s {output} ]; "  # check if exists AND nonempty
+#         "then touch {output}; "  # touch to satisfy snakemake condition
+#         "else split -d --lines  $SPLIT_SIZE {input} genotypes; " # split into $SPLIT_SIZE sized chunks
+#         "fi "
+
+# rule nussinov_gp_map:
+#     input:
+#         "genotypes{id}"
+#     output:
+#         "bp_graph{base_pairing,[0-9]+}/gp_map{id}.txt"  # regex to constrain to numbers and prevent matching subdirectory gp_map.txt
+#     params:
+#         graph_path=config["graph_path"],
+#         min_loop_size=config["mapping_params"]["min_loop_size"],
+#         suboptimal=config["mapping_params"]["suboptimal"],
+#         structures_max=config["mapping_params"]["structures_max"],
+#         alphabet=config["alphabet"]
+#     shell:
+#         "nussinov_gp_mapping.py "
+#         "-i {input} "
+#         "-o {output} "
+#         "-m {params.min_loop_size} "
+#         "-s {params.suboptimal} "
+#         "-z {params.structures_max} "
+#         "-g {params.graph_path} "
+#         "-a {params.alphabet} "
+#         "-p {wildcards.base_pairing} "
+
+# rule merge_gp_maps:
+#     input:
+#         gp_maps=[f"bp_graph{{base_pairing}}/gp_map{id:02d}.txt" for id in range(config["parallelization"]["nussinov_splits"])],
+#         genotypes=[f"genotypes{id:02d}" for id in range(config["parallelization"]["nussinov_splits"])]
+#     output:
+#         "bp_graph{base_pairing,[0-9]+}/gp_map.txt"
+#     shell:
+#         "merge_gp_maps.py "
+#         "-i {input.gp_maps} "
+#         "-g {input.genotypes} "
+#         "-o {output} " 
+
+
 rule nussinov_gp_map:
     input:
         "genotypes.txt"
@@ -40,7 +95,7 @@ rule nussinov_gp_map:
         min_loop_size=config["mapping_params"]["min_loop_size"],
         suboptimal=config["mapping_params"]["suboptimal"],
         structures_max=config["mapping_params"]["structures_max"],
-        alphabet=config["alphabet"]
+        alphabet=config["alphabet"],
     shell:
         "nussinov_gp_mapping.py "
         "-i {input} "
@@ -51,7 +106,6 @@ rule nussinov_gp_map:
         "-g {params.graph_path} "
         "-a {params.alphabet} "
         "-p {wildcards.base_pairing} "
-
 
 # Concats all gp maps, extracts all phenotypes and creates a unique list
 # The position in this list will define the id of each phenotype for the rest
@@ -102,7 +156,7 @@ rule build_gpmap_python_object:
         gp_map="{bp_graph_dir}/{rank}/gp_map.txt",
         genotypes="genotypes.txt"
     output:
-        "{bp_graph_dir}/{rank}/gp_map.pickle",
+        temp("{bp_graph_dir}/{rank}/gp_map.pickle"),
     params:
         alphabet=config["alphabet"]
     shell:
