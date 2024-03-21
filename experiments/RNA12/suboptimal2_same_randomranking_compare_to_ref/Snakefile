@@ -8,7 +8,8 @@ rule all:
         expand("bp_graph{base_pairing}/ranking{rankings}/analysis/.mkdir_placeholder", 
                base_pairing=config["mapping_params"]["base_pairing"],
                rankings=config["rankings"]),
-        expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_robustness_distributions.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"])
+        expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_robustness_distributions.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"]),
+        expand("bp_graph{bp}/phenotype_robustness_freq_all.pdf", bp=config["mapping_params"]["base_pairing"])
 
 rule create_subdirectories:
     priority: 1
@@ -218,7 +219,7 @@ rule plot_robustness_over_freq_all:
         "-d {params.ph_distr} "
         "-r {params.ph_rob} "
         "-l {params.rank_label} "
-        "-e True "
+        "-e False "
         "-o {output} "
 
 rule plot_phenotype_distribution:
