@@ -2,14 +2,14 @@ configfile: "./config.yaml"
 
 # define the directories to be created (.mkdir_placeholder) simply serves
 # to trick snakemake into making the creation of directories its own job
-
 rule all:
     input:
         expand("bp_graph{base_pairing}/ranking{rankings}/analysis/.mkdir_placeholder", 
                base_pairing=config["mapping_params"]["base_pairing"],
                rankings=config["rankings"]),
-        expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_robustness_distributions.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"]),
-        expand("bp_graph{bp}/phenotype_robustness_freq_all.pdf", bp=config["mapping_params"]["base_pairing"])
+        # expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_robustness_distributions.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"]),
+        # expand("bp_graph{bp}/phenotype_robustness_freq_all.pdf", bp=config["mapping_params"]["base_pairing"]),
+        expand("bp_graph{bp}/analysis/ph_to_gt_dist.pdf", bp=config["mapping_params"]["base_pairing"])
 
 rule create_subdirectories:
     priority: 1
@@ -269,4 +269,32 @@ rule plot_phenotype_robustness_distribution_to_single_ref:
         "-r {input.ref} "
         "-b {wildcards.query_bp} "
         "-i {params.ref} "
+        "-o {output} "
+
+rule count_gt_per_ph_and_ph_per_gt:
+    input:
+        "bp_graph{bp}/gp_map.txt"
+    output:
+        gt_per_ph="bp_graph{bp}/analysis/gt_per_ph.pickle",
+        ph_per_gt="bp_graph{bp}/analysis/ph_per_gt.pickle"
+    params:
+        sep=config["file_format_params"]["gp_map_col_sep"]
+    shell:
+        "gt_per_ph_and_ph_per_gt.py "
+        "-i {input} "
+        "--output_gt_per_ph {output.gt_per_ph} "
+        "--output_ph_per_gt {output.ph_per_gt} "
+        "-s '{params.sep}' "
+
+
+rule plot_ph_to_gt_mapping_distributions:
+    input:
+        gt_per_ph="bp_graph{bp}/analysis/gt_per_ph.pickle",
+        ph_per_gt="bp_graph{bp}/analysis/ph_per_gt.pickle"
+    output:
+        "bp_graph{bp}/analysis/ph_to_gt_dist.pdf",
+    shell:
+        "plot_ph_to_gt_distributions.py "
+        "--input_gt_per_ph {input.gt_per_ph} "
+        "--input_ph_per_gt {input.ph_per_gt} "
         "-o {output} "

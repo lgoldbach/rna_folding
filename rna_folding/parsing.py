@@ -78,5 +78,3 @@ def viennarna_to_gp_map_file(viennarna_output: str) -> dict:
             gp_map[gt] = ph
 
     return gp_map
-
-        
