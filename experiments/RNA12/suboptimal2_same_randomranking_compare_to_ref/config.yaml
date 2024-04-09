@@ -29,7 +29,7 @@ ref_bp_rule: 7   # base-pairing rule to compare detailed statistics to
 
 rankings:
   - 1
-  - 2
+  # - 2
   # - 3
   # - 4
   # - 5

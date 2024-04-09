@@ -8,7 +8,8 @@ rule all:
         expand("bp_graph{base_pairing}/ranking{rankings}/analysis/.mkdir_placeholder", 
                base_pairing=config["mapping_params"]["base_pairing"],
                rankings=config["rankings"]),
-        expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_robustness_distributions.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"])
+        expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_robustness_distributions.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"]),
+        expand("bp_graph{base_pairing}/unique_sets.txt", base_pairing=config["mapping_params"]["base_pairing"])
 
 rule create_subdirectories:
     priority: 1
@@ -51,6 +52,16 @@ rule nussinov_gp_map:
         "-g {params.graph_path} "
         "-a {params.alphabet} "
         "-p {wildcards.base_pairing} "
+
+rule unique_suboptimal_sets:
+    input:
+        "bp_graph{base_pairing,[0-9]+}/gp_map.txt"
+    output:
+        "bp_graph{base_pairing,[0-9]+}/unique_sets.txt"
+    shell:
+        "get_unique_suboptimal_sets.py "
+        "-i {input} "
+        "-o {output} "
 
 
 # Concats all gp maps, extracts all phenotypes and creates a unique list
