@@ -308,4 +308,5 @@ rule plot_ph_to_gt_mapping_distributions:
         "plot_ph_to_gt_distributions.py "
         "--input_gt_per_ph {input.gt_per_ph} "
         "--input_ph_per_gt {input.ph_per_gt} "
+        "-r {wildcards.bp} "
         "-o {output} "

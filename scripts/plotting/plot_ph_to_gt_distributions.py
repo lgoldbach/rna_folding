@@ -13,6 +13,8 @@ if __name__ ==  "__main__":
                         required=True)
     parser.add_argument("-s", "--separator", help="Column separator", 
                         required=False, default=" ")
+    parser.add_argument("-r", "--bp_rule", help="Number of base pair rule", 
+                        required=True)
     parser.add_argument("-o", "--output", help="Path to output file", 
                         required=True)
   
@@ -31,6 +33,7 @@ if __name__ ==  "__main__":
     ax1.set_ylabel("Count")
     ax2.set_xlabel("Phenotypes per genotypes")
     ax2.set_ylabel("Count")
+    ax2.title.set_text(f"bp_rule{args.bp_rule}")
 
     plt.tight_layout()
     plt.savefig(args.output, format='pdf')
