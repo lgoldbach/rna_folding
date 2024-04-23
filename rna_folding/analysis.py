@@ -6,14 +6,14 @@ def count_gt_per_ph_and_ph_per_gt(gp_map_file, sep=" "):
     """Open a gp_map file and count phenotypes per genotype and vice versa
 
     Args:
-        gp_map_file (str): gp_map file in format: 
+        gp_map_file (str):  gp_map file in format: 
                             <ph1> <gtX> <gtY> ...
                             <ph2> <gtY> <gtX> <gtZ>...
-        sep (str): Column seperator. Defaults to " ".
+        sep (str):          Column seperator. Defaults to " ".
 
     Returns:
-        gt_per_ph (dict): Maps genotypes to number of phenotypes they map to
-        ph_per_gt (dict): Maps phenotypes to number of genotypes that map to them
+        gt_per_ph (dict):   Maps genotypes to number of phenotypes they map to
+        ph_per_gt (dict):   Maps phenotypes to num. of genot. that map to them
 
     """
     gt_per_ph = {}
@@ -30,3 +30,39 @@ def count_gt_per_ph_and_ph_per_gt(gp_map_file, sep=" "):
                     ph_per_gt[gt] += 1
 
     return gt_per_ph, ph_per_gt
+
+
+def pairwise_consensus_matrix(phenotypes, pg_map, ref_gp_map):
+    """Create a pairwise consensus matrix that counts how often any phenotype i
+    is ranked above any other phenotype j
+
+    Args:
+        phenotypes (list):  List of phenotypes to consider
+        ph_map (dict):      Maps phenotypes to list of genotypes that map to 
+                            it. One-to-many gp map.
+        ref_gp_map (dict):  Reference one-to-one map that maps genotype to the
+                            highest ranked phenotype.
+
+    Returns:
+        A (np.array):       #(phenotype) x #(phenotypes) matrix where entry 
+                            A(i,j) counts how often phenotype i has been the
+                            highest ranked phenotype when both i and j appeared
+                            in the same suboptimal set.
+
+    """
+    A = np.zeros(shape=(len(phenotypes), len(phenotypes)))  # initiate matrix
+    # Loop over upper triangle of matrix
+    for i in range(len(phenotypes)):
+        for j in range(i+1,len(phenotypes)):
+            ph_i = phenotypes[i]
+            ph_j = phenotypes[j]
+            # get genotypes that map to both phenos
+            gt_intersect = set(pg_map[ph_i]).intersection(pg_map[ph_j])
+            for gt in gt_intersect:  # loop over gt
+                # phenotype i is ranked above j
+                if ref_gp_map[gt][0] == ph_i:  
+                    A[i, j] += 1
+                # phenotype j is ranked above i
+                elif ref_gp_map[gt][0] == ph_j:
+                    A[j, i] += 1
+    return A

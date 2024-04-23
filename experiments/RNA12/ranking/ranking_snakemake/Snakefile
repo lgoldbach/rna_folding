@@ -34,11 +34,14 @@ rule preprocess_suboptimal_map:
 rule pairwise_consensus_matrix:
     input:
         pg_subopt="pg_map_supoptimal_augc_folded_dict.pickle",
-        pg_ref="pg_map_ref_folded_augc_folded_dict.pickle"
+        gp_ref="pg_map_ref_folded_augc_folded_dict.pickle"
     output:
         "pairwise_consensus_matrix.pickle"
     shell:
-        "echo 'AAAA' "
+        "pairwise_consensus_matrix.py "
+        "-i {input.pg_subopt} "
+        "-r {input.gp_ref} "
+        "-o {output} "
     
 
 rule consenus_matrix_statistics:

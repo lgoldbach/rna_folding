@@ -1,6 +1,42 @@
 import argparse
 import numpy as np
 
+def gpmap_pgdict(gpmap_file: str, genotype_file: str = None) -> dict:
+    """Takes a file that stores genotype-phenotype mapping and a list of 
+    genotypes and parses it into dictionary {<phe> (str): [genotypes (str)]}. 
+    Intended for many-to-many mappings
+
+    Args:
+        gpmap_file (str):       Path to file in following format:
+                                <phenotype> <genotypeID_x> <genotypeID_y>
+                                <phenotype> <genotypeID_y>
+                                ...
+                                Example for RNA secondary structure:
+                                ((..)) 2 1
+                                (....) 3
+                                ().... 4 1
+                                ...
+
+        genotype_file (str):    file path to a file that contains simple list of 
+                                genotypes (one per line)
+
+    Returns:
+        pgmap (dict):           Dictionary that maps phenotype (str) to list of
+                                one or more genotypes (str).
+
+    """
+    if genotype_file:
+        with open(genotype_file, "r") as g_file:    
+            genotype_list = [line.strip() for line in g_file]
+         
+    pg_map = {}
+    with open(gpmap_file, "r") as gp_file:
+        for line in gp_file:
+            l = line.strip().split(" ")
+            pg_map[l[0]] = [genotype_list[int(gt)] for gt in l[1:]]
+    
+    return pg_map
+
 
 def gpmap_to_dict(gpmap_file: str, genotype_file: str = None) -> dict:
     """Takes a file that stores genotype-phenotype mapping and a list of 

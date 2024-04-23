@@ -2,7 +2,7 @@
 
 import argparse
 import pickle
-from rna_folding.parsing import gpmap_to_dict
+from rna_folding.parsing import gpmap_to_dict, gpmap_pgdict
 
 
 
@@ -28,23 +28,33 @@ if __name__ ==  "__main__":
 # map nussinov to AUGC
 translation = {"L": "A", "J": "U", "M": "G", "K": "C"}
 
-D = gpmap_to_dict(gpmap_file=args.input, genotype_file=args.genotypes)
+D = gpmap_pgdict(gpmap_file=args.input, genotype_file=args.genotypes)
 ref_gpmap = gpmap_to_dict(args.reference, "genotypes_vienna.txt")
-
-
-# Map to AUGC alphabet and remove gt that map to unfolded and ph that don't
-# appear in ref. This speeds up the process later on.
-ref_phenos = set([i[0] for i in ref_gpmap.values()])
-D_augc_folded = {}
-for g in D:
-    new_g = "".join([translation[i] for i in g])  # map to AUGC alphabet.
-    if ref_gpmap[new_g] != args.dead:  # ignore where reference maps to dead phenotype
-        D_augc_folded[new_g] = [p for p in D[g] if p in ref_phenos]  # consider only ref phenotypes
 
 # remove entries for dead phenotypes.
 for g in ref_gpmap:
     if ref_gpmap[g] == args.dead:
         del ref_gpmap[g]
+
+# Map to AUGC alphabet and remove gt that map to unfolded and ph that don't
+# appear in ref. This speeds up the process later on.
+ref_phenos = set([i[0] for i in ref_gpmap.values()])
+D_augc_folded = {}
+for ph in ref_phenos:  # only consider phenotypes from vienna
+    D_augc_folded[ph] = []
+    for g in D[ph]:
+        new_g = "".join([translation[s] for s in g])  # map to AUGC alphabet.
+        if ref_gpmap[new_g] != args.dead:  # ignore where reference maps to dead phenotype
+            D_augc_folded[ph].append(new_g)
+    
+# # Map to AUGC alphabet and remove gt that map to unfolded and ph that don't
+# # appear in ref. This speeds up the process later on.
+# ref_phenos = set([i[0] for i in ref_gpmap.values()])
+# D_augc_folded = {}
+# for g in D:
+#     new_g = "".join([translation[i] for i in g])  # map to AUGC alphabet.
+#     if ref_gpmap[new_g] != args.dead:  # ignore where reference maps to dead phenotype
+#         D_augc_folded[new_g] = [p for p in D[g] if p in ref_phenos]  # consider only ref phenotypes
     
 pickle.dump(D_augc_folded, open(args.output, "wb"))
 pickle.dump(ref_gpmap, open(args.output_ref, "wb"))
