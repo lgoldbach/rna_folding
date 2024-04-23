@@ -259,6 +259,3 @@ def load_phenotype_and_metric_from_file(file: str, dtype=float):
     distr = file_data[:,1].astype(dtype)
 
     return phenotypes, distr
-
-
-def gp
