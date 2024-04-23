@@ -13,6 +13,7 @@ gp_map_nussi7 = gpmap_to_dict(gpmap_file="gp_map_nussi7.txt", genotype_file="gen
 # gp_map_nussi7_1000 = dict(random.sample(gp_map_nussi7.items(), 1000))
 
 
+# map nussinov to AUGC
 trans_dict = {"L": "A", "J": "U", "M": "G", "K": "C"}
 gp_map_nussi7_augc = {}
 for g in gp_map_nussi7:
@@ -27,15 +28,15 @@ pickle.dump(gp_map_nussi7_augc, open("gp_map_nussi7_augc_dict.pickle", "wb"))
 
 
 
-D = {}
-for gt in gp_map_nussi7_augc:
-    for ph in gp_map_nussi7_augc[gt]:
-        if ph in D:
-            D[ph].append(gt)
-        else:
-            D[ph] = [gt]
+# D = {}
+# for gt in gp_map_nussi7_augc:
+#     for ph in gp_map_nussi7_augc[gt]:
+#         if ph in D:
+#             D[ph].append(gt)
+#         else:
+#             D[ph] = [gt]
 
-pickle.dump(D, open("pg_map_nussi7_augc.pickle", "wb"))
+# pickle.dump(D, open("pg_map_nussi7_augc.pickle", "wb"))
 
 
 unfolded = "."*12
@@ -58,6 +59,7 @@ for gt in gp_map_nussi7_folded_augc:
 pickle.dump(pg_map_nussi7_folded_augc, open("pg_map_nussi7_augc_folded_dict.pickle", "wb"))
 
 
+# remove all non vienna phenotypes
 phenos = set([i[0] for i in vienna_gp_map.values()])
 print(phenos, len(phenos))
 for i in list(pg_map_nussi7_folded_augc.keys()):
@@ -153,7 +155,7 @@ def position(element, rank, ranking, pair_ranking, inconsistent):
             inconsistent.append((element, ranking[rank]))
             return
             # print( ValueError(f"Inconsistent ranking between element {element} and elements {ranking[rank]}")
-              also check if the inconsistency is with two others. In that case this element can be used to sort the other two
+            # also check if the inconsistency is with two others. In that case this element can be used to sort the other two
         else:
             shift = 1
 
