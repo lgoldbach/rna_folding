@@ -1,0 +1,56 @@
+configfile: "./config.yaml"
+
+# define the directories to be created (.mkdir_placeholder) simply serves
+# to trick snakemake into making the creation of directories its own job
+rule all:
+    input:
+        # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/.mkdir_placeholder", 
+        #        base_pairing=config["mapping_params"]["base_pairing"],
+        #        rankings=config["rankings"]),
+        "pairwise_consensus_matrix.pickle"
+
+
+rule preprocess_suboptimal_map:
+    input: 
+        gp_map=config["gp_map_suboptimal"],
+        genotypes_suboptimal=config["genotypes_suboptimal"],
+        reference=config["gp_map_reference"],
+        genotypes_reference=config["genotypes_reference"]
+    output: 
+        output="pg_map_supoptimal_augc_folded_dict.pickle",
+        output_ref="pg_map_ref_folded_augc_folded_dict.pickle"
+    params:
+        dead_ph=config["dead_pheno"]
+    shell:
+        "prepocess_suboptiomal_map.py "
+        "-i {input.gp_map} "
+        "-g1 {input.genotypes_suboptimal} "
+        "-r {input.reference} "
+        "-g2 {input.reference} "
+        "-d {params.dead_ph} "
+        "-o1 {output.output} "
+        "-o2 {output.output_ref} "
+
+rule pairwise_consensus_matrix:
+    input:
+        pg_subopt="pg_map_supoptimal_augc_folded_dict.pickle",
+        gp_ref="pg_map_ref_folded_augc_folded_dict.pickle"
+    output:
+        "pairwise_consensus_matrix.pickle"
+    shell:
+        "pairwise_consensus_matrix.py "
+        "-i {input.pg_subopt} "
+        "-r {input.gp_ref} "
+        "-o {output} "
+    
+
+rule consenus_matrix_statistics:
+
+rule binarize_consensus_matrix:
+
+rule topological_sorting:
+
+rule plot_phenotype_frequencies:
+
+rule draw_phenotype_ranking:
+

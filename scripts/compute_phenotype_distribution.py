@@ -42,7 +42,8 @@ if __name__ ==  "__main__":
     with open(args.file, "r") as file:
         with open(args.output, "w") as outfile:
             for line_ in file:
-                line = line_.split(" ")
+                
+                line = line_.strip().split(" ")
                 # count number of genotypes that map to this phenotype
                 # -1 to exclude the phenotype at the start of the line
                 count = len(line) - 1

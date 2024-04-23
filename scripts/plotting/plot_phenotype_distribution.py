@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 import argparse
-import numpy as np
 import matplotlib.pyplot as plt
+
+from rna_folding.utils import ranked_ph_log_distribution
 
 
 if __name__ ==  "__main__":
@@ -14,18 +15,8 @@ if __name__ ==  "__main__":
     
     args = parser.parse_args()
 
-    data = []
-    # load data and get second column (fist only contains phenotype IDs)
-    file_data = np.loadtxt(args.phenotype_dist, dtype=str)
-    if file_data.ndim == 1:  # in case there is only one phenotype
-        file_data = np.expand_dims(file_data, axis=0)
-    phenotypes = file_data[:,0]
-    distr = file_data[:,1].astype(int)
-    distr = np.log10(distr)
-    order = np.argsort(distr)[::-1]
-    distr = distr[order]
-    phenotypes = phenotypes[order]
-
+    phenotypes, distr = ranked_ph_log_distribution(ph_distr_file=
+                                                   args.phenotype_dist)
 
     x = range(distr.shape[0])
 

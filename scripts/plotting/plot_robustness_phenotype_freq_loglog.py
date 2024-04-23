@@ -42,7 +42,7 @@ if __name__ ==  "__main__":
         x = []
         y = []
         for ph in robus:
-            y.append(robus[ph])
+            y.append(np.log10(robus[ph]))
             # turn phenotype counts into log frequency
             try: 
                 a = distr[ph]
@@ -51,11 +51,12 @@ if __name__ ==  "__main__":
             d = distr[ph]/phenotype_count_sum
             d = np.log10(d)
             x.append(d)
-            
         ax.scatter(x, y, s=5, alpha=0.5, label=l)
 
-    ax.set_ylim(bottom=-0.05, top=1)
-    ax.set_xlim(left=-8, right=0)
+    # ax.set_ylim(bottom=-0.05, top=1)
+    # ax.set_xlim(left=-8, right=0)
+
+    print(args.plot_null_expectation, type(args.plot_null_expectation))
     if args.plot_null_expectation:
         expec = []
         x_expec = []
@@ -63,11 +64,11 @@ if __name__ ==  "__main__":
         exp_of_xlim_min = 10**ax.get_xlim()[0]
         for freq in np.arange(exp_of_xlim_min, 1, 0.01):
             x_expec.append(np.log10(freq))
-            expec.append(freq)
+            expec.append(np.log10(freq))
         ax.plot(x_expec, expec, color="grey", ls="--", lw="1")
         
     ax.set_xlabel("Phenotype frequency (log10)")
-    ax.set_ylabel("Phenotype robustness")
+    ax.set_ylabel("Phenotype robustness (log10)")
     ax.set_title("Phenotype robustness over freqency plot")
     ax.legend()
 

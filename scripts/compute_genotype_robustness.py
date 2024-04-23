@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+import argparse
+
+from rna_folding.gp_map import GenotypePhenotypeGraph
+
+if __name__ ==  "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--file", help="Input genotype-phenotype map "
+                        "file", required=True)
+    parser.add_argument("-g", "--genotypes", help="Reference file that "
+                        "contains the ith genotype on the ith line. Used to "
+                        "map the numeric genotypes back to the sequences ", 
+                        required=True)
+    parser.add_argument("-a", "--alphabet", help="Define the alphabet used in "
+                        "the genotype map, e.g. -a AUGC", required=True)
+    parser.add_argument("-o", "--output", help="File output for robustness",
+                        required=True)
+    
+
+    args = parser.parse_args()
+    
+    gpm = GenotypePhenotypeGraph.read_from_ph_to_gt_file(path=args.file, 
+                                              genotype_ref_path=args.genotypes,
+                                              alphabet=args.alphabet)
+
+    # simply get the average robustness over all genotypes
+    gt_robustness = gpm.phenotype_robustness(gpm.genotypes)
+
+    with open(args.output, "w") as outfile:
+        outfile.write(f"{gt_robustness}\n")
+    
