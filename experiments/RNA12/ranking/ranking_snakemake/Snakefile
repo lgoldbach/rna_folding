@@ -7,7 +7,7 @@ rule all:
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/.mkdir_placeholder", 
         #        base_pairing=config["mapping_params"]["base_pairing"],
         #        rankings=config["rankings"]),
-        "pairwise_consensus_matrix.pickle"
+        "consistency_matrix_stats.pdf"
 
 
 rule preprocess_suboptimal_map:
@@ -43,8 +43,15 @@ rule pairwise_consensus_matrix:
         "-r {input.gp_ref} "
         "-o {output} "
     
-
 rule consenus_matrix_statistics:
+    input:
+        "pairwise_consensus_matrix.pickle"
+    output:
+        "consistency_matrix_stats.pdf"
+    shell:
+        "plot_consensus_matrix_stats.py "
+        "-i {input} "
+        "-o {output} "
 
 rule binarize_consensus_matrix:
 

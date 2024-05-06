@@ -46,15 +46,6 @@ for ph in ref_phenos:  # only consider phenotypes from vienna
         new_g = "".join([translation[s] for s in g])  # map to AUGC alphabet.
         if ref_gpmap[new_g] != args.dead:  # ignore where reference maps to dead phenotype
             D_augc_folded[ph].append(new_g)
-    
-# # Map to AUGC alphabet and remove gt that map to unfolded and ph that don't
-# # appear in ref. This speeds up the process later on.
-# ref_phenos = set([i[0] for i in ref_gpmap.values()])
-# D_augc_folded = {}
-# for g in D:
-#     new_g = "".join([translation[i] for i in g])  # map to AUGC alphabet.
-#     if ref_gpmap[new_g] != args.dead:  # ignore where reference maps to dead phenotype
-#         D_augc_folded[new_g] = [p for p in D[g] if p in ref_phenos]  # consider only ref phenotypes
-    
+
 pickle.dump(D_augc_folded, open(args.output, "wb"))
 pickle.dump(ref_gpmap, open(args.output_ref, "wb"))
