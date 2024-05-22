@@ -14,6 +14,9 @@ if __name__ ==  "__main__":
                         help="One-to-one reference gp-map", required=True),
     parser.add_argument("-o", "--output", help="Consensus matrix",
                         required=True)
+    parser.add_argument("-p", "--phenotypes", help="List of phenotypes in "
+                        "order corresponding to consesnus matrix indices",
+                        required=True)
 
     args = parser.parse_args()    
         
@@ -30,3 +33,7 @@ if __name__ ==  "__main__":
                                   ref_gp_map=gp_map_ref)
     
     pickle.dump(A, open(args.output, "wb"))
+    print(phenotypes)
+    with open(args.phenotypes, "w") as file:
+        for ph in phenotypes:
+            file.write(ph + "\n")

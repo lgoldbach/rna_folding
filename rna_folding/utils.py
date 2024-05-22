@@ -210,7 +210,7 @@ def dict_to_gpmap(ph_to_gt: dict, file: str) -> None:
     file_out.close()
 
 
-def ranked_ph_log_distribution(ph_distr_file) -> tuple:
+def ranked_ph_distribution(ph_distr_file, log=False) -> tuple:
     """Rank phenotypes by their count and return log10 frequency
 
     Args:
@@ -230,7 +230,8 @@ def ranked_ph_log_distribution(ph_distr_file) -> tuple:
     
     phenotypes, distr = load_phenotype_and_metric_from_file(ph_distr_file)
     distr = distr / np.sum(distr)
-    distr = np.log10(distr)
+    if log:
+        distr = np.log10(distr)
 
     order = np.argsort(distr)[::-1]
     distr = distr[order]

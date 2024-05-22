@@ -24,9 +24,10 @@ six = "==1.16.0"
 tzdata = "==2023.3"
 zipp = "==3.15.0"
 pytest = "*"
-snakemake = "*"
+snakemake = "==5.26"
 scikit-learn = "*"
 seaborn = "*"
+viennaRNA
 
 [dev-packages]
 ipykernel = "*"
