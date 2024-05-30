@@ -1,0 +1,234 @@
+configfile: "./config.yaml"
+
+rule all:
+    input:
+        # define the directories to be created (.mkdir_placeholder) simply serves
+        # to trick snakemake into making the creation of directories its own job
+        expand("ranking{rankings}/.mkdir_placeholder", 
+        rankings=config["rankings"]),
+        expand("analysis/.mkdir_placeholder"),  # create an analysis folder
+        expand("ranking{rankings}/analysis/.mkdir_placeholder", 
+        rankings=config["rankings"]),
+
+        # expand("ranking{rankings}/analysis/phenotype_counts.txt"),
+        # expand("ranking{rankings}/analysis/neutral_component_sizes.txt"),
+        # expand("ranking{rankings}/analysis/neutral_path_lengths.txt"),
+        # expand("ranking{rankings}/analysis/shape_space_distances.txt"),
+
+
+        expand("analysis/phenotype_bias.pdf"),
+        # expand("analysis/neutral_component_dist.pdf"),
+        # expand("analysis/neutral_path_length.pdf"),
+        # expand("analysis/shape_space_covering.pdf")
+        
+        
+rule create_subdirectories:
+    priority: 1
+    output:
+        temp("{path}/.mkdir_placeholder")  # temp -> this file will be deleted when all jobs are done
+    shell:
+        "mkdir -p {wildcards.path} && "  # create directory
+        "touch {output}"  # make file (only to satisfy condition)
+
+rule generate_genotype_space:
+    output:
+        "genotypes.txt"
+    params:
+        alphabet=config["alphabet"],
+        seq_len=config["sequence_lengths"]
+    shell:
+        "build_genotype_space.py " 
+        "-a {params.alphabet} "
+        "-l {params.seq_len} "
+        "-o {output}"
+
+rule nussinov_gp_map:
+    input:
+        "genotypes.txt"
+    output:
+        "gp_map.txt"
+    params:
+        graph_path=config["graph_path"],
+        min_loop_size=config["mapping_params"]["min_loop_size"],
+        suboptimal=config["mapping_params"]["suboptimal"],
+        base_pairing=config["mapping_params"]["base_pairing"],
+        structures_max=config["mapping_params"]["structures_max"],
+        alphabet=config["alphabet"],
+    shell:
+        "nussinov_gp_mapping.py "
+        "-i {input} "
+        "-o {output} "
+        "-m {params.min_loop_size} "
+        "-s {params.suboptimal} "
+        "-z {params.structures_max} "
+        "-g {params.graph_path} "
+        "-a {params.alphabet} "
+        "-p {params.base_pairing} "
+
+rule extract_phenotype_list:
+    input:
+        "gp_map.txt"
+    output:
+        "phenotypes.txt"
+    shell:
+        "awk '{{print $1}}' {input} | sort | uniq > {output}"
+
+# take phenotype file and randomly shuffle it using shuf function
+rule create_rankings:
+    input:
+        "phenotypes.txt"
+    output:
+        "ranking{rank}/phenotype_ranking.txt"
+    shell:
+        "shuf {input} > {output} "
+
+rule flatten_gp_map:
+    input:
+        gp_map="gp_map.txt",
+        ranking="ranking{rank}/phenotype_ranking.txt"
+    output:
+        "ranking{rank}/gp_map.txt"
+    shell:
+        "flatten_gp_map.py "
+        "-i {input.gp_map} "
+        "-r {input.ranking} "
+        "-o {output} "
+
+rule build_gpmap_python_object:
+    input:
+        gp_map="{rank_dir}/gp_map.txt",
+        genotypes="genotypes.txt"
+    output:
+        "{rank_dir}/gp_map.pickle",
+    params:
+        alphabet=config["alphabet"]
+    shell:
+        "build_gpmap_pickle.py "
+        "-f {input.gp_map} "
+        "-g {input.genotypes} "
+        "-a {params.alphabet} "
+        "-o {output}"
+
+rule compute_phenotype_distribution:
+    input:
+        gp_map="{rank_dir}/gp_map.txt"
+    output:
+        "{rank_dir}/phenotype_distribution.txt"
+    shell:
+        "compute_phenotype_distribution.py "
+        "-f {input} "
+        "-o {output} "
+
+rule plot_joint_phenotype_bias:
+    input:
+        ph_distr=expand("ranking{rank}/phenotype_distribution.txt", rank=config["rankings"])
+
+    output:
+        "analysis/phenotype_bias.pdf"
+    shell:
+        "plot_joint_phenotype_bias.py "
+        "-i {input.ph_distr} "
+        "-o {output} "
+
+
+
+# ##########
+# ### Estimate the difference in robustness of the different g-p maps
+# ##########
+
+# rule compute_genotype_robustness:
+#     input:
+#         gp_map="{bp_graph_dir}/{rank}/gp_map.txt",
+#         genotypes="genotypes.txt"
+#     output:
+#         "{bp_graph_dir}/{rank}/average_genotype_robustness.txt"
+#     params:
+#         alphabet=config["alphabet"]
+#     shell:
+#         "compute_genotype_robustness.py "
+#         "-f {input.gp_map} "
+#         "-g {input.genotypes} "
+#         "-a {params.alphabet} "
+#         "-o {output}"
+
+# rule plot_genotype_robustnesses:
+#     input:
+#         expand("bp_graph{base_pairing}/ranking{rankings}/average_genotype_robustness.txt", 
+#                 base_pairing=config["mapping_params"]["base_pairing"], 
+#                 rankings=config["rankings"])
+#     output:
+#         plot="analysis/genotype_robustness_distributions.pdf",
+#         tmp_data=temp("analysis/plot_genotype_robustnesses_tmp.txt")
+#     params:
+#         n=len(config["rankings"])  # how many rankings per bp rule
+#     shell:
+#         "cat {input} > {output.tmp_data} &&"
+#         "plot_distribution_of_metric.py "
+#         "-n {params.n} "
+#         "-i {output.tmp_data} "
+#         "-o {output.plot} "
+
+# rule get_neutral_components:
+#     input:
+#         "{bp_graph_dir}/{rank}/gp_map.pickle"
+#     output:
+#         "{bp_graph_dir}/{rank}/neutral_components.pickle"
+#     shell:
+#         "neutral_components.py "
+#         "-f {input} "
+#         "-o {output} "
+
+# rule neutral_component_summary_plots:
+#     input:
+#         expand("{{bp_graph_path}}/ranking{rank}/neutral_components.pickle", rank=config["rankings"])
+#     output:
+#         "{bp_graph_path}/neutral_component_summary.pdf"
+#     shell:
+#         "plot_neutral_component_summary.py "
+#         "--files {input} "
+#         "-o {output} "
+
+# rule phenotype_distr_plot_across_bp_rules_violin:
+#     input:
+#         expand("bp_graph{base_pairing}/ranking{rankings}/phenotype_distribution.txt", 
+#                 rankings=config["rankings"], 
+#                 base_pairing=config["mapping_params"]["base_pairing"])
+#     output:
+#         "analysis/phenotype_bias_violin.pdf"
+#     params:
+#         num_of_ranks=len(config["rankings"])
+#     shell:
+#         "plot_phenotype_distribution_across_bprules_violin.py "
+#         "--files {input} "
+#         "-n {params.num_of_ranks} "
+#         "-o {output} "
+
+# rule phenotype_distr_plot_across_bp_rules_rank:
+#     input:
+#         expand("bp_graph{base_pairing}/ranking{rankings}/phenotype_distribution.txt", 
+#                 rankings=config["rankings"], 
+#                 base_pairing=config["mapping_params"]["base_pairing"])
+#     output:
+#         "analysis/phenotype_bias.pdf"
+#     params:
+#         num_of_ranks=len(config["rankings"])
+#     shell:
+#         "plot_phenotype_distribution_across_bprules.py "
+#         "--files {input} "
+#         "-n {params.num_of_ranks} "
+#         "-o {output} "
+
+# rule phenotype_robustness_plot_across_bp_rules_violin:
+#     input:
+#         expand("bp_graph{base_pairing}/ranking{rankings}/phenotype_robustness.txt", 
+#                 rankings=config["rankings"], 
+#                 base_pairing=config["mapping_params"]["base_pairing"])
+#     output:
+#         "analysis/phenotype_robustness_violin.pdf"
+#     params:
+#         num_of_ranks=len(config["rankings"])
+#     shell:
+#         "plot_phenotype_robustness_across_bprules_violin.py "
+#         "--files {input} "
+#         "-n {params.num_of_ranks} "
+#         "-o {output} "

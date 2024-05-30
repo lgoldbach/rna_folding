@@ -4,13 +4,11 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
-def list_of_strings(arg):
-    return arg.split(',')
 
 if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--robust_distr", help="Path to robustness x phenotype data where column 1 is rob. and column 2 is phenotype freq ",
-                         required=True, type=list_of_strings)
+                         required=True)
     parser.add_argument("-l", "--label", help="Label for data, e.g. graph ids "
                         , required=True, type=list_of_strings)
     parser.add_argument("-e", "--plot_null_expectation", help="Plot null "
