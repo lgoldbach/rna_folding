@@ -22,7 +22,7 @@ if __name__ ==  "__main__":
     if not gpm.edges:
         print("start edge addition", datetime.now())
         gpm.add_hamming_edges()
-        # pickle.dump(gpm, open(args.file, "wb")) 
+        pickle.dump(gpm, open(args.file, "wb")) 
         print("Done", datetime.now())
 
     print("start neutral components", datetime.now())

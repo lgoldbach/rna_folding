@@ -9,6 +9,8 @@ if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--phenotype_dist", help="Path to phenotype "
                         "distribution files", required=True, nargs='+')
+    parser.add_argument("-r", "--ref", help="Reference phenotype distribution "
+                        "file ", required=True)
     parser.add_argument("-o", "--output", help="Output file name "
                         "(should end in .pdf)", required=True)
     parser.add_argument("-l", "--log", action="store_true")
@@ -22,8 +24,13 @@ if __name__ ==  "__main__":
 
         x = range(distr.shape[0])
         
-        ax.scatter(x, distr, label=i)
+        ax.scatter(x, distr, label=i, color="blue")
 
+    phenotypes, distr = ranked_ph_distribution(ph_distr_file=args.ref,
+                                                    log=args.log)
+    x = range(distr.shape[0])
+
+    ax.plot(x, distr, color="black", marker=".")
 
     ax.set_xlabel("Rank")
     if args.log:

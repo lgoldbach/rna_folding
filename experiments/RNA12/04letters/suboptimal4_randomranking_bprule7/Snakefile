@@ -16,10 +16,10 @@ rule all:
         # expand("ranking{rankings}/analysis/shape_space_distances.txt"),
 
 
-        expand("analysis/phenotype_bias.pdf"),
-        # expand("analysis/neutral_component_dist.pdf"),
-        # expand("analysis/neutral_path_length.pdf"),
-        # expand("analysis/shape_space_covering.pdf")
+        "analysis/phenotype_bias.pdf",
+        "analysis/neutral_component_sizes.pdf",
+        # "analysis/neutral_path_length.pdf",
+        # "analysis/shape_space_covering.pdf"
         
         
 rule create_subdirectories:
@@ -109,6 +109,21 @@ rule build_gpmap_python_object:
         "-a {params.alphabet} "
         "-o {output}"
 
+rule build_ref_gpmap_python_object:
+    input:
+        gp_map=config["ref_gp_map"],
+        genotypes="genotypes.txt"
+    output:
+        "ref_gp_map.pickle",
+    params:
+        alphabet=config["alphabet"]
+    shell:
+        "build_gpmap_pickle.py "
+        "-f {input.gp_map} "
+        "-g {input.genotypes} "
+        "-a {params.alphabet} "
+        "-o {output}"
+
 rule compute_phenotype_distribution:
     input:
         gp_map="{rank_dir}/gp_map.txt"
@@ -119,16 +134,61 @@ rule compute_phenotype_distribution:
         "-f {input} "
         "-o {output} "
 
+rule compute_ref_phenotype_distribution:
+    input:
+        gp_map=config["ref_gp_map"]
+    output:
+        "ref_phenotype_distribution.txt"
+    shell:
+        "compute_phenotype_distribution.py "
+        "-f {input} "
+        "-o {output} "
+
 rule plot_joint_phenotype_bias:
     input:
-        ph_distr=expand("ranking{rank}/phenotype_distribution.txt", rank=config["rankings"])
-
+        ph_distr=expand("ranking{rank}/phenotype_distribution.txt", rank=config["rankings"]),
+        ref_ph_distr="ref_phenotype_distribution.txt"
     output:
         "analysis/phenotype_bias.pdf"
     shell:
         "plot_joint_phenotype_bias.py "
         "-i {input.ph_distr} "
+        "-r {input.ref_ph_distr} "
+        "-l "
         "-o {output} "
+
+rule get_neutral_components:
+    input:
+        "{rank_dir}/gp_map.pickle"
+    output:
+        "{rank_dir}/neutral_components.pickle"
+    shell:
+        "neutral_components.py "
+        "-f {input} "
+        "-o {output} "
+
+rule get_ref_neutral_components:
+    input:
+        "ref_gp_map.pickle"
+    output:
+        "ref_neutral_components.pickle"
+    shell:
+        "neutral_components.py "
+        "-f {input} "
+        "-o {output} "
+
+rule plot_joint_neutral_component_sizes:
+    input:
+        nc=expand("ranking{rank}/neutral_components.pickle", rank=config["rankings"]),
+        ref_nc="ref_neutral_components.pickle"
+    output:
+        "analysis/neutral_component_sizes.pdf"
+    shell:
+        "plot_joint_neutral_component_sizes.py "
+        "-n {input.nc} "
+        "-r {input.ref_nc} "
+        "-o {output} "
+        "-l "
 
 
 
@@ -168,15 +228,7 @@ rule plot_joint_phenotype_bias:
 #         "-i {output.tmp_data} "
 #         "-o {output.plot} "
 
-# rule get_neutral_components:
-#     input:
-#         "{bp_graph_dir}/{rank}/gp_map.pickle"
-#     output:
-#         "{bp_graph_dir}/{rank}/neutral_components.pickle"
-#     shell:
-#         "neutral_components.py "
-#         "-f {input} "
-#         "-o {output} "
+
 
 # rule neutral_component_summary_plots:
 #     input:
