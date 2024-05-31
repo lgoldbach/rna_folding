@@ -17,8 +17,11 @@ if __name__ ==  "__main__":
     parser.add_argument("-s", "--num_of_paths", 
                         help="How many neutral paths to sample per genotype",
                         required=True, type=int)
-    parser.add_argument("-o", "--output", 
-                        help="File output for neutral components",
+    parser.add_argument("-l", "--len_dist", 
+                        help="File output for neutral path length distibution",
+                        required=True)
+    parser.add_argument("-p", "--paths", 
+                        help="File output for neutral paths",
                         required=True)
     
     args = parser.parse_args()
@@ -31,7 +34,17 @@ if __name__ ==  "__main__":
         genotype = np.random.choice(gpm.genotypes)
         neutral_paths.append(gpm.neutral_paths(genotype, n=args.num_of_paths))
 
-    with open(args.output, "w") as file:
+    length_list = []
+    for path_set in neutral_paths:
+        for path in path_set:
+                length_list.append(len(path))
+                 
+    lenths, counts = np.unique(length_list, return_counts=True)
+    with open(args.len_dist, "w") as file:
+        for l, c in zip(lenths, counts):
+            file.write(str(l) + " " + str(c) + "\n")
+         
+    with open(args.paths, "w") as file:
         for path_set in neutral_paths:
             for path in path_set:
                 file.write(",".join(path) + "\n")
