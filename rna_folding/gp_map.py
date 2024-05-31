@@ -202,6 +202,89 @@ class GenotypePhenotypeGraph(nx.Graph):
                 
             neutral_components.append(final_cc)
         return neutral_components
+    
+    def neutral_paths(self, source_genotype: str, n: int) -> list:
+        """Start n random walks from <genotype> along genotypes with the same
+        phenotype
+
+        Args:
+            genotype (str): Starting genotype for random walks
+            n (int): Number of random walks to take
+
+        Returns:
+            list: List of lists of random walks.
+
+        """
+        phenotype = self.nodes[source_genotype]["phenotype"]  # get ref phenotype
+        neutral_paths = []
+        
+        for i in range(n):            
+            # create mutation generator for each iteration
+            mutation_gen = self.mutation_space(source_genotype)  
+            neutral_path = [source_genotype]  # init list
+            
+            genotype = source_genotype
+            for mutation in mutation_gen:  # loop through possible mutations
+                new_genotype = self.mutate(genotype, mutation)
+                # only accept neutral mutants
+                if self.nodes[new_genotype]["phenotype"] == phenotype:
+                    neutral_path.append(new_genotype)
+                    genotype = new_genotype
+                else:
+                    continue
+            neutral_paths.append(neutral_path)
+
+        return neutral_paths
+    
+    def mutation_space(self, genotype: str):
+        """Generate new mutations for genotype. Each mutation can only appear
+        once.
+
+        Args:
+            genotype (str): A genotype.
+
+        Yields:
+            mutation (tuple): (<site, int>, <letter, str>), The first element
+                            defines the site of the mutation and the second
+                            the letter.
+
+        """
+        # create a space of all possible mutations for the genotype
+        # one list per site. Contains all mutations except the wildtype.
+        mutation_space = []
+        for site in genotype:
+            mutation_space.append([])
+            for letter in self.alphabet:
+                if letter != site:
+                    mutation_space[-1].append(letter)
+        
+        # as long as there are possible mutations left, yield a random one
+        while any(mutation_space):
+            site = np.random.choice(len(genotype))
+            # this could be done more sophisticated. I am brute-forcing
+            # random.choice until I find a site that still has available mut.
+            try:  
+                mut_i = np.random.choice(len(mutation_space[site]))
+            except ValueError:
+                continue
+            mut = mutation_space[site].pop(mut_i)
+            yield((site, mut))
+    
+    @staticmethod
+    def mutate(genotype: str, m: tuple) -> str:
+        """Take a genotype and mutate is
+
+        Args:
+            genotype (str): A genotype, e.g. ACGUA
+            m (tuple): A tuple (<site, int>, <letter, str>) defining
+                                the mutation.
+
+        Returns:
+            mutant (str): The mutant genotype
+
+        """
+        new_genotype = genotype[:m[0]] + m[1] + genotype[m[0]+1:]
+        return new_genotype
 
     def phenotype_robustness(self, nodes: list) -> float:
         """Compute robustness of given set of nodes. Defined as fraction of
