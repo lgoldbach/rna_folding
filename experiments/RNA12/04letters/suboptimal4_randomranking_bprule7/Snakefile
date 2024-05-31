@@ -21,6 +21,7 @@ rule all:
 
         "analysis/phenotype_bias.pdf",
         "analysis/neutral_component_sizes.pdf",
+        "analysis/neutral_path_lenth_dist.pdf"
         # "analysis/neutral_path_length.pdf",
         # "analysis/shape_space_covering.pdf"
         
@@ -49,7 +50,7 @@ rule nussinov_gp_map:
     input:
         "genotypes.txt"
     output:
-        "gp_map.txt"
+        config["nussinov_gp_map"]
     params:
         graph_path=config["graph_path"],
         min_loop_size=config["mapping_params"]["min_loop_size"],
@@ -209,6 +210,35 @@ rule compute_neutral_path_length_distribution:
         "-s {params.num_of_paths} "
         "-p {output.paths} "
         "-l {output.length_dist} "
+
+rule compute_ref_neutral_path_length_distribution:
+    input:
+        "ref_gp_map.pickle"
+    output:
+        length_dist="ref_neutral_path_length_dist.txt",
+        paths="ref_neutral_paths.txt"
+    params:
+        num_of_genotypes=config["neutral_path_params"]["num_of_genotypes"],
+        num_of_paths=config["neutral_path_params"]["num_of_paths"]
+    shell:
+        "neutral_paths.py "
+        "-f {input} "
+        "-n {params.num_of_genotypes} "
+        "-s {params.num_of_paths} "
+        "-p {output.paths} "
+        "-l {output.length_dist} "
+
+rule plot_joint_neutral_path_length_distribution:
+    input:
+        lengths=expand("ranking{rank}/analysis/neutral_path_length_dist.txt", rank=config["rankings"]),
+        ref_lengths="ref_neutral_path_length_dist.txt"
+    output:
+        "analysis/neutral_path_lenth_dist.pdf"
+    shell:
+        "plot_joint_neutral_path_length_dist.py "
+        "-i {input.lengths} "
+        "-r {input.ref_lengths} "
+        "-o {output} "
 
 
 
