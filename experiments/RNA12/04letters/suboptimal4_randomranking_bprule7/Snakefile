@@ -12,10 +12,10 @@ rule all:
 
         # expand("ranking{rankings}/analysis/phenotype_counts.txt"),
         # expand("ranking{rankings}/analysis/neutral_component_sizes.txt"),
-        expand("ranking{rankings}/analysis/neutral_paths.txt",
-        rankings=config["rankings"]),
-        expand("ranking{rankings}/analysis/neutral_path_length_dist.txt",
-        rankings=config["rankings"]),
+        # expand("ranking{rankings}/analysis/neutral_paths.txt",
+        # rankings=config["rankings"]),
+        # expand("ranking{rankings}/neutral_components.pickle",
+        # rankings=config["rankings"]),
         # expand("ranking{rankings}/analysis/shape_space_distances.txt"),
 
 
@@ -71,7 +71,7 @@ rule nussinov_gp_map:
 
 rule extract_phenotype_list:
     input:
-        "gp_map.txt"
+        config["nussinov_gp_map"]
     output:
         "phenotypes.txt"
     shell:
@@ -88,7 +88,7 @@ rule create_rankings:
 
 rule flatten_gp_map:
     input:
-        gp_map="gp_map.txt",
+        gp_map=config["nussinov_gp_map"],
         ranking="ranking{rank}/phenotype_ranking.txt"
     output:
         "ranking{rank}/gp_map.txt"

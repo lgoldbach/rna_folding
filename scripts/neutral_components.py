@@ -18,16 +18,12 @@ if __name__ ==  "__main__":
     print("start loading", datetime.now())
     gpm = pickle.load(open(args.file, "rb"))
     print("done", datetime.now())
-    # if edges are not added, add them and save updated gpm in pickle file
-    if not gpm.edges:
-        print("start edge addition", datetime.now())
-        gpm.add_hamming_edges()
-        print("Done", datetime.now())
 
-    print("start neutral components", datetime.now())
-    nc = gpm.neutral_components(return_ids=True)
-    print("Done", datetime.now())
+    nc_counts = gpm.neutral_component_sizes()
 
-    nc_l = [list(i) for i in nc]
-    pickle.dump(nc_l, open(args.output, "wb"))
+    print(nc_counts)
+
+    with open(args.output, "w") as file:
+        for counts in nc_counts:
+            file.write(" ".join([str(c) for c in counts]) + "\n")
     

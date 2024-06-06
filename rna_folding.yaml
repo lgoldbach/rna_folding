@@ -1,0 +1,19 @@
+# This is a yaml file to define micromamba environment dependencies on the 
+# cluster
+
+
+name: rna_folding
+channels:
+ - conda-forge
+ - bioconda
+dependencies:
+ - python >=3.8,<3.9
+ - matplotlib
+ - numpy
+ - scipy
+ - networkx
+ - pandas
+ - pytest
+ - scikit-learn
+ - snakemake == 7.32.4
+ - ViennaRNA == 2.6.3

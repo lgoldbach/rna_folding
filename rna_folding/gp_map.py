@@ -1,6 +1,7 @@
 import numpy as np
 import networkx as nx
 from rna_folding.utils import combinatorically_complete_genotypes
+import sys
 
 
 class GenotypePhenotypeGraph(nx.Graph):
@@ -134,13 +135,16 @@ class GenotypePhenotypeGraph(nx.Graph):
         nodes = self.genotypes[np.where(self.phenotypes == phenotype)[0]]
         return nodes
 
-    def add_hamming_edges(self):
+    def add_hamming_edges(self, genotypes=None):
         """Compute all hamming edges for each genotype, i.e. add an edge 
         between a genotype and all genotypes that differ by one letter.
         
         Note:
             Current implementation assumes combinatorically complete g-p map
         """
+        if not genotypes:
+            genotypes = self.genotypes
+
         for g in self.genotypes:
             for neighbor in self._neighbors(g):
                 self.add_edge(g, neighbor)
@@ -168,7 +172,10 @@ class GenotypePhenotypeGraph(nx.Graph):
         """Compute all neutral components for given phenotypes. A neutral 
         component is defined as a connected set of nodes that all map to the
         same phenotype. A phenotype can have between one and #(phenotype) 
-        neutral components. 
+        neutral components. Note that this process is very mmemory intensive
+        for larger graphs. Use neutral_component_sizes for an iterative
+        and less memory intensive way of computing just the neutral component
+        sizes
 
         Args:
             phenotypes (list, optional): List of phenotypes for which neutral
@@ -202,7 +209,57 @@ class GenotypePhenotypeGraph(nx.Graph):
                 
             neutral_components.append(final_cc)
         return neutral_components
-    
+
+    def neutral_component_sizes(self, phenotypes: list = []) -> list:
+        """Compute all neutral component sizes for given phenotypes. A neutral 
+        component is defined as a connected set of nodes that all map to the
+        same phenotype. A phenotype can have between one and #(phenotype) 
+        neutral components.
+
+        Args:
+            phenotypes (list, optional): List of phenotypes for which neutral
+            components will be returned. If none are given, neutral components 
+            for all phenotypes will be returned. Defaults to [].
+           
+        Returns:
+            list:   list of lists where the ith list contains all neutral 
+                    component sizes for the ith phenotype, e.g. [[10, 3], [1]] 
+
+        """
+
+        if not phenotypes:
+            phenotypes = self.phenotype_set
+        
+        nc_sizes_all = []
+        for ph in phenotypes:
+            genotypes = [g for g, attr in self.nodes(data=True) 
+                     if attr['phenotype']==ph] # get all genotype for <ph>
+            
+            sys.setrecursionlimit(max(999, len(genotypes)**2))
+
+            # track which genotype were visited already in dict
+            visited = dict(zip(genotypes, [False]*len(genotypes)))
+
+            nc_sizes = []
+            for g in genotypes:
+                if not visited[g]:
+                    count_before = sum(visited.values())
+                    self.neutral_DFS(genotype=g, phenotype=ph, visited=visited)
+                    count_after = sum(visited.values())
+                    nc_sizes.append(count_after - count_before)
+            
+            nc_sizes_all.append(nc_sizes)  # add values for ph to the results
+        
+        return nc_sizes_all
+
+    def neutral_DFS(self, genotype, phenotype, visited):
+        print(genotype)
+        visited[genotype] = True
+        for neighbor in self._neighbors(genotype):
+            neigh_ph = self.nodes[neighbor]["phenotype"]
+            if neigh_ph == phenotype and not visited[neighbor]:
+                self.neutral_DFS(neighbor, phenotype, visited)
+
     def neutral_paths(self, source_genotype: str, n: int) -> list:
         """Start n random walks from <genotype> along genotypes with the same
         phenotype
