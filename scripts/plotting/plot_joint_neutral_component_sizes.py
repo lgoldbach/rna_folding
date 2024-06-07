@@ -19,27 +19,28 @@ if __name__ ==  "__main__":
     fig, ax = plt.subplots()
     nc_sizes_all = []
 
-    for i, file in enumerate(args.nc):
-        nc = pickle.load(open(file, "rb"))
+    for i, filename in enumerate(args.nc):
         nc_sizes_all.append([])  # add new list for new file
-        for ph in nc:
-            for c in ph:
-                nc_sizes_all[-1].append(len(c))
+        with open(filename, "r") as file:
+            nc_sizes = []
+            for line in file:
+                for size in line.strip().split(" "):
+                    nc_sizes_all[-1].append(int(size))
+
     nc_sizes_all_sort = [np.sort(l)[::-1] for l in nc_sizes_all]
 
     for nc_sizes in nc_sizes_all_sort:
         x = range(nc_sizes.shape[0])
         if args.log:
-            ax.scatter(x, np.log10(nc_sizes), label=i, color="blue")
+            ax.scatter(x, np.log10(nc_sizes), color="blue")
         else:
-            ax.scatter(x, nc_sizes, label=i, color="blue")
+            ax.scatter(x, nc_sizes, color="blue")
 
-
-    nc_ref = pickle.load(open(args.ref_nc, "rb"))
     nc_ref_sizes = []
-    for ph in nc_ref:
-        for c in ph:
-            nc_ref_sizes.append(len(c))
+    with open(args.ref_nc, "r") as file:
+        for line in file:
+            for size in line.strip().split(" "):
+                nc_ref_sizes.append(int(size))
     nc_ref_sizes_sort = np.sort(nc_ref_sizes)[::-1]
 
     x = range(nc_ref_sizes_sort.shape[0])

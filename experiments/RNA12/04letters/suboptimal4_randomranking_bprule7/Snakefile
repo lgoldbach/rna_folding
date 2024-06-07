@@ -22,9 +22,7 @@ rule all:
         "analysis/phenotype_bias.pdf",
         "analysis/neutral_component_sizes.pdf",
         "analysis/neutral_path_lenth_dist.pdf"
-        # "analysis/neutral_path_length.pdf",
         # "analysis/shape_space_covering.pdf"
-        
         
 rule create_subdirectories:
     priority: 1
@@ -41,10 +39,10 @@ rule generate_genotype_space:
         alphabet=config["alphabet"],
         seq_len=config["sequence_lengths"]
     shell:
-        "build_genotype_space.py " 
+        "build_genotype_space.py "
         "-a {params.alphabet} "
         "-l {params.seq_len} "
-        "-o {output}"
+        "-o {output} "
 
 rule nussinov_gp_map:
     input:
@@ -161,21 +159,21 @@ rule plot_joint_phenotype_bias:
         "-l "
         "-o {output} "
 
-rule get_neutral_components:
+rule get_neutral_component_sizes:
     input:
         "{rank_dir}/gp_map.pickle"
     output:
-        "{rank_dir}/neutral_components.pickle"
+        "{rank_dir}/neutral_component_sizes.txt"
     shell:
         "neutral_components.py "
         "-f {input} "
         "-o {output} "
 
-rule get_ref_neutral_components:
+rule get_ref_neutral_component_sizes:
     input:
         "ref_gp_map.pickle"
     output:
-        "ref_neutral_components.pickle"
+        "ref_neutral_component_sizes.txt"
     shell:
         "neutral_components.py "
         "-f {input} "
@@ -183,8 +181,8 @@ rule get_ref_neutral_components:
 
 rule plot_joint_neutral_component_sizes:
     input:
-        nc=expand("ranking{rank}/neutral_components.pickle", rank=config["rankings"]),
-        ref_nc="ref_neutral_components.pickle"
+        nc=expand("ranking{rank}/neutral_component_sizes.txt", rank=config["rankings"]),
+        ref_nc="ref_neutral_component_sizes.txt"
     output:
         "analysis/neutral_component_sizes.pdf"
     shell:

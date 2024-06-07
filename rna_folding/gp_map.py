@@ -217,9 +217,12 @@ class GenotypePhenotypeGraph(nx.Graph):
         neutral components.
 
         Args:
-            phenotypes (list, optional): List of phenotypes for which neutral
-            components will be returned. If none are given, neutral components 
-            for all phenotypes will be returned. Defaults to [].
+            phenotypes (list, optional):    List of phenotypes for which 
+                                            neutral components will be 
+                                            returned. If none are given, 
+                                            neutral components for all 
+                                            phenotypes will be returned. 
+                                            Defaults to [].
            
         Returns:
             list:   list of lists where the ith list contains all neutral 
@@ -235,30 +238,55 @@ class GenotypePhenotypeGraph(nx.Graph):
             genotypes = [g for g, attr in self.nodes(data=True) 
                      if attr['phenotype']==ph] # get all genotype for <ph>
             
-            sys.setrecursionlimit(max(999, len(genotypes)**2))
 
             # track which genotype were visited already in dict
             visited = dict(zip(genotypes, [False]*len(genotypes)))
 
             nc_sizes = []
-            for g in genotypes:
-                if not visited[g]:
-                    count_before = sum(visited.values())
-                    self.neutral_DFS(genotype=g, phenotype=ph, visited=visited)
+            
+            # start a DFS from every genotype
+            for init_gt in genotypes:
+                if not visited[init_gt]:  # only if it wasn't visited in a previous DFS
+                    stack = [init_gt]  # initialize a stack
+                    count_before = sum(visited.values())  # count how many genotype have been visited before this DFS
+                    while stack:
+                        g = stack.pop()  # get next genotype from stack
+                        if not visited[g]:
+                            stack = self.neutral_DFS_helper(genotype=g, 
+                                                    phenotype=ph, 
+                                                    visited=visited, 
+                                                    stack=stack)
+                                
                     count_after = sum(visited.values())
                     nc_sizes.append(count_after - count_before)
-            
+                    
             nc_sizes_all.append(nc_sizes)  # add values for ph to the results
         
         return nc_sizes_all
 
-    def neutral_DFS(self, genotype, phenotype, visited):
-        print(genotype)
+    def neutral_DFS_helper(self, genotype, phenotype, visited, stack):
+        """Perform a neutral depth-first search. Only accept steps to genotypes
+        with same phenotype
+
+        Args:
+            genotype (str):     The current genotype
+            phenotype (str):    The phenotype that has to be matched
+            visited (np.array): Array that keeps track of which genotypes have 
+                                been visited
+            stack (list):       Stack with all genotypes to be visited
+
+        Returns:
+            stack (list):       Returns the updated stack. The return is not
+                                necessary as stack is changed in-place but
+                                this makes more explicit what the result of 
+                                this method is
+        """
         visited[genotype] = True
         for neighbor in self._neighbors(genotype):
             neigh_ph = self.nodes[neighbor]["phenotype"]
             if neigh_ph == phenotype and not visited[neighbor]:
-                self.neutral_DFS(neighbor, phenotype, visited)
+                stack.append(neighbor)     
+        return stack
 
     def neutral_paths(self, source_genotype: str, n: int) -> list:
         """Start n random walks from <genotype> along genotypes with the same
