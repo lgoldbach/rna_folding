@@ -15,6 +15,22 @@ def example_gp():
     
     return gpm
 
+def test_connected_component_sizes():
+    ref_nc_sizes = {')..': [1, 3], 
+              ').(': [2], 
+              ')((': [1, 1]}
+    
+    gpm = example_gp()
+
+    nc_sizes = {}
+    for ph in gpm.phenotypes:
+        nc_sizes_ = gpm.neutral_component_sizes(phenotypes=[ph])[0]
+        nc_sizes_.sort()
+        nc_sizes[ph] = nc_sizes_
+
+    for ph in ref_nc_sizes:
+        assert nc_sizes[ph] == ref_nc_sizes[ph], f"Neutral component size {nc_sizes[ph]} should match {ref_nc_sizes[ph]}."
+
 
 def test_connected_components():
     # define the correct neutral components per phenotype

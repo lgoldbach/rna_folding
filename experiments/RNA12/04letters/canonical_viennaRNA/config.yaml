@@ -1,0 +1,8 @@
+sequence_lengths:
+  - 12
+
+alphabet:
+  - AUGC
+
+graph_path: /home/lgold/phd/research/projects/connectivity/rna_folding/data/graphs/
+

@@ -6,15 +6,12 @@ alphabet:
 
 graph_path: /home/lgold/phd/research/projects/connectivity/rna_folding/data/graphs/
 
-# parallelization:
-#   nussinov_splits: 1  # into how many parts to split the nussinov rule
-  
 mapping_params:
-  min_loop_size: 3
+  min_loop_size: 0
   suboptimal: 2
   structures_max: 1000
   base_pairing:
-    - 2
+    - 2 
     - 3
     - 4
     - 5
@@ -25,15 +22,7 @@ mapping_params:
     - 10
     - 11
 
-ref_bp_rule: 7   # base-pairing rule to compare detailed statistics to
-
 rankings:
   - 1
-  # - 2
-  # - 3
-  # - 4
-  # - 5
-  # - 6
-
-file_format_params:
-  gp_map_col_sep: " "
+  - 2
+  - 3

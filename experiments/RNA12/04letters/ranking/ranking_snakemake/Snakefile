@@ -7,7 +7,8 @@ rule all:
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/.mkdir_placeholder", 
         #        base_pairing=config["mapping_params"]["base_pairing"],
         #        rankings=config["rankings"]),
-        "consistency_matrix_stats.pdf"
+        # "rankings.csv"
+        "consensus_matrix_plot.pdf"
 
 
 rule preprocess_suboptimal_map:
@@ -36,12 +37,14 @@ rule pairwise_consensus_matrix:
         pg_subopt="pg_map_supoptimal_augc_folded_dict.pickle",
         gp_ref="pg_map_ref_folded_augc_folded_dict.pickle"
     output:
-        "pairwise_consensus_matrix.pickle"
+        matrix="pairwise_consensus_matrix.pickle",
+        phenotype_list="phenotypes.txt"
     shell:
         "pairwise_consensus_matrix.py "
         "-i {input.pg_subopt} "
         "-r {input.gp_ref} "
-        "-o {output} "
+        "-o {output.matrix} "
+        "-p {output.phenotype_list} "
     
 rule consenus_matrix_statistics:
     input:
@@ -54,8 +57,40 @@ rule consenus_matrix_statistics:
         "-o {output} "
 
 rule binarize_consensus_matrix:
+    input:
+        "pairwise_consensus_matrix.pickle"
+    output:
+        "binary_pairwise_consensus_matrix.pickle"
+    shell:
+        "binarize_consensus_matrix.py "
+        "-i {input} "
+        "-o {output} "
+
+rule plot_consensus_matrix:
+    input:
+        matrix="pairwise_consensus_matrix.pickle",
+        phenotypes="phenotypes.txt"
+    output:
+        "consensus_matrix_plot.pdf"
+    shell:
+        "plot_consensus_matrix.py "
+        "-i {input.matrix} "
+        "-p {input.phenotypes} "
+        "-o {output} "
 
 rule topological_sorting:
+    input:
+        matrix="binary_pairwise_consensus_matrix.pickle",
+        phenotypes="phenotypes.txt"
+    output:
+        "rankings.csv"
+    shell:
+        "topological_sorting.py "
+        "-i {input.matrix} "
+        "-o {output} "
+        "-p {input.phenotypes} "
+
+    
 
 rule plot_phenotype_frequencies:
 

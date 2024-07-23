@@ -4,13 +4,14 @@ configfile: "./config.yaml"
 # to trick snakemake into making the creation of directories its own job
 rule all:
     input:
-        expand("bp_graph{base_pairing}/ranking{rankings}/analysis/.mkdir_placeholder", 
-               base_pairing=config["mapping_params"]["base_pairing"],
-               rankings=config["rankings"]),
+        # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/.mkdir_placeholder", 
+        #        base_pairing=config["mapping_params"]["base_pairing"],
+        #        rankings=config["rankings"]),
         # expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_robustness_distributions.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"]),
         # expand("bp_graph{bp}/phenotype_robustness_freq_all.pdf", bp=config["mapping_params"]["base_pairing"]),
-        expand("bp_graph{bp}/analysis/ph_to_gt_dist.pdf", bp=config["mapping_params"]["base_pairing"]),
-        expand("bp_graph{bp}/unique_sets.txt", bp=config["mapping_params"]["base_pairing"])
+        # expand("bp_graph{bp}/analysis/ph_to_gt_dist.pdf", bp=config["mapping_params"]["base_pairing"]),
+        # expand("bp_graph{bp}/unique_sets.txt", bp=config["mapping_params"]["base_pairing"])
+        "bp_graph7/analysis/suboptimal_phenotype_frequencies.pdf"
 
 rule create_subdirectories:
     priority: 1
@@ -297,6 +298,26 @@ rule count_gt_per_ph_and_ph_per_gt:
         "--output_ph_per_gt {output.ph_per_gt} "
         "-s '{params.sep}' "
 
+rule suboptimal_gt_per_phenotype_to_txt:
+    input:
+        "bp_graph{bp}/analysis/gt_per_ph.pickle"
+    output:
+        "bp_graph{bp}/analysis/suboptimal_phenotype_frequencies.txt"
+    shell:
+        "dict_to_phenotype_frequencies.py "
+        "-i {input} "
+        "-o {output} "
+
+rule plot_suboptimal_phenotype_distribution:
+    input:
+        "bp_graph{bp}/analysis/suboptimal_phenotype_frequencies.txt"
+    output:
+        "bp_graph{bp}/analysis/suboptimal_phenotype_frequencies.pdf"
+    shell:
+        "plot_phenotype_distribution.py "
+        "-d {input} "
+        "-o {output} "
+        # "--log "
 
 rule plot_ph_to_gt_mapping_distributions:
     input:

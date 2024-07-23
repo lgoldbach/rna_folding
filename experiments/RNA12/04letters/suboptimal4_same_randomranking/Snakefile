@@ -1,0 +1,496 @@
+configfile: "./config.yaml"
+
+rule all:
+    input:
+        expand("analysis/ranking{rank}/.mkdir_placeholder", rank=config["rankings"]),
+
+        expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_robustness_distributions.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"]),
+        expand("bp_graph{bp}/analysis/phenotype_bias.pdf", bp=config["mapping_params"]["base_pairing"]),
+        expand("bp_graph{bp}/analysis/neutral_component_sizes.pdf", bp=config["mapping_params"]["base_pairing"]),
+        expand("bp_graph{bp}/analysis/neutral_path_length_dist.pdf", bp=config["mapping_params"]["base_pairing"]),
+        expand("bp_graph{bp}/ranking{rank}/analysis/neutral_path_length_dist_ph_freq.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"]),
+        # expand("bp_graph{bp}/ranking{rank}/analysis/neutral_path_length_over_freq_and_dist.png", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"]),
+        # expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_robustness_freq_all.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"])
+        
+        expand("bp_graph{base_pairing}/ranking{rankings}/analysis/.mkdir_placeholder", 
+               base_pairing=config["mapping_params"]["base_pairing"],
+               rankings=config["rankings"]),
+        expand("bp_graph{base_pairing}/ranking{rankings}/.mkdir_placeholder", 
+               base_pairing=config["mapping_params"]["base_pairing"],
+               rankings=config["rankings"]),
+               
+
+        # expand("bp_graph{bp}/phenotype_robustness_freq_all.pdf", bp=config["mapping_params"]["base_pairing"]),
+        # expand("bp_graph{bp}/analysis/ph_to_gt_dist.pdf", bp=config["mapping_params"]["base_pairing"]),
+        # expand("bp_graph{bp}/unique_sets.txt", bp=config["mapping_params"]["base_pairing"])
+        
+rule create_subdirectories:
+    priority: 1
+    output:
+        "{path}/.mkdir_placeholder"  # temp -> this file will be deleted when all jobs are done
+    shell:
+        "mkdir -p {wildcards.path} && "  # create directory
+        "touch {output}"  # make file (only to satisfy condition)
+
+rule generate_genotype_space:
+    output:
+        "genotypes.txt"
+    params:
+        alphabet=config["alphabet"],
+        seq_len=config["sequence_lengths"]
+    shell:
+        "build_genotype_space.py " 
+        "-a {params.alphabet} "
+        "-l {params.seq_len} "
+        "-o {output}"
+
+# rule split_gp_map:
+#     input:
+#         "genotypes.txt"
+#     output:
+#         temp("genotypes{id}")
+#     params:
+#         split_n=config["parallelization"]["nussinov_splits"]
+#     shell:
+#         # Since the nussinov rule will invoke the split_gp_map rule for each output individually,
+#         # but we only need to run it once to create all the genotype{id}.txt files,
+#         # we check whether the currently requested output has already been created,
+#         # if yes, we only touch it, if no, we generate all at once.
+#         # this is a bit unsnakemake but I don't see another option
+#         "LINE_COUNT=$(($(wc -l < {input}) + $(({params.split_n}-1)) )) && "  # plus $(({params.split_n}-1)) to round up. #Line/(#chunks-1)=#lines per chunk
+#         "SPLIT_SIZE=$(($LINE_COUNT / {params.split_n})) && "  # compute size per split, i.e. lines per file
+#         "if [ -s {output} ]; "  # check if exists AND nonempty
+#         "then touch {output}; "  # touch to satisfy snakemake condition
+#         "else split -d --lines  $SPLIT_SIZE {input} genotypes; " # split into $SPLIT_SIZE sized chunks
+#         "fi "
+
+# rule nussinov_gp_map:
+#     input:
+#         "genotypes{id}"
+#     output:
+#         "bp_graph{base_pairing,[0-9]+}/gp_map{id}.txt"  # regex to constrain to numbers and prevent matching subdirectory gp_map.txt
+#     params:
+#         graph_path=config["graph_path"],
+#         min_loop_size=config["mapping_params"]["min_loop_size"],
+#         suboptimal=config["mapping_params"]["suboptimal"],
+#         structures_max=config["mapping_params"]["structures_max"],
+#         alphabet=config["alphabet"]
+#     shell:
+#         "nussinov_gp_mapping.py "
+#         "-i {input} "
+#         "-o {output} "
+#         "-m {params.min_loop_size} "
+#         "-s {params.suboptimal} "
+#         "-z {params.structures_max} "
+#         "-g {params.graph_path} "
+#         "-a {params.alphabet} "
+#         "-p {wildcards.base_pairing} "
+
+# rule merge_gp_maps:
+#     input:
+#         gp_maps=[f"bp_graph{{base_pairing}}/gp_map{id:02d}.txt" for id in range(config["parallelization"]["nussinov_splits"])],
+#         genotypes=[f"genotypes{id:02d}" for id in range(config["parallelization"]["nussinov_splits"])]
+#     output:
+#         "bp_graph{base_pairing,[0-9]+}/gp_map.txt"
+#     shell:
+#         "merge_gp_maps.py "
+#         "-i {input.gp_maps} "
+#         "-g {input.genotypes} "
+#         "-o {output} " 
+
+
+rule nussinov_gp_map:
+    input:
+        "genotypes.txt"
+    output:
+        # regex to constrain to numbers and prevent matching subdirectory gp_map.txt
+        "/home/lgold/phd/research/projects/connectivity/rna_folding/experiments/RNA12/04letters/data/nussinov_maps/gp_map{base_pairing,[0-9]+}_suboptimal4.txt"
+    params:
+        graph_path=config["graph_path"],
+        min_loop_size=config["mapping_params"]["min_loop_size"],
+        suboptimal=config["mapping_params"]["suboptimal"],
+        structures_max=config["mapping_params"]["structures_max"],
+        alphabet=config["alphabet"]
+    resources:
+        mem_mb=25000
+    shell:
+        "nussinov_gp_mapping.py "
+        "-i {input} "
+        "-o {output} "
+        "-m {params.min_loop_size} "
+        "-s {params.suboptimal} "
+        "-z {params.structures_max} "
+        "-g {params.graph_path} "
+        "-a {params.alphabet} "
+        "-p {wildcards.base_pairing} "
+
+rule unique_suboptimal_sets:
+    input:
+        "bp_graph{base_pairing,[0-9]+}/gp_map.txt"
+    output:
+        "bp_graph{base_pairing,[0-9]+}/unique_sets.txt"
+    shell:
+        "get_unique_suboptimal_sets.py "
+        "-i {input} "
+        "-o {output} "
+
+# Concats all gp maps, extracts all phenotypes and creates a unique list
+# The position in this list will define the id of each phenotype for the rest
+# of the snakemake pipeline.
+rule extract_phenotype_list:
+    input:
+        "bp_graph{base_pairing,[0-9]+}/gp_map.txt"
+    output:
+        "bp_graph{base_pairing,[0-9]+}/phenotypes.txt"
+    shell:
+        "cat {input} > bp_graph{wildcards.base_pairing}/tmp_phenotypes && " 
+        "awk '{{print $1}}' {input} | sort | uniq > {output} && "
+        "rm bp_graph{wildcards.base_pairing}/tmp_phenotypes"
+
+rule extract_meta_list_of_phenotypes:
+    input:
+        expand("bp_graph{bp}/phenotypes.txt", bp=config["mapping_params"]["base_pairing"])
+    output:
+        "phenotypes.txt"
+    shell:
+        "cat {input} > tmp_phenotypes && " 
+        "awk '{{print $1}}' {input} | sort | uniq > {output} && "
+        "rm tmp_phenotypes"
+
+# take phenotype file and randomly shuffle it using shuf function
+rule create_rankings:
+    input:
+        "phenotypes.txt"
+    output:
+        "phenotype_ranking{rank}.txt"
+    shell:
+        "shuf {input} > {output} "
+
+rule flatten_gp_map:
+    input:
+        gp_map="/home/lgold/phd/research/projects/connectivity/rna_folding/experiments/RNA12/04letters/data/nussinov_maps/gp_map{base_pairing,[0-9]+}_suboptimal4.txt",
+        ranking="phenotype_ranking{rank}.txt"
+    output:
+        "bp_graph{base_pairing}/ranking{rank}/gp_map.txt"
+    resources:
+        mem_mb=60000
+    shell:
+        "flatten_gp_map.py "
+        "-i {input.gp_map} "
+        "-r {input.ranking} "
+        "-o {output} "
+
+rule build_gpmap_python_object:
+    input:
+        gp_map="{bp_graph_dir}/{rank}/gp_map.txt",
+        genotypes="genotypes.txt"
+    output:
+        temp("{bp_graph_dir}/{rank}/gp_map.pickle"),
+    params:
+        alphabet=config["alphabet"]
+    resources:
+        mem_mb=60000
+    shell:
+        "build_gpmap_pickle.py "
+        "-f {input.gp_map} "
+        "-g {input.genotypes} "
+        "-a {params.alphabet} "
+        "-o {output}"
+
+rule compute_robustness:
+    input:
+        gp_map="{bp_graph_dir}/ranking{rank}/gp_map.pickle",
+    output:
+        "{bp_graph_dir}/ranking{rank}/phenotype_robustness.txt"
+    resources:
+        mem_mb=60000
+    shell:
+        "compute_robustness.py "
+        "-f {input.gp_map} "
+        "-o {output}"
+
+rule compute_phenotype_distribution:
+    input:
+        gp_map="{bp_graph_path}/ranking{rank}/gp_map.txt"
+    output:
+        "{bp_graph_path}/ranking{rank}/phenotype_distribution.txt"
+    shell:
+        "compute_phenotype_distribution.py "
+        "-f {input} "
+        "-o {output} "
+
+rule plot_joint_phenotype_bias:
+    input:
+        ph_distr=expand("bp_graph{{bp_rule}}/ranking{rank}/phenotype_distribution.txt", rank=config["rankings"]),
+        ref_ph_distr=expand("bp_graph%s/ranking{rank}/phenotype_distribution.txt" % config["ref_bp_rule"], rank=config["rankings"])
+    output:
+        "bp_graph{bp_rule}/analysis/phenotype_bias.pdf"
+    params:
+        ref_bp_rule=config["ref_bp_rule"]
+    shell:
+        "plot_joint_phenotype_bias_w_join_ref.py "
+        "-i {input.ph_distr} "
+        "-r {input.ref_ph_distr} "
+        "-b {wildcards.bp_rule} "
+        "-k {params.ref_bp_rule} "
+        "-l "
+        "-o {output} "
+
+rule get_neutral_component_sizes:
+    input:
+        "bp_graph{bp_rule}/ranking{rank}/gp_map.pickle"
+    output:
+        "bp_graph{bp_rule}/ranking{rank}/neutral_component_sizes.txt"
+    resources:
+        mem_mb=60000
+    shell:
+        "neutral_components.py "
+        "-f {input} "
+        "-o {output} "
+
+rule plot_joint_neutral_component_sizes:
+    input:
+        nc=expand("bp_graph{{bp_rule}}/ranking{rank}/neutral_component_sizes.txt", rank=config["rankings"]),
+        ref_nc=expand("bp_graph%s/ranking{rank}/neutral_component_sizes.txt" % config["ref_bp_rule"], rank=config["rankings"])
+    output:
+        "bp_graph{bp_rule}/analysis/neutral_component_sizes.pdf"
+    params:
+        rank_cutoff=config["neutral_component_plotting_param"]["rank_cutoff"],
+        ref_bp_rule=config["ref_bp_rule"]
+    shell:
+        "plot_joint_neutral_component_sizes_w_joint_ref.py "
+        "-n {input.nc} "
+        "-r {input.ref_nc} "
+        "-c {params.rank_cutoff} "
+        "-b {wildcards.bp_rule} "
+        "-k {params.ref_bp_rule} "
+        "-o {output} "
+        "-l "
+
+rule plot_joint_neutral_path_length_distribution:
+    input:
+        lengths=expand("bp_graph{{bp_rule}}/ranking{rank}/neutral_path_length_dist.txt", rank=config["rankings"]),
+        ref_lengths=expand("bp_graph%s/ranking{rank}/neutral_path_length_dist.txt" % config["ref_bp_rule"], rank=config["rankings"])
+    output:
+        "bp_graph{bp_rule}/analysis/neutral_path_length_dist.pdf"
+    params:
+        ref_bp_rule=config["ref_bp_rule"]
+    shell:
+        "plot_joint_neutral_path_length_dist_w_joint_ref.py "
+        "-i {input.lengths} "
+        "-r {input.ref_lengths} "
+        "-b {wildcards.bp_rule} "
+        "-k {params.ref_bp_rule} "
+        "-o {output} "
+
+rule plot_robustness_over_freq_single:
+    input:
+        ph_distr="{bp_graph_path}/{rank}/phenotype_distribution.txt",
+        ph_rob="{bp_graph_path}/{rank}/phenotype_robustness.txt"
+    output:
+        "{bp_graph_path}/{rank}/phenotype_robustness_freq.pdf"
+    shell:
+        "plot_robustness_phenotype_freq.py "
+        "-d {input.ph_distr} "
+        "-r {input.ph_rob} "
+        "-l {wildcards.rank} "
+        "-e True "
+        "-o {output} "
+
+rule plot_robustness_over_freq_all:
+    input:
+        ph_distr=expand("{{bp_graph_path}}/ranking{rank}/phenotype_distribution.txt", rank=config["rankings"]),
+        ph_rob=expand("{{bp_graph_path}}/ranking{rank}/phenotype_robustness.txt", rank=config["rankings"])
+    output:
+        "{bp_graph_path}/phenotype_robustness_freq_all.pdf"
+    params:
+        # have to join the inputs as a comma-separated to be recognized as one
+        # argument by the shell script. argparse then processes the list (see 
+        # script).
+        rank_label=",".join([str(r) for r in config["rankings"]]),
+        ph_distr=",".join(expand("{{bp_graph_path}}/ranking{rank}/phenotype_distribution.txt", rank=config["rankings"])),
+        ph_rob=",".join(expand("{{bp_graph_path}}/ranking{rank}/phenotype_robustness.txt", rank=config["rankings"]))
+    shell:
+        "plot_robustness_phenotype_freq.py "
+        "-d {params.ph_distr} "
+        "-r {params.ph_rob} "
+        "-l {params.rank_label} "
+        "-e False "
+        "-o {output} "
+
+rule plot_phenotype_distribution:
+    input:
+        ph_distr="{bp_graph_path}/{rank}/phenotype_distribution.txt"
+    output:
+        "{bp_graph_path}/{rank}/phenotype_distribution.pdf"
+    shell:
+        "plot_phenotype_distribution.py "
+        "-d {input.ph_distr} "
+        "-o {output} "
+
+rule join_robustness_and_phenotype_distr:
+    input:
+        rob=expand("{{bp_graph_path}}/ranking{{rank}}/phenotype_robustness.txt", rank=config["rankings"]),
+        distr=expand("{{bp_graph_path}}/ranking{{rank}}/phenotype_distribution.txt", rank=config["rankings"])
+    output:
+        "{bp_graph_path}/ranking{rank}/phenotype_robustness_distribution.txt"
+    shell:
+        "join_robustness_and_phenotype_distr.py "
+        "-r {input.rob} "
+        "-d {input.distr} "
+        "-o {output} "
+
+rule compute_neutral_path_length_distribution:
+    input:
+        "bp_graph{base_pairing,[0-9]+}/ranking{rank,[0-9]+}/gp_map.pickle"
+    output:
+        length_dist="bp_graph{base_pairing,[0-9]+}/ranking{rank,[0-9]+}/neutral_path_length_dist.txt",
+        paths="bp_graph{base_pairing,[0-9]+}/ranking{rank,[0-9]+}/neutral_paths_chain.txt"
+    params:
+        num_of_genotypes=config["neutral_path_params"]["num_of_genotypes"],
+        num_of_paths=config["neutral_path_params"]["num_of_paths"]
+    resources:
+        mem_mb=60000
+    shell:
+        "neutral_paths.py "
+        "-f {input} "
+        "-n {params.num_of_genotypes} "
+        "-s {params.num_of_paths} "
+        "-p {output.paths} "
+        "-l {output.length_dist} "
+
+rule compute_neutral_path_length_per_ph:
+    input:
+        "bp_graph{base_pairing,[0-9]+}/ranking{rank,[0-9]+}/gp_map.pickle"
+    output:
+        paths="bp_graph{base_pairing,[0-9]+}/ranking{rank,[0-9]+}/neutral_paths.txt"
+    params:
+        num_of_genotypes=config["neutral_path_per_ph_params"]["num_of_genotypes"],
+        num_of_paths=config["neutral_path_per_ph_params"]["num_of_paths"]
+    resources:
+        mem_mb=60000
+    shell:
+        "neutral_paths_per_phenotype.py "
+        "-f {input} "
+        "-n {params.num_of_genotypes} "
+        "-s {params.num_of_paths} "
+        "-p {output.paths} "
+
+
+rule plot_neutral_path_length_over_ph_frequency_and_dist:
+    input:
+        lengths="bp_graph{bp_rule}/ranking{rank}/neutral_paths.txt",
+        frequencies="bp_graph{bp_rule}/ranking{rank}/phenotype_distribution.txt",
+        ref_lengths="bp_graph%s/ranking{rank}/neutral_paths.txt" % config["ref_bp_rule"],
+        ref_frequencies="bp_graph%s/ranking{rank}/phenotype_distribution.txt" % config["ref_bp_rule"],
+        # distribution=expand("{{bp_graph_path}}/ranking{rank}/neutral_path_length_dist.txt", rank=config["rankings"]),
+        # ref_distribution="bp_graph%s/ranking{rank}/neutral_path_length_dist.txt" % config["ref_bp_rule"]
+    output:
+        "bp_graph{bp_rule}/ranking{rank}/analysis/neutral_path_length_dist_ph_freq.pdf"
+    params:
+        ref_bp_rule=config["ref_bp_rule"]
+    shell:
+        "plot_neutral_path_length_over_phenotype_freq_and_dist.py "
+        "-i {input.lengths} "
+        "-f {input.frequencies} "
+        "-r {input.ref_lengths} "
+        "-k {input.ref_frequencies} "
+        "-b {wildcards.bp_rule} "
+        "-m {params.ref_bp_rule} "
+        "-n {wildcards.rank} "
+        # "-d {input.distribution} "
+        # "-l {input.ref_distribution} "
+        "-o {output} "
+
+
+# rule plot_phenotype_robustness_distribution:
+#     input:
+#         expand("bp_graph{bp}/ranking{{rank}}/phenotype_robustness_distribution.txt", bp=config["mapping_params"]["base_pairing"])
+#     output:
+#         "analysis/phenotype_robustness_distributions_rank{rank}.pdf"
+#     shell:
+#         "plot_phenotype_robustness_distribution.py "
+#         "-f {input} "
+#         "-o {output} "
+
+# rule plot_phenotype_robustness_distribution_to_single_ref_panel:
+#     input:
+#         query="bp_graph{query_bp}/ranking{rank}/phenotype_robustness_distribution.txt",
+#         ref=expand("bp_graph{ref_bp}/ranking{{rank}}/phenotype_robustness_distribution.txt", ref_bp=config["ref_bp_rule"])        
+#     output:
+#         "bp_graph{query_bp}/ranking{rank}/analysis/phenotype_robustness_distributions_panel.pdf"
+#     params:
+#         ref=config["ref_bp_rule"]
+#     shell:
+#         "plot_phenotype_robustness_distribution_panel.py "
+#         "-f {input.query} "
+#         "-r {input.ref} "
+#         "-b {wildcards.query_bp} "
+#         "-i {params.ref} "
+#         "-o {output} "
+
+rule plot_phenotype_robustness_distribution_to_single_ref:
+    input:
+        query="bp_graph{query_bp}/ranking{rank}/phenotype_robustness_distribution.txt",
+        ref=expand("bp_graph{ref_bp}/ranking{{rank}}/phenotype_robustness_distribution.txt", ref_bp=config["ref_bp_rule"])        
+    output:
+        "bp_graph{query_bp}/ranking{rank}/analysis/phenotype_robustness_distributions.pdf"
+    params:
+        ref=config["ref_bp_rule"]
+    shell:
+        "plot_phenotype_robustness_distribution.py "
+        "-f {input.query} "
+        "-r {input.ref} "
+        "-b {wildcards.query_bp} "
+        "-i {params.ref} "
+        "-o {output} "
+
+# rule count_gt_per_ph_and_ph_per_gt:
+#     input:
+#         "bp_graph{bp}/gp_map.txt"
+#     output:
+#         gt_per_ph="bp_graph{bp}/analysis/gt_per_ph.pickle",
+#         ph_per_gt="bp_graph{bp}/analysis/ph_per_gt.pickle"
+#     params:
+#         sep=config["file_format_params"]["gp_map_col_sep"]
+#     shell:
+#         "gt_per_ph_and_ph_per_gt.py "
+#         "-i {input} "
+#         "--output_gt_per_ph {output.gt_per_ph} "
+#         "--output_ph_per_gt {output.ph_per_gt} "
+#         "-s '{params.sep}' "
+
+
+# rule plot_ph_to_gt_mapping_distributions:
+#     input:
+#         gt_per_ph="bp_graph{bp}/analysis/gt_per_ph.pickle",
+#         ph_per_gt="bp_graph{bp}/analysis/ph_per_gt.pickle"
+#     output:
+#         "bp_graph{bp}/analysis/ph_to_gt_dist.pdf",
+#     shell:
+#         "plot_ph_to_gt_distributions.py "
+#         "--input_gt_per_ph {input.gt_per_ph} "
+#         "--input_ph_per_gt {input.ph_per_gt} "
+#         "-o {output} "
+
+# rule suboptimal_gt_per_phenotype_to_txt:
+#     input:
+#         "bp_graph{bp}/analysis/gt_per_ph.pickle"
+#     output:
+#         "bp_graph{bp}/analysis/suboptimal_phenotype_frequencies.txt"
+#     shell:
+#         "dict_to_phenotype_frequencies.py "
+#         "-i {input} "
+#         "-o {output} "
+
+# rule plot_suboptimal_phenotype_distribution:
+#     input:
+#         "bp_graph{bp}/analysis/suboptimal_phenotype_frequencies.txt"
+#     output:
+#         "bp_graph{bp}/analysis/suboptimal_phenotype_frequencies.pdf"
+#     shell:
+#         "plot_phenotype_distribution.py "
+#         "-d {input} "
+#         "-o {output} "
+#         # "--log "
+

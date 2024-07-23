@@ -1,0 +1,106 @@
+configfile: "./config.yaml"
+
+rule all:
+    input:
+        "phenotype_distribution.pdf",
+        "phenotype_robustness_freq.pdf"
+
+rule generate_genotype_space:
+    output:
+        "genotypes.txt"
+    params:
+        alphabet=config["alphabet"],
+        seq_len=config["sequence_lengths"]
+    shell:
+        "build_genotype_space.py " 
+        "-a {params.alphabet} "
+        "-l {params.seq_len} "
+        "-o {output}"
+
+rule vienna_mfe_gp_map:
+    input:
+        "genotypes.txt"
+    output:
+        "gp_map.txt"
+    shell:
+        "viennaRNAmfe_gp_mapping.py "
+        "-i {input} "
+        "-o {output} "
+
+rule build_ref_gpmap_python_object:
+    input:
+        gp_map="gp_map.txt",
+        genotypes="genotypes.txt"
+    output:
+        "gp_map.pickle"
+    params:
+        alphabet=config["alphabet"]
+    shell:
+        "build_gpmap_pickle.py "
+        "-f {input.gp_map} "
+        "-g {input.genotypes} "
+        "-a {params.alphabet} "
+        "-o {output}"
+
+rule compute_robustness:
+    input:
+        gp_map="gp_map.pickle"
+    output:
+        "phenotype_robustness.txt"
+    shell:
+        "compute_robustness.py "
+        "-f {input.gp_map} "
+        "-o {output}"
+
+# rule compute_robustness:
+#     input:
+#         gp_map="gp_map.txt",
+#         genotypes="genotypes.txt"
+#     output:
+#         "phenotype_robustness.txt"
+#     params:
+#         alphabet=config["alphabet"]
+#     shell:
+#         "compute_robustness.py "
+#         "-f {input.gp_map} "
+#         "-g {input.genotypes} "
+#         "-a {params.alphabet} "
+#         "-o {output}"
+
+
+rule compute_phenotype_distribution:
+    input:
+        gp_map="gp_map.txt"
+    output:
+        "phenotype_distribution.txt"
+    shell:
+        "compute_phenotype_distribution.py "
+        "-f {input} "
+        "-o {output} "
+
+rule plot_robustness_over_freq:
+    input:
+        ph_distr="phenotype_distribution.txt",
+        ph_rob="phenotype_robustness.txt"
+    output:
+        "phenotype_robustness_freq.pdf"
+    params:
+        bp_label="canonical"
+    shell:
+        "plot_robustness_phenotype_freq.py "
+        "-d {input.ph_distr} "
+        "-r {input.ph_rob} "
+        "-l {params.bp_label} "
+        "-e True "
+        "-o {output} "
+
+rule plot_phenotype_distribution:
+    input:
+        ph_distr="phenotype_distribution.txt"
+    output:
+        "phenotype_distribution.pdf"
+    shell:
+        "plot_phenotype_distribution.py "
+        "-d {input.ph_distr} "
+        "-o {output} "
+

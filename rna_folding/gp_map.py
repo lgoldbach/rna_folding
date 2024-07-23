@@ -1,6 +1,7 @@
 import numpy as np
 import networkx as nx
 from rna_folding.utils import combinatorically_complete_genotypes
+import sys
 
 
 class GenotypePhenotypeGraph(nx.Graph):
@@ -26,8 +27,9 @@ class GenotypePhenotypeGraph(nx.Graph):
         self.phenotypes = np.array(phenotypes)
         self.alphabet = alphabet
 
+        self.phenotype_set = self.phenotypes  # turn phenotypes into a set
+
         if genotypes:
-            self.phenotype_set = list(set(self.phenotypes))
             for i, (g, p) in enumerate(zip(self.genotypes, self.phenotypes)):
                 self.add_node(g, phenotype=p, id=i)
 
@@ -121,6 +123,17 @@ class GenotypePhenotypeGraph(nx.Graph):
         gpm = cls(genotypes, phenotypes, alphabet)
         return gpm
 
+    @property
+    def phenotype_set(self):    
+        if not self._phenotype_set:
+            self.phenotype_set = self.phenotypes
+        return self._phenotype_set
+    
+    @phenotype_set.setter
+    def phenotype_set(self, phenotypes):
+        if isinstance(phenotypes, list):
+            self._phenotype_set = list(set(phenotypes))
+
     def nodes_with_phenotype(self, phenotype: str) -> list:
         """Get all nodes with a given phenotype
 
@@ -134,13 +147,16 @@ class GenotypePhenotypeGraph(nx.Graph):
         nodes = self.genotypes[np.where(self.phenotypes == phenotype)[0]]
         return nodes
 
-    def add_hamming_edges(self):
+    def add_hamming_edges(self, genotypes=None):
         """Compute all hamming edges for each genotype, i.e. add an edge 
         between a genotype and all genotypes that differ by one letter.
         
         Note:
             Current implementation assumes combinatorically complete g-p map
         """
+        if not genotypes:
+            genotypes = self.genotypes
+
         for g in self.genotypes:
             for neighbor in self._neighbors(g):
                 self.add_edge(g, neighbor)
@@ -161,14 +177,19 @@ class GenotypePhenotypeGraph(nx.Graph):
         for site, wt_l in enumerate(node):
             for l in self.alphabet:
                 if l != wt_l:
-                    neighbors.append(node[:site] + l + node[site + 1:])
+                    genotype = node[:site] + l + node[site + 1:]
+                    if genotype in self.nodes:
+                        neighbors.append(genotype)
         return neighbors
 
     def neutral_components(self, phenotypes: list = [], return_ids=False) -> list:
         """Compute all neutral components for given phenotypes. A neutral 
         component is defined as a connected set of nodes that all map to the
         same phenotype. A phenotype can have between one and #(phenotype) 
-        neutral components. 
+        neutral components. Note that this process is very mmemory intensive
+        for larger graphs. Use neutral_component_sizes for an iterative
+        and less memory intensive way of computing just the neutral component
+        sizes
 
         Args:
             phenotypes (list, optional): List of phenotypes for which neutral
@@ -203,6 +224,182 @@ class GenotypePhenotypeGraph(nx.Graph):
             neutral_components.append(final_cc)
         return neutral_components
 
+    def genotypes_of_phenotype(self, phenotype: str) -> list:
+        """Returns the list of all genotypes that map to the given phenotypes
+
+        Args:
+            phenotype (str): A phenotype string, e.g. "((((...))))".
+
+        Returns:
+            list: list of genotypes that map to <phenotype>.
+
+        """
+        genotypes = [g for g, attr in self.nodes(data=True) 
+                     if attr['phenotype']==phenotype]
+        
+        return genotypes
+        
+    def neutral_component_sizes(self, phenotypes: list = []) -> list:
+        """Compute all neutral component sizes for given phenotypes. A neutral 
+        component is defined as a connected set of nodes that all map to the
+        same phenotype. A phenotype can have between one and #(phenotype) 
+        neutral components.
+
+        Args:
+            phenotypes (list, optional):    List of phenotypes for which 
+                                            neutral components will be 
+                                            returned. If none are given, 
+                                            neutral components for all 
+                                            phenotypes will be returned. 
+                                            Defaults to [].
+           
+        Returns:
+            list:   list of lists where the ith list contains all neutral 
+                    component sizes for the ith phenotype, e.g. [[10, 3], [1]] 
+
+        """
+
+        if not phenotypes:
+            phenotypes = self.phenotype_set
+        
+        nc_sizes_all = []
+        for ph in phenotypes:
+            genotypes = self.genotypes_of_phenotype(ph) # get all genotype for <ph>
+            
+
+            # track which genotype were visited already in dict
+            visited = dict(zip(genotypes, [False]*len(genotypes)))
+
+            nc_sizes = []
+            
+            # start a DFS from every genotype
+            for init_gt in genotypes:
+                if not visited[init_gt]:  # only if it wasn't visited in a previous DFS
+                    stack = [init_gt]  # initialize a stack
+                    count_before = sum(visited.values())  # count how many genotype have been visited before this DFS
+                    while stack:
+                        g = stack.pop()  # get next genotype from stack
+                        if not visited[g]:
+                            stack = self.neutral_DFS_helper(genotype=g, 
+                                                    phenotype=ph, 
+                                                    visited=visited, 
+                                                    stack=stack)
+                                
+                    count_after = sum(visited.values())
+                    nc_sizes.append(count_after - count_before)
+                    
+            nc_sizes_all.append(nc_sizes)  # add values for ph to the results
+        
+        return nc_sizes_all
+
+    def neutral_DFS_helper(self, genotype, phenotype, visited, stack):
+        """Perform a neutral depth-first search. Only accept steps to genotypes
+        with same phenotype
+
+        Args:
+            genotype (str):     The current genotype
+            phenotype (str):    The phenotype that has to be matched
+            visited (np.array): Array that keeps track of which genotypes have 
+                                been visited
+            stack (list):       Stack with all genotypes to be visited
+
+        Returns:
+            stack (list):       Returns the updated stack. The return is not
+                                necessary as stack is changed in-place but
+                                this makes more explicit what the result of 
+                                this method is
+        """
+        visited[genotype] = True
+        for neighbor in self._neighbors(genotype):
+            neigh_ph = self.nodes[neighbor]["phenotype"]
+            if neigh_ph == phenotype and not visited[neighbor]:
+                stack.append(neighbor)     
+        return stack
+
+    def neutral_paths(self, source_genotype: str, n: int) -> list:
+        """Start n random walks from <genotype> along genotypes with the same
+        phenotype
+
+        Args:
+            genotype (str): Starting genotype for random walks
+            n (int): Number of random walks to take
+
+        Returns:
+            list: List of lists of random walks.
+
+        """
+        phenotype = self.nodes[source_genotype]["phenotype"]  # get ref phenotype
+        neutral_paths = []
+        
+        for i in range(n):   
+            # create mutation generator for each iteration
+            mutation_gen = self.mutation_space(source_genotype)  
+            neutral_path = [source_genotype]  # init list
+            
+            genotype = source_genotype
+            for mutation in mutation_gen:  # loop through possible mutations
+                new_genotype = self.mutate(genotype, mutation)
+                # only accept neutral mutants
+                if new_genotype in self.nodes:
+                    if self.nodes[new_genotype]["phenotype"] == phenotype:
+                        neutral_path.append(new_genotype)
+                        genotype = new_genotype
+                    else:
+                        continue
+            neutral_paths.append(neutral_path)
+
+        return neutral_paths
+    
+    def mutation_space(self, genotype: str):
+        """Generate new mutations for genotype. Each mutation can only appear
+        once.
+
+        Args:
+            genotype (str): A genotype.
+
+        Yields:
+            mutation (tuple): (<site, int>, <letter, str>), The first element
+                            defines the site of the mutation and the second
+                            the letter.
+
+        """
+        # create a space of all possible mutations for the genotype
+        # one list per site. Contains all mutations except the wildtype.
+        mutation_space = []
+        for site in genotype:
+            mutation_space.append([])
+            for letter in self.alphabet:
+                if letter != site:
+                    mutation_space[-1].append(letter)
+        
+        # as long as there are possible mutations left, yield a random one
+        while any(mutation_space):
+            site = np.random.choice(len(genotype))
+            # this could be done more sophisticated. I am brute-forcing
+            # random.choice until I find a site that still has available mut.
+            try:  
+                mut_i = np.random.choice(len(mutation_space[site]))
+            except ValueError:
+                continue
+            mut = mutation_space[site].pop(mut_i)
+            yield((site, mut))
+    
+    @staticmethod
+    def mutate(genotype: str, m: tuple) -> str:
+        """Take a genotype and mutate is
+
+        Args:
+            genotype (str): A genotype, e.g. ACGUA
+            m (tuple): A tuple (<site, int>, <letter, str>) defining
+                                the mutation.
+
+        Returns:
+            mutant (str): The mutant genotype
+
+        """
+        new_genotype = genotype[:m[0]] + m[1] + genotype[m[0]+1:]
+        return new_genotype
+
     def phenotype_robustness(self, nodes: list) -> float:
         """Compute robustness of given set of nodes. Defined as fraction of
         neighboring nodes with a different phenotype averaged over the whole
@@ -228,7 +425,11 @@ class GenotypePhenotypeGraph(nx.Graph):
                 total_neighb += 1
                 if self.nodes[neighbor]["phenotype"] == ref_ph:
                     same_ph += 1
-            fractions_of_identical_neighbors.append(same_ph / total_neighb)
+
+            if not total_neighb:  # if no neighbors (incomplete map)
+                fractions_of_identical_neighbors.append(0)
+            else:
+                fractions_of_identical_neighbors.append(same_ph / total_neighb)
 
         robustness = np.mean(fractions_of_identical_neighbors)
         return robustness

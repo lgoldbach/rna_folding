@@ -33,6 +33,9 @@ if __name__ ==  "__main__":
                         "e.g.:   ()() 10 4 2 1 "
                         "        .... 3 5 6 "
                         "        (..) 7 8 9 ")
+    parser.add_argument("-i", "--ignore", type=str, 
+                        help="Which phenotype to ignore, e.g. the unfolded "
+                        " one", required=False)
     parser.add_argument("-o", "--output", help="Output file"
                         "file", required=True)
 
@@ -46,6 +49,9 @@ if __name__ ==  "__main__":
                 line = line_.strip().split(" ")
                 # count number of genotypes that map to this phenotype
                 # -1 to exclude the phenotype at the start of the line
+                if line[0] == args.ignore:
+                    continue  # ignore this phenotype
+
                 count = len(line) - 1
                 outfile.write(line[0] + " " + str(count) + "\n")
     file.close()

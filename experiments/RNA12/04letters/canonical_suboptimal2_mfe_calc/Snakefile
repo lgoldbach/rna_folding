@@ -1,0 +1,37 @@
+configfile: "./config.yaml"
+
+rule all:
+    input:
+        "gpfe_map.txt"
+
+rule generate_genotype_space:
+    output:
+        "genotypes.txt"
+    params:
+        alphabet=config["alphabet"],
+        seq_len=config["sequence_lengths"]
+    shell:
+        "build_genotype_space.py " 
+        "-a {params.alphabet} "
+        "-l {params.seq_len} "
+        "-o {output}"
+
+rule nussinov_gpfe_map:
+    input:
+        "genotypes.txt"
+    output:
+        "gpfe_map.txt"
+    params:
+        graph_path=config["graph_path"],
+        min_loop_size=config["mapping_params"]["min_loop_size"],
+        suboptimal=config["mapping_params"]["suboptimal"],
+        structures_max=config["mapping_params"]["structures_max"],
+        alphabet=config["alphabet"],
+    shell:
+        "nussinov_canonical_fe_gp_mapping.py "
+        "-i {input} "
+        "-o {output} "
+        "-m {params.min_loop_size} "
+        "-s {params.suboptimal} "
+        "-z {params.structures_max} "
+        "-a {params.alphabet} "

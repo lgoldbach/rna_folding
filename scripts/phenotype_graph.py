@@ -15,13 +15,9 @@ if __name__ ==  "__main__":
 
     args = parser.parse_args()
     
-    print("start loading", datetime.now())
     gpm = pickle.load(open(args.file, "rb"))
-    print("done", datetime.now())
 
-    nc_counts = gpm.neutral_component_sizes()
-
-    print(nc_counts)
+    nc_counts = gpm.neutral_components()
 
     with open(args.output, "w") as file:
         for counts in nc_counts:

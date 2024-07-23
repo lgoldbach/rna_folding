@@ -8,6 +8,7 @@ def list_of_strings(arg):
     return arg.split(',')
 
 if __name__ ==  "__main__":
+    # assumes the first element is the reference data
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--robustness", help="Path to phenotype "
                         "robustness file", required=True, nargs="+")
@@ -25,7 +26,7 @@ if __name__ ==  "__main__":
 
     fig, ax = plt.subplots()
 
-    for robust_in, dist_in, l in zip(args.robustness, args.phenotype_dist, args.label):
+    for i, (robust_in, dist_in, l) in enumerate(zip(args.robustness, args.phenotype_dist, args.label)):
         robus = {}
         with open(robust_in, "r") as file:
             for line_ in file:
@@ -42,17 +43,22 @@ if __name__ ==  "__main__":
         x = []
         y = []
         for ph in robus:
-            y.append(robus[ph])
             # turn phenotype counts into log frequency
             try: 
                 a = distr[ph]
             except KeyError:
                 print(ph, "\n", len(distr.keys()), len(robus.keys()))
+                continue
+            y.append(robus[ph])
             d = distr[ph]/phenotype_count_sum
             d = np.log10(d)
             x.append(d)
-            
-        ax.scatter(x, y, s=5, alpha=0.5, label=l)
+        
+        # assume the first element is the reference and plot that differently
+        if i == 0:  
+            ax.scatter(x, y, s=20, label=l, marker="x", color="0.4")
+        else:
+            ax.scatter(x, y, s=5, alpha=1, label=f"Random ranking {l}")
 
     ax.set_ylim(bottom=-0.05, top=1)
     ax.set_xlim(left=-8, right=0)
@@ -64,11 +70,15 @@ if __name__ ==  "__main__":
         for freq in np.arange(exp_of_xlim_min, 1, 0.01):
             x_expec.append(np.log10(freq))
             expec.append(freq)
-        ax.plot(x_expec, expec, color="grey", ls="--", lw="1")
+        ax.plot(x_expec, expec, color="grey", ls="--", lw="1", label="Null expectation")
         
     ax.set_xlabel("Phenotype frequency (log10)")
     ax.set_ylabel("Phenotype robustness")
-    ax.set_title("Phenotype robustness over freqency plot")
-    ax.legend()
-
+    # ax.set_title("Phenotype robustness over freqency plot")
+    ax.legend(loc="upper left")
+    
+    ax.set_axisbelow(True)  # needed to set grid below points
+    plt.grid()
+    
+    plt.tight_layout()
     plt.savefig(args.output, format="pdf", dpi=30)
