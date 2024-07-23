@@ -1,0 +1,30 @@
+sequence_lengths:
+  - 12
+
+alphabet:
+  - JKLM
+
+graph_path: /home/lgold/phd/research/projects/connectivity/rna_folding/data/graphs/
+nussinov_gp_map: /home/lgold/phd/research/projects/connectivity/rna_folding/experiments/RNA12/04letters/data/nussinov_maps/gp_map7_suboptimal4.txt
+
+mapping_params:
+  min_loop_size: 3
+  suboptimal: 4
+  structures_max: 1000
+  base_pairing: 7
+
+shuffling_params:
+  percentages:
+    - 0 
+    # - 5
+    # - 10
+    # - 25
+    - 50
+    - 100
+
+rankings:
+  - 1
+  - 2
+
+# how many different starting genotypes to sample for each ranking
+starting_genotypes_per_ranking: 1

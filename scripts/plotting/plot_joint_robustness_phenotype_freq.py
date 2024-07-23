@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--robust_distr", help="Path to robustness x phenotype data where column 1 is rob. and column 2 is phenotype freq ",
-                         required=True)
+                         required=True, nargs="+")
     parser.add_argument("-l", "--label", help="Label for data, e.g. graph ids "
-                        , required=True, type=list_of_strings)
+                        , required=True, nargs="+")
     parser.add_argument("-e", "--plot_null_expectation", help="Plot null "
                         "expectation of robustness ", required=False, 
                         type=bool, default=False)
@@ -29,12 +29,14 @@ if __name__ ==  "__main__":
                 rob, dist = line.strip().split(" ")
                 y.append(float(rob))
                 x.append(np.log10(float(dist)))
-        
-        coeff = np.polyfit(x, y, 2)
-        p = np.poly1d(coeff)
-        xp = np.linspace(np.min(x)*0.95, np.max(x)*1.05, 100)
-        # ax.plot(xp, p(xp), label=l)
+                
         ax.scatter(x, y, s=5, alpha=0.5, label=l)
+        # # plot a line fit
+        # coeff = np.polyfit(x, y, 2)
+        # p = np.poly1d(coeff)
+        # xp = np.linspace(np.min(x)*0.95, np.max(x)*1.05, 100)
+        # ax.plot(xp, p(xp), label=l)
+
     ax.set_ylim(bottom=-0.05, top=1)
     ax.set_xlim(left=-8, right=0)
     

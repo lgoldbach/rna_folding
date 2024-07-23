@@ -27,7 +27,7 @@ if __name__ ==  "__main__":
     # the values are lists that contain only one phenotype, hence the 
     # "complicated" approach
     phenotypes = list(set([i[0] for i in gp_map_ref.values()]))
-
+    phenotypes.remove("............")
     A = pairwise_consensus_matrix(phenotypes=phenotypes,
                                   pg_map=pg_map, 
                                   ref_gp_map=gp_map_ref)

@@ -20,14 +20,15 @@ rule all:
 
 
         "analysis/phenotype_bias.pdf",
-        "analysis/neutral_component_sizes.pdf",
-        "analysis/neutral_path_lenth_dist.pdf"
+        "analysis/neutral_component_sizes.png",
+        "analysis/neutral_path_lenth_dist.pdf",
+        "analysis/phenotype_robustness_freq_all.pdf",
         # "analysis/shape_space_covering.pdf"
         
 rule create_subdirectories:
     priority: 1
     output:
-        temp("{path}/.mkdir_placeholder")  # temp -> this file will be deleted when all jobs are done
+        "{path}/.mkdir_placeholder" 
     shell:
         "mkdir -p {wildcards.path} && "  # create directory
         "touch {output}"  # make file (only to satisfy condition)
@@ -184,11 +185,14 @@ rule plot_joint_neutral_component_sizes:
         nc=expand("ranking{rank}/neutral_component_sizes.txt", rank=config["rankings"]),
         ref_nc="ref_neutral_component_sizes.txt"
     output:
-        "analysis/neutral_component_sizes.pdf"
+        "analysis/neutral_component_sizes.png"
+    params:
+        rank_cutoff=config["neutral_component_plotting_param"]["rank_cutoff"]
     shell:
         "plot_joint_neutral_component_sizes.py "
         "-n {input.nc} "
         "-r {input.ref_nc} "
+        "-c {params.rank_cutoff} "
         "-o {output} "
         "-l "
 
@@ -238,6 +242,41 @@ rule plot_joint_neutral_path_length_distribution:
         "-r {input.ref_lengths} "
         "-o {output} "
 
+rule compute_robustness:
+    input:
+        gp_map="{rank}/gp_map.pickle",
+    output:
+        "{rank}/phenotype_robustness.txt"
+    shell:
+        "compute_robustness.py "
+        "-f {input.gp_map} "
+        "-o {output}"
+
+rule compute_robustness_ref:
+    input:
+        gp_map="ref_gp_map.pickle"
+    output:
+        "ref_phenotype_robustness.txt"
+    shell:
+        "compute_robustness.py "
+        "-f {input.gp_map} "
+        "-o {output}"
+
+rule plot_robustness_over_freq_all:
+    input:
+        ph_distr=expand("ranking{rank}/phenotype_distribution.txt", rank=config["rankings"]) + ["ref_phenotype_distribution.txt"],
+        ph_rob=expand("ranking{rank}/phenotype_robustness.txt", rank=config["rankings"]) + ["ref_phenotype_robustness.txt"]
+    output:
+        "analysis/phenotype_robustness_freq_all.pdf"
+    params:
+        rank_label=config["rankings"] + [0]
+    shell:
+        "plot_robustness_phenotype_freq.py "
+        "-d {input.ph_distr} "
+        "-r {input.ph_rob} "
+        "-l {params.rank_label} "
+        "-e False "
+        "-o {output} "
 
 
 # ##########

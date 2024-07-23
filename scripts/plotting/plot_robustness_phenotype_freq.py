@@ -10,11 +10,11 @@ def list_of_strings(arg):
 if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--robustness", help="Path to phenotype "
-                        "robustness file", required=True, type=list_of_strings)
+                        "robustness file", required=True, nargs="+")
     parser.add_argument("-d", "--phenotype_dist", help="Path to phenotype "
-                        "distribution file", required=True, type=list_of_strings)
+                        "distribution file", required=True, nargs="+")
     parser.add_argument("-l", "--label", help="Label for data, e.g. graph ids "
-                        , required=True, type=list_of_strings)
+                        , required=True, nargs="+")
     parser.add_argument("-e", "--plot_null_expectation", help="Plot null "
                         "expectation of robustness ", required=False, 
                         type=bool, default=False)

@@ -1,10 +1,10 @@
 
 
 # path to the subtopimal gp map containing all possible structures per gp map
-gp_map_suboptimal: "/home/lgold/phd/research/projects/connectivity/rna_folding/experiments/RNA12/suboptimal4_same_randomranking/bp_graph7/gp_map.txt"
+gp_map_suboptimal: /home/lgold/phd/research/projects/connectivity/rna_folding/experiments/RNA12/04letters/data/nussinov_maps/gp_map7_suboptimal4.txt
 genotypes_suboptimal: "/home/lgold/phd/research/projects/connectivity/rna_folding/experiments/RNA12/suboptimal4_same_randomranking/genotypes.txt"
 
-gp_map_reference: "gp_map_vienna.txt"
+gp_map_reference: "/home/lgold/phd/research/projects/connectivity/rna_folding/experiments/RNA12/04letters/data/gp_maps/gp_map_canonical.txt"
 genotypes_reference: "genotypes_vienna.txt" 
 
 dead_pheno: "............"

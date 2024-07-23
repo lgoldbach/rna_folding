@@ -2,6 +2,24 @@ import numpy as np
 from itertools import product
 
 
+def shuffle_array(A, k):
+    """Shuffle an array k times. In each step two random elements are swaped
+    See Janzer et al., 2023, DOI. 10.1137/22M1530677.
+
+    Args:
+        A (list-like): An array or list like mutable object.
+    
+    Returns:
+        A (list-like): Shuffled version of A
+    """
+    for shuffle in range(k):
+        i = np.random.choice(len(A), size=1)
+        j = np.random.choice(len(A), size=1)
+        A[i], A[j] = A[j], A[i]
+    
+    return A
+
+
 def canonical_base_pairs(A, B):
     """Define all possible base-pairs. Use dictionary for quick look-up with hashing
 

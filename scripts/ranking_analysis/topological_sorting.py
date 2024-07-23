@@ -65,18 +65,18 @@ if __name__ ==  "__main__":
 
     #     print(f"Ranking: {ranking}\nInconsistent: {inconsistent}\n\n")
 
-    beats = A.sum(axis=1)
-    beaten = A.sum(axis=0)
-    win_ratio = beats/beaten
-    game_count = beats+beaten
-    rank = np.argsort(win_ratio)
-    # np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
-    print(game_count[rank], "\n\n")
-    print(beats[rank], "\n", beaten[rank], "\n\n")
-    print(rank, "\n", np.sort(win_ratio), "\n\n")
-    with open("win_ratio_ranking.txt", "w") as file:
-        for i, p in enumerate(phenotypes[rank][::-1]):
-            file.write(p + "\n")
+    # beats = A.sum(axis=1)
+    # beaten = A.sum(axis=0)
+    # win_ratio = beats/beaten
+    # game_count = beats+beaten
+    # rank = np.argsort(win_ratio)
+    # # np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
+    # print(game_count[rank], "\n\n")
+    # print(beats[rank], "\n", beaten[rank], "\n\n")
+    # print(rank, "\n", np.sort(win_ratio), "\n\n")
+    # with open("win_ratio_ranking.txt", "w") as file:
+    #     for i, p in enumerate(phenotypes[rank][::-1]):
+    #         file.write(p + "\n")
 
     # # B = np.tril(A)
     # B = A
@@ -96,19 +96,7 @@ if __name__ ==  "__main__":
 
     # G = nx.from_numpy_array(A, create_using=nx.DiGraph)
 
-    # cycle = True
-    # cycles = []
-    # while cycle:
-    #     try:
-    #         c = nx.find_cycle(G)
-    #         cycles.append(c)
-    #         for edge in c:
-    #             print(phenotypes[edge[0]], phenotypes[edge[1]])
-    #         for edge in c:
-    #             G.remove_edge(edge[0], edge[1])
-    #     except nx.exception.NetworkXNoCycle:
-    #         cycle = False
-    
+
     # import matplotlib.pyplot as plt
     # nx.draw(G, pos=nx.spring_layout(G))
     # plt.draw()
@@ -116,28 +104,44 @@ if __name__ ==  "__main__":
     # plt.savefig("digraph.pdf", format="pdf", dpi=20)
     
     ## DEBUG CODE
-    # top17 = [36, 46, 40, 29, 0, 19, 44, 9, 1, 7, 6, 20, 26, 24, 41, 42, 30]
-    # G_17 = nx.induced_subgraph(G, top17)
-    # s_gen = nx.all_topological_sorts(G_17)
-    # s = 1
-    # count = 0
-    # while s:
-    #     try:
-    #         s = next(s_gen)
-    #         print(s)
-    #         count += 1
-    #     except StopIteration:
-    #         print(count)
-    #         break
-    
-    # s_gen = nx.all_topological_sorts(G_17)
-    # print(s)
-    # edges = []
-    # for i, j in enumerate(s[:-1]):
-    #     edges.append((j, s[i+1]))
-    # edges = [(36, 46), (46, 40), (40, 29), (29, 0), (0, 19), (19, 44), (44, 9), (9, 7), (9, 6), (9, 1), (7, 20), (6, 20), (1, 20), (20, 26), (26, 24), (24, 41), (41, 42), (42, 30)]
 
+    G = nx.from_numpy_array(A, create_using=nx.DiGraph)
+
+    cycle = True
+    cycles = []
+    while cycle:
+        try:
+            c = nx.find_cycle(G)
+            cycles.append(c)
+            for edge in c:
+                print(phenotypes[edge[0]], phenotypes[edge[1]])
+            for edge in c:
+                G.remove_edge(edge[0], edge[1])
+        except nx.exception.NetworkXNoCycle:
+            cycle = False
     
+    top17 = [36, 46, 40, 29, 0, 19, 44, 9, 1, 7, 6, 20, 26, 24, 41, 42, 30]
+    G_17 = nx.induced_subgraph(G, top17)
+    s_gen = nx.all_topological_sorts(G_17)
+    s = 1
+    count = 0
+    while s:
+        try:
+            s = next(s_gen)
+            print(s)
+            count += 1
+        except StopIteration:
+            print(count)
+            break
+    
+    s_gen = nx.all_topological_sorts(G_17)
+    print(s)
+    edges = []
+    for i, j in enumerate(s[:-1]):
+        edges.append((j, s[i+1]))
+    edges = [(36, 46), (46, 40), (40, 29), (29, 0), (0, 19), (19, 44), (44, 9), (9, 7), (9, 6), (9, 1), (7, 20), (6, 20), (1, 20), (20, 26), (26, 24), (24, 41), (41, 42), (42, 30)]
+
+    print(cycles)
     # cycles_merged = []
     # for c in cycles:
     #     for e in c:

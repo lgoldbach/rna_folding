@@ -9,6 +9,7 @@ channels:
 dependencies:
  - python >=3.8,<3.9
  - matplotlib
+ - seaborn
  - numpy
  - scipy
  - networkx
@@ -17,3 +18,4 @@ dependencies:
  - scikit-learn
  - snakemake == 7.32.4
  - ViennaRNA == 2.6.3
+ - jupyter

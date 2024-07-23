@@ -7,7 +7,8 @@ rule all:
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/.mkdir_placeholder", 
         #        base_pairing=config["mapping_params"]["base_pairing"],
         #        rankings=config["rankings"]),
-        "rankings.csv"
+        # "rankings.csv"
+        "consensus_matrix_plot.pdf"
 
 
 rule preprocess_suboptimal_map:
@@ -65,6 +66,17 @@ rule binarize_consensus_matrix:
         "-i {input} "
         "-o {output} "
 
+rule plot_consensus_matrix:
+    input:
+        matrix="pairwise_consensus_matrix.pickle",
+        phenotypes="phenotypes.txt"
+    output:
+        "consensus_matrix_plot.pdf"
+    shell:
+        "plot_consensus_matrix.py "
+        "-i {input.matrix} "
+        "-p {input.phenotypes} "
+        "-o {output} "
 
 rule topological_sorting:
     input:

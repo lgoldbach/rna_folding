@@ -1,0 +1,393 @@
+configfile: "./config.yaml"
+
+rule all:
+    input:
+        # define the directories to be created (.mkdir_placeholder) simply serves
+        # to trick snakemake into making the creation of directories its own job
+        expand("ranking{rankings}/.mkdir_placeholder", 
+        rankings=config["rankings"]),
+        expand("analysis/.mkdir_placeholder"),  # create an analysis folder
+        expand("ranking{rankings}/analysis/.mkdir_placeholder", 
+        rankings=config["rankings"]),
+        # expand("ranking{rankings}/analysis/neutral_path_length_over_freq_and_dist.png", 
+        # rankings=config["rankings"]),
+
+        # expand("ranking{rankings}/analysis/phenotype_counts.txt"),
+        # expand("ranking{rankings}/analysis/neutral_component_sizes.txt"),
+        # expand("ranking{rankings}/analysis/neutral_paths.txt",
+        # rankings=config["rankings"]),
+        # expand("ranking{rankings}/neutral_components.pickle",
+        # rankings=config["rankings"]),
+        # expand("ranking{rankings}/analysis/shape_space_distances.txt"),
+
+
+        "analysis/phenotype_bias.pdf",
+        "analysis/neutral_component_sizes.pdf",
+        "analysis/neutral_path_lenth_dist.pdf",
+        "analysis/neutral_path_length_over_freq_and_dist.png",
+        "analysis/phenotype_robustness_freq_all.pdf",
+        
+        # "analysis/shape_space_covering.pdf",
+        
+        # "ranking1/analysis/neutral_paths.txt",
+
+        
+rule create_subdirectories:
+    priority: 1
+    output:
+        "{path}/.mkdir_placeholder" 
+    shell:
+        "mkdir -p {wildcards.path} && "  # create directory
+        "touch {output}"  # make file (only to satisfy condition)
+
+rule generate_genotype_space:
+    output:
+        "genotypes.txt"
+    params:
+        alphabet=config["alphabet"],
+        seq_len=config["sequence_lengths"]
+    shell:
+        "build_genotype_space.py "
+        "-a {params.alphabet} "
+        "-l {params.seq_len} "
+        "-o {output} "
+
+rule nussinov_gp_map:
+    input:
+        "genotypes.txt"
+    output:
+        config["nussinov_gp_map"]
+    params:
+        graph_path=config["graph_path"],
+        min_loop_size=config["mapping_params"]["min_loop_size"],
+        suboptimal=config["mapping_params"]["suboptimal"],
+        base_pairing=config["mapping_params"]["base_pairing"],
+        structures_max=config["mapping_params"]["structures_max"],
+        alphabet=config["alphabet"],
+    shell:
+        "nussinov_gp_mapping.py "
+        "-i {input} "
+        "-o {output} "
+        "-m {params.min_loop_size} "
+        "-s {params.suboptimal} "
+        "-z {params.structures_max} "
+        "-g {params.graph_path} "
+        "-a {params.alphabet} "
+        "-p {params.base_pairing} "
+
+rule extract_phenotype_list:
+    input:
+        config["nussinov_gp_map"]
+    output:
+        "phenotypes.txt"
+    shell:
+        "awk '{{print $1}}' {input} | sort | uniq > {output}"
+
+# take phenotype file and randomly shuffle it using shuf function
+rule create_rankings:
+    input:
+        "phenotypes.txt"
+    output:
+        "ranking{rank}/phenotype_ranking.txt"
+    shell:
+        "shuf {input} > {output} "
+
+rule extract_unfolded_genotypes_from_reference:
+    input: 
+        gp_map=config["ref_gp_map"],
+        genotypes="genotypes.txt"
+    params:
+        unfolded=config["mapping_params"]["unfolded"]
+    output:
+        "ref_unfolded_genotypes.txt"
+    shell:
+        "extract_unfolded_genotypes_from_reference.py "
+        "-i {input.gp_map} "
+        "-u {params.unfolded} "
+        "-g {input.genotypes} "
+        "-o {output} "
+
+rule flatten_gp_map:
+    input:
+        gp_map=config["nussinov_gp_map"],
+        ranking="ranking{rank}/phenotype_ranking.txt"
+    output:
+        "ranking{rank}/gp_map.txt"
+    params:
+        # dropout=config["mapping_params"]["dropout"],
+        unfolded=config["mapping_params"]["unfolded"],
+        unfolded_genotypes="ref_unfolded_genotypes.txt"
+    shell:
+        "flatten_gp_map.py "
+        "-i {input.gp_map} "
+        "-r {input.ranking} "
+        # "-g {params.unfolded_genotypes} "
+        # "-u {params.unfolded} "
+        "-o {output} "
+
+rule build_gpmap_python_object:
+    input:
+        gp_map="{rank_dir}/gp_map.txt",
+        genotypes="genotypes.txt"
+    output:
+        "{rank_dir}/gp_map.pickle",
+    params:
+        alphabet=config["alphabet"]
+    shell:
+        "build_gpmap_pickle.py "
+        "-f {input.gp_map} "
+        "-g {input.genotypes} "
+        "-a {params.alphabet} "
+        "-o {output}"
+
+rule build_ref_gpmap_python_object:
+    input:
+        gp_map=config["ref_gp_map"],
+        genotypes="genotypes.txt"
+    output:
+        "ref_gp_map.pickle",
+    params:
+        alphabet=config["alphabet"]
+    shell:
+        "build_gpmap_pickle.py "
+        "-f {input.gp_map} "
+        "-g {input.genotypes} "
+        "-a {params.alphabet} "
+        "-o {output}"
+
+rule compute_phenotype_distribution:
+    input:
+        gp_map="{rank_dir}/gp_map.txt"
+    output:
+        "{rank_dir}/phenotype_distribution.txt"
+    shell:
+        "compute_phenotype_distribution.py "
+        "-f {input} "
+        "-o {output} "
+
+rule compute_ref_phenotype_distribution:
+    input:
+        gp_map=config["ref_gp_map"]
+    output:
+        "ref_phenotype_distribution.txt"
+    shell:
+        "compute_phenotype_distribution.py "
+        "-f {input} "
+        "-o {output} "
+
+rule plot_joint_phenotype_bias:
+    input:
+        ph_distr=expand("ranking{rank}/phenotype_distribution.txt", rank=config["rankings"]),
+        ref_ph_distr="ref_phenotype_distribution.txt"
+    output:
+        "analysis/phenotype_bias.pdf"
+    shell:
+        "plot_joint_phenotype_bias.py "
+        "-i {input.ph_distr} "
+        "-r {input.ref_ph_distr} "
+        "-l "
+        "-o {output} "
+
+rule get_neutral_component_sizes:
+    input:
+        "{rank_dir}/gp_map.pickle"
+    output:
+        "{rank_dir}/neutral_component_sizes.txt"
+    shell:
+        "neutral_components.py "
+        "-f {input} "
+        "-o {output} "
+
+rule get_ref_neutral_component_sizes:
+    input:
+        "ref_gp_map.pickle"
+    output:
+        "ref_neutral_component_sizes.txt"
+    shell:
+        "neutral_components.py "
+        "-f {input} "
+        "-o {output} "
+
+rule plot_joint_neutral_component_sizes:
+    input:
+        nc=expand("ranking{rank}/neutral_component_sizes.txt", rank=config["rankings"]),
+        ref_nc="ref_neutral_component_sizes.txt"
+    output:
+        "analysis/neutral_component_sizes.pdf"
+    params:
+        rank_cutoff=config["neutral_component_plotting_param"]["rank_cutoff"]
+    shell:
+        "plot_joint_neutral_component_sizes.py "
+        "-n {input.nc} "
+        "-r {input.ref_nc} "
+        "-c {params.rank_cutoff} "
+        "-o {output} "
+        "-l "
+
+rule compute_neutral_path_length_distribution:
+    input:
+        "{rank_dir}/gp_map.pickle"
+    output:
+        length_dist="{rank_dir}/analysis/neutral_path_length_dist.txt",
+        paths="{rank_dir}/analysis/neutral_paths_chain.txt"
+    params:
+        num_of_genotypes=config["neutral_path_params"]["num_of_genotypes"],
+        num_of_paths=config["neutral_path_params"]["num_of_paths"]
+    shell:
+        "neutral_paths.py "
+        "-f {input} "
+        "-n {params.num_of_genotypes} "
+        "-s {params.num_of_paths} "
+        "-p {output.paths} "
+        "-l {output.length_dist} "
+
+rule compute_ref_neutral_path_length_distribution:
+    input:
+        "ref_gp_map.pickle"
+    output:
+        length_dist="ref_neutral_path_length_dist.txt",
+        paths="ref_neutral_paths_chain.txt"
+    params:
+        num_of_genotypes=config["neutral_path_params"]["num_of_genotypes"],
+        num_of_paths=config["neutral_path_params"]["num_of_paths"]
+    shell:
+        "neutral_paths.py "
+        "-f {input} "
+        "-n {params.num_of_genotypes} "
+        "-s {params.num_of_paths} "
+        "-p {output.paths} "
+        "-l {output.length_dist} "
+
+# rule plot_joint_neutral_path_length_distribution:
+#     input:
+#         lengths=expand("ranking{rank}/analysis/neutral_path_length_dist.txt", rank=config["rankings"]),
+#         ref_lengths="ref_neutral_path_length_dist.txt"
+#     output:
+#         "analysis/neutral_path_lenth_dist.pdf"
+#     shell:
+#         "plot_joint_neutral_path_length_dist.py "
+#         "-i {input.lengths} "
+#         "-r {input.ref_lengths} "
+#         "-o {output} "
+
+rule compute_neutral_path_length_per_ph:
+    input:
+        "{rank_dir}/gp_map.pickle"
+    output:
+        paths="{rank_dir}/analysis/neutral_paths.txt"
+    params:
+        num_of_genotypes=config["neutral_path_per_ph_params"]["num_of_genotypes"],
+        num_of_paths=config["neutral_path_per_ph_params"]["num_of_paths"]
+    shell:
+        "neutral_paths_per_phenotype.py "
+        "-f {input} "
+        "-n {params.num_of_genotypes} "
+        "-s {params.num_of_paths} "
+        "-p {output.paths} "
+
+rule compute_ref_neutral_path_length_per_ph:
+    input:
+        "ref_gp_map.pickle"
+    output:
+        paths="ref_neutral_paths.txt"
+    params:
+        num_of_genotypes=config["neutral_path_per_ph_params"]["num_of_genotypes"],
+        num_of_paths=config["neutral_path_per_ph_params"]["num_of_paths"]
+    shell:
+        "neutral_paths_per_phenotype.py "
+        "-f {input} "
+        "-n {params.num_of_genotypes} "
+        "-s {params.num_of_paths} "
+        "-p {output.paths} "
+
+# rule plot_neutral_path_length_over_ph_frequency:
+#     input:
+#         lengths=expand("ranking{rank}/analysis/neutral_paths.txt", rank=config["rankings"]),
+#         frequencies=expand("ranking{rank}/phenotype_distribution.txt", rank=config["rankings"]),
+#         ref_lengths="ref_neutral_paths.txt",
+#         ref_frequencies="ref_phenotype_distribution.txt"
+#     output:
+#         "analysis/neutral_path_length_over_freq.pdf"
+#     shell:
+#         "plot_neutral_path_length_over_phenotype_freq.py "
+#         "-i {input.lengths} "
+#         "-f {input.frequencies} "
+#         "-r {input.ref_lengths} "
+#         "-k {input.ref_frequencies} "
+#         "-o {output} "
+
+rule plot_neutral_path_length_over_ph_frequency_and_dist:
+    input:
+        lengths=expand("ranking{rank}/analysis/neutral_paths.txt", rank=config["rankings"]),
+        frequencies=expand("ranking{rank}/phenotype_distribution.txt", rank=config["rankings"]),
+        ref_lengths="ref_neutral_paths.txt",
+        ref_frequencies="ref_phenotype_distribution.txt",
+        distribution=expand("ranking{rank}/analysis/neutral_path_length_dist.txt", rank=config["rankings"]),
+        ref_distribution="ref_neutral_path_length_dist.txt"
+    output:
+        "analysis/neutral_path_length_over_freq_and_dist.png"
+    shell:
+        "plot_neutral_path_length_over_phenotype_freq_and_dist.py "
+        "-i {input.lengths} "
+        "-f {input.frequencies} "
+        "-r {input.ref_lengths} "
+        "-k {input.ref_frequencies} "
+        "-d {input.distribution} "
+        "-l {input.ref_distribution} "
+        "-o {output} "
+
+rule plot_neutral_path_length_over_ph_frequency_and_dist_single_ref:
+    input:
+        lengths="ranking{rank}/analysis/neutral_paths.txt",
+        frequencies="ranking{rank}/phenotype_distribution.txt",
+        ref_lengths="ref_neutral_paths.txt",
+        ref_frequencies="ref_phenotype_distribution.txt",
+        distribution="ranking{rank}/analysis/neutral_path_length_dist.txt",
+        ref_distribution="ref_neutral_path_length_dist.txt"
+    output:
+        "ranking{rank}/analysis/neutral_path_length_over_freq_and_dist.png"
+    shell:
+        "plot_neutral_path_length_over_phenotype_freq_and_dist.py "
+        "-i {input.lengths} "
+        "-f {input.frequencies} "
+        "-r {input.ref_lengths} "
+        "-k {input.ref_frequencies} "
+        "-d {input.distribution} "
+        "-l {input.ref_distribution} "
+        "-o {output} "
+
+rule compute_robustness:
+    input:
+        gp_map="{rank}/gp_map.pickle",
+    output:
+        "{rank}/phenotype_robustness.txt"
+    shell:
+        "compute_robustness.py "
+        "-f {input.gp_map} "
+        "-o {output}"
+
+rule compute_robustness_ref:
+    input:
+        gp_map="ref_gp_map.pickle"
+    output:
+        "ref_phenotype_robustness.txt"
+    shell:
+        "compute_robustness.py "
+        "-f {input.gp_map} "
+        "-o {output}"
+
+rule plot_robustness_over_freq_all:
+    input:
+        ph_distr=["ref_phenotype_distribution.txt"] + expand("ranking{rank}/phenotype_distribution.txt", rank=config["rankings"]),
+        ph_rob=["ref_phenotype_robustness.txt"] + expand("ranking{rank}/phenotype_robustness.txt", rank=config["rankings"])
+    output:
+        "analysis/phenotype_robustness_freq_all.pdf"
+    params:
+        rank_label=["ViennaRNA"] + config["rankings"]
+    shell:
+        "plot_robustness_phenotype_freq_w_ref.py "
+        "-d {input.ph_distr} "
+        "-r {input.ph_rob} "
+        "-l {params.rank_label} "
+        "-e True " 
+        "-o {output} "

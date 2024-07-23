@@ -20,7 +20,7 @@ if __name__ ==  "__main__":
 
     for i, file in enumerate(args.lengths):
         data = np.loadtxt(file, delimiter=" ", dtype=int).T
-        ax.scatter(data[0], data[1], color="blue")
+        ax.plot(data[0], data[1], label=f"{i+2}") #, color="blue")
 
     # plot reference data
     data = np.loadtxt(args.ref_lengths, delimiter=" ", dtype=int).T
@@ -29,6 +29,7 @@ if __name__ ==  "__main__":
 
     ax.set_xlabel("Count")
     ax.set_ylabel("Neutral path length")
-        
+    
+    plt.legend()
     plt.tight_layout()
     plt.savefig(args.output, format="pdf", dpi=30)

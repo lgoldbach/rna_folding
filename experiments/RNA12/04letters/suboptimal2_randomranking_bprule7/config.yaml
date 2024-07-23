@@ -1,0 +1,36 @@
+sequence_lengths:
+  - 12
+
+alphabet:
+  - JKLM
+
+graph_path: /home/lgold/phd/research/projects/connectivity/rna_folding/data/graphs/
+nussinov_gp_map: /home/lgold/phd/research/projects/connectivity/rna_folding/experiments/RNA12/04letters/data/nussinov_maps/gp_map7_suboptimal2.txt
+ref_gp_map: /home/lgold/phd/research/projects/connectivity/rna_folding/experiments/RNA12/04letters/data/gp_maps/gp_map_canonical_no_unfolded.txt
+# ref_gp_map: "ref_gp_map.txt"
+
+mapping_params:
+  min_loop_size: 3
+  suboptimal: 2
+  structures_max: 1000
+  base_pairing: 7
+  drop_out: 14622555  # this is the number of unfolded genotypes in canonical RNA12 map
+
+neutral_path_params:
+  num_of_genotypes: 1000  # how many random genotypes to sample
+  num_of_paths: 1000  # how many paths to sample per genotype
+
+neutral_component_plotting_param:
+  rank_cutoff: 1000  # how many ranks to show max.
+
+rankings:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10

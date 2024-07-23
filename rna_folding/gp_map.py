@@ -27,8 +27,9 @@ class GenotypePhenotypeGraph(nx.Graph):
         self.phenotypes = np.array(phenotypes)
         self.alphabet = alphabet
 
+        self.phenotype_set = self.phenotypes  # turn phenotypes into a set
+
         if genotypes:
-            self.phenotype_set = list(set(self.phenotypes))
             for i, (g, p) in enumerate(zip(self.genotypes, self.phenotypes)):
                 self.add_node(g, phenotype=p, id=i)
 
@@ -122,6 +123,17 @@ class GenotypePhenotypeGraph(nx.Graph):
         gpm = cls(genotypes, phenotypes, alphabet)
         return gpm
 
+    @property
+    def phenotype_set(self):    
+        if not self._phenotype_set:
+            self.phenotype_set = self.phenotypes
+        return self._phenotype_set
+    
+    @phenotype_set.setter
+    def phenotype_set(self, phenotypes):
+        if isinstance(phenotypes, list):
+            self._phenotype_set = list(set(phenotypes))
+
     def nodes_with_phenotype(self, phenotype: str) -> list:
         """Get all nodes with a given phenotype
 
@@ -165,7 +177,9 @@ class GenotypePhenotypeGraph(nx.Graph):
         for site, wt_l in enumerate(node):
             for l in self.alphabet:
                 if l != wt_l:
-                    neighbors.append(node[:site] + l + node[site + 1:])
+                    genotype = node[:site] + l + node[site + 1:]
+                    if genotype in self.nodes:
+                        neighbors.append(genotype)
         return neighbors
 
     def neutral_components(self, phenotypes: list = [], return_ids=False) -> list:
@@ -210,6 +224,21 @@ class GenotypePhenotypeGraph(nx.Graph):
             neutral_components.append(final_cc)
         return neutral_components
 
+    def genotypes_of_phenotype(self, phenotype: str) -> list:
+        """Returns the list of all genotypes that map to the given phenotypes
+
+        Args:
+            phenotype (str): A phenotype string, e.g. "((((...))))".
+
+        Returns:
+            list: list of genotypes that map to <phenotype>.
+
+        """
+        genotypes = [g for g, attr in self.nodes(data=True) 
+                     if attr['phenotype']==phenotype]
+        
+        return genotypes
+        
     def neutral_component_sizes(self, phenotypes: list = []) -> list:
         """Compute all neutral component sizes for given phenotypes. A neutral 
         component is defined as a connected set of nodes that all map to the
@@ -235,8 +264,7 @@ class GenotypePhenotypeGraph(nx.Graph):
         
         nc_sizes_all = []
         for ph in phenotypes:
-            genotypes = [g for g, attr in self.nodes(data=True) 
-                     if attr['phenotype']==ph] # get all genotype for <ph>
+            genotypes = self.genotypes_of_phenotype(ph) # get all genotype for <ph>
             
 
             # track which genotype were visited already in dict
@@ -303,7 +331,7 @@ class GenotypePhenotypeGraph(nx.Graph):
         phenotype = self.nodes[source_genotype]["phenotype"]  # get ref phenotype
         neutral_paths = []
         
-        for i in range(n):            
+        for i in range(n):   
             # create mutation generator for each iteration
             mutation_gen = self.mutation_space(source_genotype)  
             neutral_path = [source_genotype]  # init list
@@ -312,11 +340,12 @@ class GenotypePhenotypeGraph(nx.Graph):
             for mutation in mutation_gen:  # loop through possible mutations
                 new_genotype = self.mutate(genotype, mutation)
                 # only accept neutral mutants
-                if self.nodes[new_genotype]["phenotype"] == phenotype:
-                    neutral_path.append(new_genotype)
-                    genotype = new_genotype
-                else:
-                    continue
+                if new_genotype in self.nodes:
+                    if self.nodes[new_genotype]["phenotype"] == phenotype:
+                        neutral_path.append(new_genotype)
+                        genotype = new_genotype
+                    else:
+                        continue
             neutral_paths.append(neutral_path)
 
         return neutral_paths
@@ -396,7 +425,11 @@ class GenotypePhenotypeGraph(nx.Graph):
                 total_neighb += 1
                 if self.nodes[neighbor]["phenotype"] == ref_ph:
                     same_ph += 1
-            fractions_of_identical_neighbors.append(same_ph / total_neighb)
+
+            if not total_neighb:  # if no neighbors (incomplete map)
+                fractions_of_identical_neighbors.append(0)
+            else:
+                fractions_of_identical_neighbors.append(same_ph / total_neighb)
 
         robustness = np.mean(fractions_of_identical_neighbors)
         return robustness

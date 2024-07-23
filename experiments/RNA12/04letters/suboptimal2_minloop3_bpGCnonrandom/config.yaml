@@ -1,0 +1,27 @@
+sequence_lengths:
+  - 12
+
+alphabet:
+  - JKLM
+
+graph_path: /home/lgold/phd/research/projects/connectivity/rna_folding/data/graphs/
+
+mapping_params:
+  min_loop_size: 3
+  suboptimal: 2
+  structures_max: 1000
+  base_pairing: 
+    - 2 
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+
+mfe_params:
+  base_pair: GC
+  deterministic: -d  # this is a flag

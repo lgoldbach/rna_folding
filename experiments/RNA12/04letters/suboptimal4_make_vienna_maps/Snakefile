@@ -1,0 +1,52 @@
+configfile: "./config.yaml"
+
+rule all:
+    input:
+        expand("bp_graph{base_pairing}/.mkdir_placeholder", 
+        base_pairing=config["mapping_params"]["base_pairing"]),
+        expand("bp_graph{base_pairing}/gp_map.txt", 
+        base_pairing=config["mapping_params"]["base_pairing"])
+
+rule create_subdirectories:
+    priority: 1
+    output:
+        temp("{path}/.mkdir_placeholder")  # temp -> this file will be deleted when all jobs are done
+    shell:
+        "mkdir -p {wildcards.path} && "  # create directory
+        "touch {output}"  # make file (only to satisfy condition)
+
+rule generate_genotype_space:
+    output:
+        "genotypes.txt"
+    params:
+        alphabet=config["alphabet"],
+        seq_len=config["sequence_lengths"]
+    shell:
+        "build_genotype_space.py " 
+        "-a {params.alphabet} "
+        "-l {params.seq_len} "
+        "-o {output}"
+
+rule nussinov_gp_map:
+    input:
+        "genotypes.txt"
+    output:
+        "bp_graph{base_pairing,[0-9]+}/gp_map.txt"  # regex to constrain to numbers and prevent matching subdirectory gp_map.txt
+    params:
+        graph_path=config["graph_path"],
+        min_loop_size=config["mapping_params"]["min_loop_size"],
+        suboptimal=config["mapping_params"]["suboptimal"],
+        structures_max=config["mapping_params"]["structures_max"],
+        alphabet=config["alphabet"]
+    resources:
+        mem_mb=40000
+    shell:
+        "nussinov_gp_mapping.py "
+        "-i {input} "
+        "-o {output} "
+        "-m {params.min_loop_size} "
+        "-s {params.suboptimal} "
+        "-z {params.structures_max} "
+        "-g {params.graph_path} "
+        "-a {params.alphabet} "
+        "-p {wildcards.base_pairing} "
