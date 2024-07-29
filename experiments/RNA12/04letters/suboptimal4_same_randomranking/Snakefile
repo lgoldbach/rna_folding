@@ -4,20 +4,24 @@ rule all:
     input:
         expand("analysis/ranking{rank}/.mkdir_placeholder", rank=config["rankings"]),
 
-        expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_robustness_distributions.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"]),
-        expand("bp_graph{bp}/analysis/phenotype_bias.pdf", bp=config["mapping_params"]["base_pairing"]),
-        expand("bp_graph{bp}/analysis/neutral_component_sizes.pdf", bp=config["mapping_params"]["base_pairing"]),
-        expand("bp_graph{bp}/analysis/neutral_path_length_dist.pdf", bp=config["mapping_params"]["base_pairing"]),
-        expand("bp_graph{bp}/ranking{rank}/analysis/neutral_path_length_dist_ph_freq.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"]),
-        # expand("bp_graph{bp}/ranking{rank}/analysis/neutral_path_length_over_freq_and_dist.png", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"]),
-        # expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_robustness_freq_all.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"])
+        # expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_robustness_distributions.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"]),
+        # expand("bp_graph{bp}/analysis/phenotype_bias.pdf", bp=config["mapping_params"]["base_pairing"]),
+        # expand("bp_graph{bp}/analysis/neutral_component_sizes.pdf", bp=config["mapping_params"]["base_pairing"]),
+        # expand("bp_graph{bp}/analysis/neutral_path_length_dist.pdf", bp=config["mapping_params"]["base_pairing"]),
+        # expand("bp_graph{bp}/ranking{rank}/analysis/neutral_path_length_dist_ph_freq.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"]),
+        # # expand("bp_graph{bp}/ranking{rank}/analysis/neutral_path_length_over_freq_and_dist.png", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"]),
+        # # expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_robustness_freq_all.pdf", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"])
         
-        expand("bp_graph{base_pairing}/ranking{rankings}/analysis/.mkdir_placeholder", 
+        # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/.mkdir_placeholder", 
+        #        base_pairing=config["mapping_params"]["base_pairing"],
+        #        rankings=config["rankings"]),
+        # expand("bp_graph{base_pairing}/ranking{rankings}/.mkdir_placeholder", 
+        #        base_pairing=config["mapping_params"]["base_pairing"],
+        #        rankings=config["rankings"]),
+
+        expand("bp_graph{base_pairing}/ranking{rankings}/phenotype_graph.pickle", 
                base_pairing=config["mapping_params"]["base_pairing"],
-               rankings=config["rankings"]),
-        expand("bp_graph{base_pairing}/ranking{rankings}/.mkdir_placeholder", 
-               base_pairing=config["mapping_params"]["base_pairing"],
-               rankings=config["rankings"]),
+               rankings=config["rankings"])
                
 
         # expand("bp_graph{bp}/phenotype_robustness_freq_all.pdf", bp=config["mapping_params"]["base_pairing"]),
@@ -185,7 +189,7 @@ rule build_gpmap_python_object:
         gp_map="{bp_graph_dir}/{rank}/gp_map.txt",
         genotypes="genotypes.txt"
     output:
-        temp("{bp_graph_dir}/{rank}/gp_map.pickle"),
+        "{bp_graph_dir}/{rank}/gp_map.pickle",
     params:
         alphabet=config["alphabet"]
     resources:
@@ -494,3 +498,16 @@ rule plot_phenotype_robustness_distribution_to_single_ref:
 #         "-o {output} "
 #         # "--log "
 
+
+rule build_phenotype_graph:
+    input:
+        gp_map="bp_graph{bp}/ranking{rank}/gp_map.pickle"
+    output:
+        "bp_graph{bp}/ranking{rank}/phenotype_graph.pickle"
+    # params:
+    #     ignore=config["unfolded"]
+    shell:
+        "phenotype_graph.py "
+        "-f {input.gp_map} "
+        # "-i {params.ignore} "
+        "-o {output} "

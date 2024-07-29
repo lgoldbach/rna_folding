@@ -25,4 +25,5 @@ if __name__ ==  "__main__":
                                               genotype_ref_path=args.genotypes,
                                               alphabet=args.alphabet)
 
+
     pickle.dump(gpm, open(args.output, "wb"))

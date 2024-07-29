@@ -27,6 +27,8 @@ class GenotypePhenotypeGraph(nx.Graph):
         self.phenotypes = np.array(phenotypes)
         self.alphabet = alphabet
 
+        self._phenotype_set = None
+
         self.phenotype_set = self.phenotypes  # turn phenotypes into a set
 
         if genotypes:
@@ -97,7 +99,6 @@ class GenotypePhenotypeGraph(nx.Graph):
                 for genotype in line_[1:]:
                     genotypes.append(genotype_ref[int(genotype)])  # num to seq
                     phenotypes.append(phenotype)
-
         gpm = cls(genotypes, phenotypes, alphabet)
         return gpm
 
@@ -131,7 +132,7 @@ class GenotypePhenotypeGraph(nx.Graph):
     
     @phenotype_set.setter
     def phenotype_set(self, phenotypes):
-        if isinstance(phenotypes, list):
+        if any(np.atleast_1d(phenotypes)):
             self._phenotype_set = list(set(phenotypes))
 
     def nodes_with_phenotype(self, phenotype: str) -> list:
@@ -206,11 +207,15 @@ class GenotypePhenotypeGraph(nx.Graph):
         if not phenotypes:
             phenotypes = self.phenotype_set
         
+        self.add_hamming_edges()
+
         neutral_components = []
         for ph in phenotypes:
             nodes = [node for node, attr in self.nodes(data=True) if 
                      attr['phenotype'] == ph]
+
             G_sub = self.subgraph(nodes)
+
             cc = nx.connected_components(G_sub)
             # translate the components from full sequences to numeric id
             # for memory efficiency
@@ -239,7 +244,10 @@ class GenotypePhenotypeGraph(nx.Graph):
         
         return genotypes
         
-    def neutral_component_sizes(self, phenotypes: list = []) -> list:
+    def neutral_component_sizes(self, 
+                                phenotypes: list = [], 
+                                add_labels: bool = False,
+                                return_boundaries: bool = False) -> list:
         """Compute all neutral component sizes for given phenotypes. A neutral 
         component is defined as a connected set of nodes that all map to the
         same phenotype. A phenotype can have between one and #(phenotype) 
@@ -262,11 +270,16 @@ class GenotypePhenotypeGraph(nx.Graph):
         if not phenotypes:
             phenotypes = self.phenotype_set
         
-        nc_sizes_all = []
-        for ph in phenotypes:
-            genotypes = self.genotypes_of_phenotype(ph) # get all genotype for <ph>
-            
+        nc_counter = 0
+        if return_boundaries:
+                boundaries = []
+        else:
+            boundaries = None
 
+        nc_sizes_all = []
+
+        for ph in phenotypes:
+            genotypes = self.genotypes_of_phenotype(ph) # get all genotypes for <ph>
             # track which genotype were visited already in dict
             visited = dict(zip(genotypes, [False]*len(genotypes)))
 
@@ -276,23 +289,34 @@ class GenotypePhenotypeGraph(nx.Graph):
             for init_gt in genotypes:
                 if not visited[init_gt]:  # only if it wasn't visited in a previous DFS
                     stack = [init_gt]  # initialize a stack
+                    nc_counter += 1  # new stack, new nc
+                    print(nc_counter, flush=True)
+
                     count_before = sum(visited.values())  # count how many genotype have been visited before this DFS
                     while stack:
                         g = stack.pop()  # get next genotype from stack
+                        if add_labels:
+                            nx.set_node_attributes(self, {g: nc_counter}, "neutral_component")  # add as node attribute
+
                         if not visited[g]:
-                            stack = self.neutral_DFS_helper(genotype=g, 
-                                                    phenotype=ph, 
-                                                    visited=visited, 
-                                                    stack=stack)
-                                
+                            stack = self.neutral_DFS_helper(genotype=g,
+                                                    phenotype=ph,
+                                                    visited=visited,
+                                                    stack=stack,
+                                                    track_boundaries=return_boundaries,
+                                                    boundaries=boundaries)
+                            
                     count_after = sum(visited.values())
                     nc_sizes.append(count_after - count_before)
                     
             nc_sizes_all.append(nc_sizes)  # add values for ph to the results
         
-        return nc_sizes_all
+        if return_boundaries:
+            return nc_sizes_all, boundaries
+        else:
+            return nc_sizes_all
 
-    def neutral_DFS_helper(self, genotype, phenotype, visited, stack):
+    def neutral_DFS_helper(self, genotype, phenotype, visited, stack, track_boundaries, boundaries):
         """Perform a neutral depth-first search. Only accept steps to genotypes
         with same phenotype
 
@@ -302,6 +326,10 @@ class GenotypePhenotypeGraph(nx.Graph):
             visited (np.array): Array that keeps track of which genotypes have 
                                 been visited
             stack (list):       Stack with all genotypes to be visited
+            track_boundaries (bool): Track boundaries or not.
+            boundaries (list):  List of tuples to track where neutral component
+                                boundaries are. Only used of track_boundaries
+                                is True
 
         Returns:
             stack (list):       Returns the updated stack. The return is not
@@ -313,7 +341,9 @@ class GenotypePhenotypeGraph(nx.Graph):
         for neighbor in self._neighbors(genotype):
             neigh_ph = self.nodes[neighbor]["phenotype"]
             if neigh_ph == phenotype and not visited[neighbor]:
-                stack.append(neighbor)     
+                stack.append(neighbor)
+            elif track_boundaries and neigh_ph != phenotype:
+                boundaries.append((genotype, neighbor))
         return stack
 
     def neutral_paths(self, source_genotype: str, n: int) -> list:
