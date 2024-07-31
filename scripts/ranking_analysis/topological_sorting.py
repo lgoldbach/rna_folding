@@ -113,35 +113,51 @@ if __name__ ==  "__main__":
         try:
             c = nx.find_cycle(G)
             cycles.append(c)
-            for edge in c:
-                print(phenotypes[edge[0]], phenotypes[edge[1]])
+            # for edge in c:
+                # print(phenotypes[edge[0]], phenotypes[edge[1]])
+            # print(c)
             for edge in c:
                 G.remove_edge(edge[0], edge[1])
         except nx.exception.NetworkXNoCycle:
             cycle = False
     
-    top17 = [36, 46, 40, 29, 0, 19, 44, 9, 1, 7, 6, 20, 26, 24, 41, 42, 30]
-    G_17 = nx.induced_subgraph(G, top17)
-    s_gen = nx.all_topological_sorts(G_17)
-    s = 1
-    count = 0
-    while s:
-        try:
-            s = next(s_gen)
-            print(s)
-            count += 1
-        except StopIteration:
-            print(count)
-            break
+    nodes_in_cycle = set([node for cycle in cycles for edge in cycle for node in edge])
+    print(nodes_in_cycle, len(nodes_in_cycle))
     
-    s_gen = nx.all_topological_sorts(G_17)
-    print(s)
-    edges = []
-    for i, j in enumerate(s[:-1]):
-        edges.append((j, s[i+1]))
-    edges = [(36, 46), (46, 40), (40, 29), (29, 0), (0, 19), (19, 44), (44, 9), (9, 7), (9, 6), (9, 1), (7, 20), (6, 20), (1, 20), (20, 26), (26, 24), (24, 41), (41, 42), (42, 30)]
+    print(A.shape)
+    initial_sort = list(nx.topological_sort(G))
+    
+    for i, node in enumerate(initial_sort):
+        if node not in nodes_in_cycle:
+            G_sub = nx.induced_subgraph(G, initial_sort[0:i+1])
+            all_sorts = list(nx.all_topological_sorts(G_sub))
+        
+            print(all_sorts)  
+        else:
+            break  
 
-    print(cycles)
+    # top17 = [36, 46, 40, 29, 0, 19, 44, 9, 1, 7, 6, 20, 26, 24, 41, 42, 30]
+    # G_17 = nx.induced_subgraph(G, top17)
+    # s_gen = nx.all_topological_sorts(G_17)
+    # s = 1
+    # count = 0
+    # while s:
+    #     try:
+    #         s = next(s_gen)
+    #         print(s)
+    #         count += 1
+    #     except StopIteration:
+    #         print(count)
+    #         break
+    
+    # s_gen = nx.all_topological_sorts(G_17)
+    # print(s)
+    # edges = []
+    # for i, j in enumerate(s[:-1]):
+    #     edges.append((j, s[i+1]))
+    # edges = [(36, 46), (46, 40), (40, 29), (29, 0), (0, 19), (19, 44), (44, 9), (9, 7), (9, 6), (9, 1), (7, 20), (6, 20), (1, 20), (20, 26), (26, 24), (24, 41), (41, 42), (42, 30)]
+
+    # print(cycles)
     # cycles_merged = []
     # for c in cycles:
     #     for e in c:

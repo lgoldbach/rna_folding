@@ -1,5 +1,60 @@
 import numpy as np
 from itertools import product
+import networkx as nx
+
+
+def remove_nonadaptive_edges(gp_graph: nx.graph) -> nx.graph:
+    """Remove edges that connect two nodes i and j where node j has higher 
+    fitness than node i.
+
+    Args:
+        gp_graph (nx.graph):    A networkx graph where nodes have the attribute 
+                                "fitness"
+    
+    Returns:
+        gp_graph (nx.graph):    The input graph object without non-adaptive 
+                                edges
+
+    """
+    for (u, v) in gp_graph.edges:
+        if gp_graph.nodes[u]["fitness"] > gp_graph.nodes[v]["fitness"]:
+            gp_graph.remove_edge(u, v)
+
+    return gp_graph
+
+
+def random_fitness_landscape_from_nx_graph(gp_graph: nx.graph, 
+                                           peak_phenotype: str) -> nx.graph:
+    """Create a random fitness landscape. Assign fitnesses to phenotypes
+    from a uniform distribution between 0 and 1. peak_phenotypes always gets
+    maximum fitness (1) assigned.
+
+    Args:
+        gp_graph (nx.graph):    A networkx graph where nodes have the attribute 
+                                "phenotype"
+        peak_phenotype (str):   The phenotype to which maximum fitness is 
+                                assigned
+    
+    Returns:
+        gp_graph (nx.graph):    The input graph object with "fitness: attribute
+                                added to each node.
+
+    """
+    phenotypes = set(nx.get_node_attributes(gp_graph, "phenotype").values())
+
+    for ph in phenotypes:
+        nodes = [g for g, attr in gp_graph.nodes(data=True) 
+                 if attr['phenotype']==ph]  # get all nodes for given phenotype
+        F = np.random.uniform(low=0, high=1, size=1)  # [0, 1) interval (1 ex.)
+        # assign fitness value to all nodes
+        nx.set_node_attributes(gp_graph, dict(zip(nodes, [F]*len(nodes))), "fitness")
+
+    # assign 1 to all peak_phenotype nodes
+    nodes = [g for g, attr in gp_graph.nodes(data=True) 
+                 if attr['phenotype']==peak_phenotype]
+    nx.set_node_attributes(gp_graph, dict(zip(nodes, [1]*len(nodes))), "fitness")
+
+    return gp_graph
 
 
 def shuffle_array(A, k):

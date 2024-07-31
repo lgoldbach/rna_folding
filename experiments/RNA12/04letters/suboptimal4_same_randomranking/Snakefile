@@ -19,7 +19,7 @@ rule all:
         #        base_pairing=config["mapping_params"]["base_pairing"],
         #        rankings=config["rankings"]),
 
-        expand("bp_graph{base_pairing}/ranking{rankings}/phenotype_graph.pickle", 
+        expand("bp_graph{base_pairing}/ranking{rankings}/navigability.txt", 
                base_pairing=config["mapping_params"]["base_pairing"],
                rankings=config["rankings"])
                
@@ -510,4 +510,17 @@ rule build_phenotype_graph:
         "phenotype_graph.py "
         "-f {input.gp_map} "
         # "-i {params.ignore} "
+        "-o {output} "
+
+rule compute_navigability:
+    input:
+        phenotype_graph="bp_graph{bp}/ranking{rank}/phenotype_graph.pickle"
+    output:
+        "bp_graph{bp}/ranking{rank}/navigability.txt"
+    params:
+        sample_size = config["navigability_sample_size"]
+    shell:
+        "navigability.py "
+        "-i {input.phenotype_graph} "
+        "-n {params.sample_size} "
         "-o {output} "
