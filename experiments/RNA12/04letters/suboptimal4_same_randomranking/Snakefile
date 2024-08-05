@@ -19,9 +19,13 @@ rule all:
         #        base_pairing=config["mapping_params"]["base_pairing"],
         #        rankings=config["rankings"]),
 
-        expand("bp_graph{base_pairing}/ranking{rankings}/navigability.txt", 
+        # expand("bp_graph{base_pairing}/ranking{rankings}/navigability_phenotype.txt", 
+        #        base_pairing=config["mapping_params"]["base_pairing"],
+        #        rankings=config["rankings"]),
+        expand("bp_graph{base_pairing}/ranking{rankings}/navigability_neutral_components.txt", 
                base_pairing=config["mapping_params"]["base_pairing"],
-               rankings=config["rankings"])
+               rankings=config["rankings"]),
+        expand("analysis/ranking{ranking}/navigability_neutral_components.pdf", ranking=config["rankings"])
                
 
         # expand("bp_graph{bp}/phenotype_robustness_freq_all.pdf", bp=config["mapping_params"]["base_pairing"]),
@@ -512,15 +516,38 @@ rule build_phenotype_graph:
         # "-i {params.ignore} "
         "-o {output} "
 
-rule compute_navigability:
+rule compute_phenotype_navigability:
     input:
         phenotype_graph="bp_graph{bp}/ranking{rank}/phenotype_graph.pickle"
     output:
-        "bp_graph{bp}/ranking{rank}/navigability.txt"
+        "bp_graph{bp}/ranking{rank}/navigability_phenotype.txt"
     params:
         sample_size = config["navigability_sample_size"]
     shell:
-        "navigability.py "
+        "navigability_phenotype.py "
         "-i {input.phenotype_graph} "
         "-n {params.sample_size} "
+        "-o {output} "
+
+rule compute_neutral_component_navigability:
+    input:
+        phenotype_graph="bp_graph{bp}/ranking{rank}/phenotype_graph.pickle"
+    output:
+        "bp_graph{bp}/ranking{rank}/navigability_neutral_components.txt"
+    params:
+        sample_size = config["navigability_sample_size"]
+    shell:
+        "navigability_neutral_components.py "
+        "-i {input.phenotype_graph} "
+        "-n {params.sample_size} "
+        "-o {output} "
+
+rule plot_navigability:
+    input:
+        expand("bp_graph{bp}/ranking{{rank}}/navigability_neutral_components.txt", bp=config["mapping_params"]["base_pairing"])
+    output:
+        "analysis/ranking{rank}/navigability_neutral_components.pdf"
+    shell:
+        "plot_navigability.py "
+        "-i {input} "
         "-o {output} "

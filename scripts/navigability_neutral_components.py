@@ -52,25 +52,26 @@ if __name__ ==  "__main__":
                 shortest_paths_all.append(paths)
     
             # check whether at least on of the target neutral components is 
-            # reachable, if so navig_temp[ph_i] = 1, else, none
+            # reachable, if so navig_temp[source_node] = 1, else, none
             # If reachable by multiple neutral components this will still be 1
-            # we only care whether it is reachable not how well for now
+            # we only care whether it is reachable, not how well for now
             navig_temp = {}
             for paths in shortest_paths_all:
                 for source_node in paths:  # if node in paths it has a shortest path
-                    ph_i = G.nodes[source_node]["phenotype"]  # get node phenotype
-                    if ph_i not in navig_temp:
-                        navig_temp[ph_i] = 1
+                    if source_node not in navig_temp:
+                        navig_temp[source_node] = 1
             
-            for ph in navig_temp:
-                if ph not in navigability[ph_j]:
-                    navigability[ph_j][ph] = 1
+            # Add to the total count of how many time source_node reached ph_j
+            # across samples
+            for source_node in navig_temp:
+                if source_node not in navigability[ph_j]:
+                    navigability[ph_j][source_node] = 1
                 else:
-                    navigability[ph_j][ph] += 1
+                    navigability[ph_j][source_node] += 1
 
     with open(args.output, "w") as file:
         for ph_j in navigability:
-            for ph_i in navigability[ph_j]:
-                nav = navigability[ph_j][ph_i] / args.sample_size # normalize
-                file.write(f"{ph_j} {ph_i} {nav}\n")
+            for source_node in navigability[ph_j]:
+                nav = navigability[ph_j][source_node] / args.sample_size # normalize
+                file.write(f"{ph_j} {source_node} {nav}\n")
             
