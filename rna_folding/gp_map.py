@@ -1,7 +1,5 @@
 import numpy as np
 import networkx as nx
-from rna_folding.utils import combinatorically_complete_genotypes
-import sys
 
 
 class GenotypePhenotypeGraph(nx.Graph):

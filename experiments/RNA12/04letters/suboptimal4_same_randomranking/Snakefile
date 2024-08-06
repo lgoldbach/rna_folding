@@ -22,10 +22,14 @@ rule all:
         # expand("bp_graph{base_pairing}/ranking{rankings}/navigability_phenotype.txt", 
         #        base_pairing=config["mapping_params"]["base_pairing"],
         #        rankings=config["rankings"]),
-        expand("bp_graph{base_pairing}/ranking{rankings}/navigability_neutral_components.txt", 
-               base_pairing=config["mapping_params"]["base_pairing"],
-               rankings=config["rankings"]),
-        expand("analysis/ranking{ranking}/navigability_neutral_components.pdf", ranking=config["rankings"])
+        # expand("bp_graph{base_pairing}/ranking{rankings}/navigability_neutral_components.txt", 
+        #        base_pairing=config["mapping_params"]["base_pairing"],
+        #        rankings=config["rankings"]),
+        # expand("bp_graph{base_pairing}/ranking{rankings}/adaptive_walk_lengths.csv", 
+        #        base_pairing=config["mapping_params"]["base_pairing"],
+        #        rankings=config["rankings"]),
+        "analysis/ranking4/adaptive_walk_lengths.pdf"
+        # expand("analysis/ranking{ranking}/navigability_neutral_components.pdf", ranking=config["rankings"])
                
 
         # expand("bp_graph{bp}/phenotype_robustness_freq_all.pdf", bp=config["mapping_params"]["base_pairing"]),
@@ -551,3 +555,35 @@ rule plot_navigability:
         "plot_navigability.py "
         "-i {input} "
         "-o {output} "
+
+rule run_adaptive_walks:
+    input:
+        "bp_graph{bp}/ranking{rank}/gp_map.pickle"
+    output:
+         "bp_graph{bp}/ranking{rank}/adaptive_walk_lengths.csv"
+    params:
+        population_size=config["adaptive_walks"]["population_size"],
+        max_steps=config["adaptive_walks"]["max_steps"],
+        sample_size_walks=config["adaptive_walks"]["sample_size_walks"],
+        sample_size_landscapes=config["adaptive_walks"]["sample_size_landscapes"]
+    shell:
+        "adaptive_walks.py "
+        "-i {input} "
+        "-o {output} "
+        "-n {params.population_size} "
+        "-m {params.max_steps} "
+        "-l {params.sample_size_landscapes} "
+        "-s {params.sample_size_walks} "
+
+
+rule plot_adaptive_walks_lengths:
+    input:
+        expand("bp_graph{bp}/ranking{rank}/adaptive_walk_lengths.csv", bp=config["mapping_params"]["base_pairing"],
+               rank=config["rankings"])
+    output:
+        "analysis/ranking4/adaptive_walk_lengths.pdf"
+    shell:
+        "plot_adaptive_walk_lengths.py "
+        "-i {input} "
+        "-o {output} "
+

@@ -1,6 +1,7 @@
 import numpy as np
 from itertools import product
 import networkx as nx
+from rna_folding.gp_map import GenotypePhenotypeGraph
 
 
 def remove_nonadaptive_edges(gp_graph: nx.graph) -> nx.graph:

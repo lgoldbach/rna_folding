@@ -22,7 +22,7 @@ if __name__ ==  "__main__":
     for i, file in enumerate(args.input, start=2):
         with open(file, "r") as f:            
             navig.append([float(line.strip().split(" ")[-1]) for line in f])  # get value from last columns
-    sns.violinplot(navig)
+    sns.boxplot(navig)
     
     ax.set_xlabel("Base-pairing rule")
     ax.set_ylabel("Navigability")
