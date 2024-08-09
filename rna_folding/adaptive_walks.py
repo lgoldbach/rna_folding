@@ -13,7 +13,11 @@ def kimura_fixation(s: float, N: int):
         float: fixation probability (float in [0, 1]).
     
     """
-    return (1-np.exp(-2*s))/(1-np.exp(-2*N*s))
+    if s == 0:
+        s = -10**-10
+
+    p = (1-np.exp(-2*s))/(1-np.exp(-2*N*s))
+    return p
 
 
 def adaptive_walk(gpmap: GenotypePhenotypeGraph, 
@@ -21,10 +25,15 @@ def adaptive_walk(gpmap: GenotypePhenotypeGraph,
                   fitness_function,
                   max_steps,
                   population_size,
-                  fixation_function) -> list:
+                  fixation_function,
+                  rng) -> list:
     path = [starting_genotype]
+    if fitness_function[gpmap.nodes[path[-1]]["phenotype"]] == 1:
+        return path
+    
     while len(path) < max_steps:
-        candidate = np.random.choice(gpmap._neighbors(path[-1]))
+        # np.random.seed(12343124*len(path)**4)
+        candidate = rng.choice(gpmap._neighbors(path[-1]))
         f1 = fitness_function[gpmap.nodes[path[-1]]["phenotype"]]
         f2 = fitness_function[gpmap.nodes[candidate]["phenotype"]]
         if f2 == 1:  # found target phenotype
@@ -38,10 +47,9 @@ def adaptive_walk(gpmap: GenotypePhenotypeGraph,
         # can infer waiting times from a realistic mutation probability
         # with high population size it will be impossible to traverse neutral
         # nets with this approach
-        if np.random.uniform() < p:
+        if rng.uniform() < p:
             path.append(candidate)
         else:
             path.append(path[-1])
-
     return path
 

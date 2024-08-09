@@ -20,161 +20,90 @@ if __name__ ==  "__main__":
 
     A = pickle.load(open(args.input, "rb"))
 
-    # def position(element, rank, ranking, pair_ranking, inconsistent):
-    #     shift = 0
-    #     if rank+shift == len(ranking):
-    #         ranking.append([element])
-
-    #     if pair_ranking[element, ranking[rank]].sum() > 0:  # if ranking above at least one of the current rank
-    #         shift = -1
-
-    #     if pair_ranking[ranking[rank], element].sum() > 0:
-    #         if shift == -1:
-    #             inconsistent.append((element, ranking[rank]))
-    #             return
-    #             # print( ValueError(f"Inconsistent ranking between element {element} and elements {ranking[rank]}")
-    #             # also check if the inconsistency is with two others. In that case this element can be used to sort the other two
-    #         else:
-    #             shift = 1
-
-    #     if shift == 0:  # here I have to see if it is outranked by lower ones, so actually continue the search
-    #         ranking[rank].append(element)
-        
-    #     elif shift == -1:       # insert as new rank above current rank
-    #         ranking.insert(rank, [element])
-        
-        
-    #     elif shift == 1:   # continue search at next position
-    #         if rank+shift == len(ranking):  # reached end, so append
-    #             ranking.append([element])
-    #         else:
-    #             position(element, rank=rank+1, ranking=ranking, pair_ranking=pair_ranking, inconsistent=inconsistent)  # search next pos
-    
-    
- 
-    # from random import sample
-    # phs = list(range(1, A.shape[0]))
-    # print(phs, "\n\n")
-    # for i in range(1):
-    #     phs_r = sample(phs, len(phs))
-    #     ranking = [[phs_r[0]]]
-    #     inconsistent = []
-    #     print(f"Phenotype order: {phs_r}\n")
-    #     for ph in phs_r:
-    #         position(ph, rank=0, ranking=ranking, pair_ranking=A, inconsistent=inconsistent)
-
-    #     print(f"Ranking: {ranking}\nInconsistent: {inconsistent}\n\n")
-
-    # beats = A.sum(axis=1)
-    # beaten = A.sum(axis=0)
-    # win_ratio = beats/beaten
-    # game_count = beats+beaten
-    # rank = np.argsort(win_ratio)
-    # # np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
-    # print(game_count[rank], "\n\n")
-    # print(beats[rank], "\n", beaten[rank], "\n\n")
-    # print(rank, "\n", np.sort(win_ratio), "\n\n")
-    # with open("win_ratio_ranking.txt", "w") as file:
-    #     for i, p in enumerate(phenotypes[rank][::-1]):
-    #         file.write(p + "\n")
-
-    # # B = np.tril(A)
-    # B = A
-    # idx = np.where(B == 1)
-    # with open("consensus_edges.csv", "w") as f:
-    #     f.write("SOURCE,TARGET\n")
-    #     for e in list(zip(*idx)):
-    #         f.write(phenotypes[e[0]] + "," + phenotypes[e[1]] + "\n")
-    
-    # print(A[9], A[9].sum())
-    
-    
-
-     ### DEBUG CODE
-    # import numpy as np
-    # A = np.array([[0, 1, 0], [0, 0, 1], [0, 0, 0]])
-
-    # G = nx.from_numpy_array(A, create_using=nx.DiGraph)
-
-
-    # import matplotlib.pyplot as plt
-    # nx.draw(G, pos=nx.spring_layout(G))
-    # plt.draw()
-
-    # plt.savefig("digraph.pdf", format="pdf", dpi=20)
-    
-    ## DEBUG CODE
-
+    # create a networkx directed graph using adjacecy matrix A
     G = nx.from_numpy_array(A, create_using=nx.DiGraph)
+    # Some nodes may not be connected, i.e. some phenotypes have not appeared
+    # in a suboptimal set together. This will lead to non-unique topological
+    # sortings later on. To prevent that we add two edges connecting the nodes
+    # in opposite directions to artificially create a cycle between them, so
+    # that they will be lumped together as unsortable later in the algorithm
+    for n_i in G.nodes:
+        for n_j in G.nodes:
+            if (n_i, n_j) not in G.edges and (n_j, n_i) not in G.edges and n_i != n_j:
+                print(n_i, n_j)
+                G.add_edges_from([(n_i, n_j), (n_j, n_i)])
 
+    # Find all the cycles and remove edges of these cycles (not nodes!) until
+    # there are no more cycles and we can do topological sort
     cycle = True
     cycles = []
     while cycle:
         try:
             c = nx.find_cycle(G)
             cycles.append(c)
-            # for edge in c:
-                # print(phenotypes[edge[0]], phenotypes[edge[1]])
-            # print(c)
-            for edge in c:
-                G.remove_edge(edge[0], edge[1])
+            for edge in c: # remove all the edges of the cycle
+                G.remove_edge(edge[0], edge[1])  
         except nx.exception.NetworkXNoCycle:
             cycle = False
     
+    # get all the nodes that are part of a cycle
     nodes_in_cycle = set([node for cycle in cycles for edge in cycle for node in edge])
-    print(nodes_in_cycle, len(nodes_in_cycle))
     
-    print(A.shape)
+    # Get a topolical sorting on G. This is probably not unique all the way 
+    # through but we do not care since we only care about the unique parts
     initial_sort = list(nx.topological_sort(G))
-    
-    for i, node in enumerate(initial_sort):
-        if node not in nodes_in_cycle:
-            G_sub = nx.induced_subgraph(G, initial_sort[0:i+1])
-            all_sorts = list(nx.all_topological_sorts(G_sub))
-        
-            print(all_sorts)  
+
+    # extract the parts of the topoligcal sorting that are unique
+    # The logic is: Loop over the sorting from top to bottom. Continue for as
+    # long as nodes have not been part of a cycle. These nodes have to 
+    # have a topological sorting. Once we hit a node that was part of a cycle
+    # we loop until we hit a nodes wasn't part of a cycle. All the nodes we
+    # found until then were part of a cycle and thus cannot be sorted. 
+    # All these nodes are just lumped into one cluster.
+
+    sort = []  # the overall sorting
+    all_sub_sorts = [[]]  # track the sorts for subsets of nodes
+    no_sort = []  # track the nodes that are not sortable
+    k = 0  # track the start of each new interval
+    for i, node in enumerate(initial_sort, start=1):
+        if node not in nodes_in_cycle:  # this starts an interval of sortable nodes
+            if len(no_sort) > 0:  # if we had an unsortable interval before, first append that intervall to the main sort
+                sort.append(no_sort)
+                no_sort = []  # reset no_sort
+            G_sub = nx.induced_subgraph(G, initial_sort[k:i])  # induce a subgraph on the subinterval. 
+     
+            all_sub_sorts = list(nx.all_topological_sorts(G_sub))
+            # we have more than one way to sort this, which should not happen 
+            # in this case as all the pairs node are connected in the beginning 
+            # and thus cycle free sets of nodes should have a unique sorting.
+            # alternatively one can say that if the nodes form a hamiltonian 
+            # path, there is a unique sorting
+            if len(all_sub_sorts) > 1:
+                print(f"Non-unique topoligical sorting detected. Should not "
+                      f"happen if there is a hamiltonian path including all the "
+                      f"nodes, which is the case in a fully connected graph.\n "
+                      f"Only plausible case is if the two structures never met "
+                      f"in a suboptimal set\n"
+                      f"All sortings: {all_sub_sorts}.\nList of unsorted "
+                      f"previous interval if applicable {no_sort}\n "
+                      f"Inital sort for this interval: {initial_sort[k:i+1]}\n "
+                      f"Whole initial sort: {initial_sort}")
+            
+                
+                            
+
+                print(G_sub.edges, 32 in nodes_in_cycle, 1 in nodes_in_cycle, 41 in nodes_in_cycle)
+                break
         else:
-            break  
+            k = i
+            if len(all_sub_sorts[0]) > 0:
+                for n in all_sub_sorts[0]:
+                    sort.append([n])
+            no_sort.append(node)
+            all_sub_sorts = [[]]  # reset
+    if len(no_sort) > 0:
+        sort.append(no_sort)
 
-    # top17 = [36, 46, 40, 29, 0, 19, 44, 9, 1, 7, 6, 20, 26, 24, 41, 42, 30]
-    # G_17 = nx.induced_subgraph(G, top17)
-    # s_gen = nx.all_topological_sorts(G_17)
-    # s = 1
-    # count = 0
-    # while s:
-    #     try:
-    #         s = next(s_gen)
-    #         print(s)
-    #         count += 1
-    #     except StopIteration:
-    #         print(count)
-    #         break
-    
-    # s_gen = nx.all_topological_sorts(G_17)
-    # print(s)
-    # edges = []
-    # for i, j in enumerate(s[:-1]):
-    #     edges.append((j, s[i+1]))
-    # edges = [(36, 46), (46, 40), (40, 29), (29, 0), (0, 19), (19, 44), (44, 9), (9, 7), (9, 6), (9, 1), (7, 20), (6, 20), (1, 20), (20, 26), (26, 24), (24, 41), (41, 42), (42, 30)]
-
-    # print(cycles)
-    # cycles_merged = []
-    # for c in cycles:
-    #     for e in c:
-    #         cycles_merged.append(e)
-    # edges_cycles = cycles_merged + edges
-    # with open("consensus_edges_w_cycles.csv", "w") as f:
-    #     f.write("SOURCE,TARGET\n")
-    #     for e in edges_cycles:
-    #         f.write(phenotypes[e[0]] + "," + phenotypes[e[1]] + "\n")
-
-    # with open("consensus_edges.csv", "w") as f:
-    #     f.write("SOURCE,TARGET\n")
-    #     for e in edges:
-    #         f.write(phenotypes[e[0]] + "," + phenotypes[e[1]] + "\n")
-
-
-    # # with open(args.output, "w") as file:
-    # #     for s in S:
-    # #         file.write(" ".join(s))
-        
+    with open(args.output, "w") as file:
+        for cluster in sort:
+            file.write(" ".join([str(node) for node in cluster]) + "\n")

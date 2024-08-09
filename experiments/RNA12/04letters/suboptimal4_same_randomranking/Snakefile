@@ -25,10 +25,11 @@ rule all:
         # expand("bp_graph{base_pairing}/ranking{rankings}/navigability_neutral_components.txt", 
         #        base_pairing=config["mapping_params"]["base_pairing"],
         #        rankings=config["rankings"]),
-        # expand("bp_graph{base_pairing}/ranking{rankings}/adaptive_walk_lengths.csv", 
-        #        base_pairing=config["mapping_params"]["base_pairing"],
-        #        rankings=config["rankings"]),
-        "analysis/ranking4/adaptive_walk_lengths.pdf"
+        expand("bp_graph{base_pairing}/ranking{rankings}/shortest_path_lengths.txt", 
+               base_pairing=config["mapping_params"]["base_pairing"],
+               rankings=config["rankings"]),
+        expand("analysis/ranking4/adaptive_walk_lengths_{pop_size}.pdf", pop_size=config['adaptive_walks']['population_sizes'])
+
         # expand("analysis/ranking{ranking}/navigability_neutral_components.pdf", ranking=config["rankings"])
                
 
@@ -537,14 +538,16 @@ rule compute_neutral_component_navigability:
     input:
         phenotype_graph="bp_graph{bp}/ranking{rank}/phenotype_graph.pickle"
     output:
-        "bp_graph{bp}/ranking{rank}/navigability_neutral_components.txt"
+        navigability="bp_graph{bp}/ranking{rank}/navigability_neutral_components.txt",
+        shortest_path_lengths="bp_graph{bp}/ranking{rank}/shortest_path_lengths.txt"
     params:
         sample_size = config["navigability_sample_size"]
     shell:
         "navigability_neutral_components.py "
         "-i {input.phenotype_graph} "
         "-n {params.sample_size} "
-        "-o {output} "
+        "-o {output.navigability} "
+        "-s {output.shortest_path_lengths} "
 
 rule plot_navigability:
     input:
@@ -560,9 +563,8 @@ rule run_adaptive_walks:
     input:
         "bp_graph{bp}/ranking{rank}/gp_map.pickle"
     output:
-         "bp_graph{bp}/ranking{rank}/adaptive_walk_lengths.csv"
+        "bp_graph{bp}/ranking{rank}/adaptive_walk_lengths_{pop_size}.csv"
     params:
-        population_size=config["adaptive_walks"]["population_size"],
         max_steps=config["adaptive_walks"]["max_steps"],
         sample_size_walks=config["adaptive_walks"]["sample_size_walks"],
         sample_size_landscapes=config["adaptive_walks"]["sample_size_landscapes"]
@@ -570,20 +572,22 @@ rule run_adaptive_walks:
         "adaptive_walks.py "
         "-i {input} "
         "-o {output} "
-        "-n {params.population_size} "
+        "-n {wildcards.pop_size} "
         "-m {params.max_steps} "
         "-l {params.sample_size_landscapes} "
         "-s {params.sample_size_walks} "
 
-
 rule plot_adaptive_walks_lengths:
     input:
-        expand("bp_graph{bp}/ranking{rank}/adaptive_walk_lengths.csv", bp=config["mapping_params"]["base_pairing"],
+        expand("bp_graph{bp}/ranking{rank}/adaptive_walk_lengths_{{pop_size}}.csv", bp=config["mapping_params"]["base_pairing"],
                rank=config["rankings"])
     output:
-        "analysis/ranking4/adaptive_walk_lengths.pdf"
+            "analysis/ranking4/adaptive_walk_lengths_{pop_size}.pdf"
     shell:
         "plot_adaptive_walk_lengths.py "
         "-i {input} "
         "-o {output} "
+
+rule plot_shortes_paths_lengths:
+
 
