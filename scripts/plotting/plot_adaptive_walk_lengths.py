@@ -21,7 +21,7 @@ if __name__ ==  "__main__":
 
     walk_lengths=[]
     aborted = []
-    for i, file_path in enumerate(args.input, start=1):
+    for i, file_path in enumerate(args.input, start=2):
         # if i == 10:
         #     continue
         walk_lengths.append([])
@@ -35,17 +35,19 @@ if __name__ ==  "__main__":
                     else:
                         aborted[-1] += 1
 
-        ax.text(i, 5, f"{int(np.round(len(walk_lengths[-1])/(aborted[-1]+len(walk_lengths[-1]))*100, 0))}%", fontsize=8, backgroundcolor="white", ha="center")
+        t = ax.text(i, 100, f"{int(np.round(len(walk_lengths[-1])/(aborted[-1]+len(walk_lengths[-1]))*100, 0))}%", fontsize=8, weight="bold", backgroundcolor="white", ha="center", bbox=dict(facecolor='white', alpha=0, edgecolor="none"))
 
         # print(aborted[-1]/(aborted[-1]+len(walk_lengths[-1])), flush=True)
         # print(aborted[-1]+len(walk_lengths[-1]), flush=True)
                         
         
     # ax.boxplot(walk_lengths, positions=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11], showfliers=False)
-    ax.boxplot(walk_lengths, showfliers=False)
-    
+    ax.violinplot(walk_lengths, positions=range(2, 2+len(args.input)), showmeans=True, showmedians=True)
+
     ax.set_xlabel("Base-pairing rule")
     ax.set_ylabel("Adaptive walk lengths")
+    plt.xticks(range(2, 2+len(args.input)))
 
+    ax.grid(axis='y')
     # plt.xticks([0, 1, 2, 3, 4, 5, 6, 7, 8], labels=)    
     plt.savefig(args.output, format="pdf", dpi=30)

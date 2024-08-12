@@ -5,6 +5,7 @@ import pickle
 import networkx as nx
 import copy
 import datetime
+import numpy as np
 
 from rna_folding.utils import random_fitness_landscape_from_nx_graph, remove_nonadaptive_edges
 
@@ -83,7 +84,9 @@ if __name__ ==  "__main__":
                 file.write(f"{ph_j} {source_node} {nav}\n")
 
     with open(args.shortest_path_lengths, "w") as file:
-        file.write(" ".join([str(l) for l in all_shortest_path_lengths]))
+        mean = np.mean(all_shortest_path_lengths)
+        med = np.median(all_shortest_path_lengths)
+        file.write(str(mean) + " " + str(med))
 
 
             

@@ -28,7 +28,8 @@ rule all:
         expand("bp_graph{base_pairing}/ranking{rankings}/shortest_path_lengths.txt", 
                base_pairing=config["mapping_params"]["base_pairing"],
                rankings=config["rankings"]),
-        expand("analysis/ranking4/adaptive_walk_lengths_{pop_size}.pdf", pop_size=config['adaptive_walks']['population_sizes'])
+        expand("analysis/ranking4/adaptive_walk_lengths_{pop_size}.pdf", pop_size=config['adaptive_walks']['population_sizes']),
+        expand("analysis/ranking{rankings}/shortest_path_lengths_nc_navigability.pdf", rankings=config["rankings"])
 
         # expand("analysis/ranking{ranking}/navigability_neutral_components.pdf", ranking=config["rankings"])
                
@@ -582,12 +583,24 @@ rule plot_adaptive_walks_lengths:
         expand("bp_graph{bp}/ranking{rank}/adaptive_walk_lengths_{{pop_size}}.csv", bp=config["mapping_params"]["base_pairing"],
                rank=config["rankings"])
     output:
-            "analysis/ranking4/adaptive_walk_lengths_{pop_size}.pdf"
+        "analysis/ranking4/adaptive_walk_lengths_{pop_size}.pdf"
     shell:
         "plot_adaptive_walk_lengths.py "
         "-i {input} "
         "-o {output} "
 
-rule plot_shortes_paths_lengths:
+rule plot_shortest_path_lengths:
+    input:
+        expand("bp_graph{bp}/ranking{rank}/shortest_path_lengths.txt", bp=config["mapping_params"]["base_pairing"],
+               rank=config["rankings"])
+    output:
+        "analysis/ranking{rank}/shortest_path_lengths_nc_navigability.pdf"
+    shell:
+        "plot_shortest_path_lengths.py "
+        "-i {input} "
+        "-o {output} "
+    
+    
+
 
 
