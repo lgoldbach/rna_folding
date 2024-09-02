@@ -33,8 +33,10 @@ if __name__ ==  "__main__":
         line_ = line.strip().split(" ")
         ph = line_[0]
 
-        if ph not in ph_to_rank:  # skip if phenotype is not part of ranking
-            print(ph, flush=True)
+        if ph not in ph_to_rank:  # add phenotype if it's not part of ranking
+            rank = max(list(ph_to_rank.values())) + 1
+            ph_to_rank[ph] = rank
+            print("Added to ranking:", ph, flush=True)
             continue
 
         rank = ph_to_rank[ph]
@@ -45,6 +47,7 @@ if __name__ ==  "__main__":
             elif rank < flat_gp_map[gt]:
                 flat_gp_map[gt] = rank  # update to better ranked ph
 
+    print("rank:", ph_to_rank.keys())
     # delete random genotypes from map
     if args.dropout:
         phenotypes.append(args.unfolded)  # add unfolded phenotype to end of ranking for reference
@@ -67,6 +70,5 @@ if __name__ ==  "__main__":
     for gt in flat_gp_map:
         ph = phenotypes[flat_gp_map[gt]]  # change rank to ph
         ph_to_gt[ph].append(gt)
-
     # save to file
     dict_to_gpmap(ph_to_gt, args.output)

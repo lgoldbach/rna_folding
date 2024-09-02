@@ -7,8 +7,8 @@ rule all:
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/.mkdir_placeholder", 
         #        base_pairing=config["mapping_params"]["base_pairing"],
         #        rankings=config["rankings"]),
-        # "rankings.csv"
-        "consensus_matrix_plot.pdf"
+        "rankings.csv"
+        # "consensus_matrix_plot.pdf"
 
 
 rule preprocess_suboptimal_map:
