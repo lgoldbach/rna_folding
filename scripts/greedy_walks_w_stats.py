@@ -7,7 +7,7 @@ import numpy as np
 import datetime
 import time
 
-from rna_folding.adaptive_walks import adaptive_walk, kimura_fixation
+from rna_folding.adaptive_walks import greedy_adaptive_walk, kimura_fixation
 
 
 if __name__ ==  "__main__":
@@ -22,7 +22,8 @@ if __name__ ==  "__main__":
                         type=int, required=False)
     parser.add_argument("-m", "--max_steps", help="Maximum number of steps "
                         "per walk", type=int, required=False)
-    parser.add_argument("-o", "--output", help="file for output data",
+    parser.add_argument("-o", "--output", help="file to store the data triplet: "
+                        "<genotype>,<nc_id>,<fitness>",
                         required=True)
     
     args = parser.parse_args()
@@ -40,9 +41,9 @@ if __name__ ==  "__main__":
     # and sample_size
     navigability = {}
 
-    adaptive_walk_lengths = {}  # store adaptive walk lenghts for each phenotype
+    triplets = {}  # store triplet: "<genotype>,<nc_id>,<fitness>"
     for target_ph in phenotypes:  # loop over target phenotypes
-        adaptive_walk_lengths[target_ph] = []
+        triplets[target_ph] = []
 
         # print(f"Start {target_ph}", datetime.datetime.now().hour, datetime.datetime.now().minute, flush=True)
         for i in range(args.sample_size_landscapes):
@@ -68,22 +69,17 @@ if __name__ ==  "__main__":
             # print(f"Start walks", datetime.datetime.now().hour, datetime.datetime.now().minute, flush=True)
             for g in start_gt:
                 # store adaptive walks by target phenotype
-                path = adaptive_walk(G, g,
+                path = greedy_adaptive_walk(G, g,
                                      fitness_function=ph_to_fitness, 
                                      max_steps=args.max_steps,
-                                     fixation_function=kimura_fixation,
-                                     population_size=args.population_size,
                                      rng=rng)
-                if ph_to_fitness[G.nodes[path[-1]]["phenotype"]] == 1:  # walk reached target
-                    adaptive_walk_lengths[target_ph].append(len(path))
-                else:
-                    adaptive_walk_lengths[target_ph].append(-1)  # walk didn't reach target
+                # nc_paths[target_ph].append([str(G.nodes[n]["neutral_component"]) for n in path])
+                triplets[target_ph].append([n + "," + str(G.nodes[n]["neutral_component"])+","+str(np.round(ph_to_fitness[G.nodes[n]["phenotype"]], 4)) for n in path])
+                
             
-
     with open(args.output, "w") as file:
-        for target_ph in adaptive_walk_lengths:
-            file.write(f"{target_ph}")
-            for path_len in adaptive_walk_lengths[target_ph]:
-                file.write(" " + str(path_len))
-            file.write("\n")
-        
+        for target_ph in triplets:
+            file.write(f"ph {target_ph}\n")
+            for i, path in enumerate(triplets[target_ph]):
+                file.write(" ".join(path))
+                file.write("\n")

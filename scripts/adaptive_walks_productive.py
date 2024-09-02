@@ -7,7 +7,7 @@ import numpy as np
 import datetime
 import time
 
-from rna_folding.adaptive_walks import adaptive_walk, kimura_fixation
+from rna_folding.adaptive_walks import productive_adaptive_walk, kimura_fixation
 
 
 if __name__ ==  "__main__":
@@ -68,7 +68,7 @@ if __name__ ==  "__main__":
             # print(f"Start walks", datetime.datetime.now().hour, datetime.datetime.now().minute, flush=True)
             for g in start_gt:
                 # store adaptive walks by target phenotype
-                path = adaptive_walk(G, g,
+                path = productive_adaptive_walk(G, g,
                                      fitness_function=ph_to_fitness, 
                                      max_steps=args.max_steps,
                                      fixation_function=kimura_fixation,

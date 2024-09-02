@@ -36,18 +36,23 @@ if __name__ ==  "__main__":
                         aborted[-1] += 1
 
         t = ax.text(i, 100, f"{int(np.round(len(walk_lengths[-1])/(aborted[-1]+len(walk_lengths[-1]))*100, 0))}%", fontsize=8, weight="bold", backgroundcolor="white", ha="center", bbox=dict(facecolor='white', alpha=0, edgecolor="none"))
-
+        # ax.bar(i, np.round(len(walk_lengths[-1])/(aborted[-1]+len(walk_lengths[-1])), 2), zorder=10)
         # print(aborted[-1]/(aborted[-1]+len(walk_lengths[-1])), flush=True)
         # print(aborted[-1]+len(walk_lengths[-1]), flush=True)
-                        
+        print(file_path, aborted[-1], len(walk_lengths[-1]), len(walk_lengths[-1])+aborted[-1])
+    # ax.set_ylim(0, 1)     
         
     # ax.boxplot(walk_lengths, positions=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11], showfliers=False)
     ax.violinplot(walk_lengths, positions=range(2, 2+len(args.input)), showmeans=True, showmedians=True)
 
     ax.set_xlabel("Base-pairing rule")
     ax.set_ylabel("Adaptive walk lengths")
+    # ax.set_ylabel("Navigability\n Perc. of adaptive walks reaching target", fontsize=10)
+
     plt.xticks(range(2, 2+len(args.input)))
 
-    ax.grid(axis='y')
+    ax.grid(axis='y', zorder=1)
+    plt.tight_layout()
     # plt.xticks([0, 1, 2, 3, 4, 5, 6, 7, 8], labels=)    
     plt.savefig(args.output, format="pdf", dpi=30)
+    # plt.savefig(args.output, format="pdf", dpi=30)

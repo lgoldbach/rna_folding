@@ -7,7 +7,7 @@ import numpy as np
 import datetime
 import time
 
-from rna_folding.adaptive_walks import adaptive_walk, kimura_fixation
+from rna_folding.adaptive_walks import greedy_adaptive_walk_no_neutral, kimura_fixation
 
 
 if __name__ ==  "__main__":
@@ -17,8 +17,6 @@ if __name__ ==  "__main__":
     parser.add_argument("-l", "--sample_size_landscapes", help="How many random fitness  "
                         "landscapes to sample", type=int, required=False)
     parser.add_argument("-s", "--sample_size_walks", help="How many random walks to sample ",
-                        type=int, required=False)
-    parser.add_argument("-n", "--population_size", help="Populaton size", 
                         type=int, required=False)
     parser.add_argument("-m", "--max_steps", help="Maximum number of steps "
                         "per walk", type=int, required=False)
@@ -68,11 +66,9 @@ if __name__ ==  "__main__":
             # print(f"Start walks", datetime.datetime.now().hour, datetime.datetime.now().minute, flush=True)
             for g in start_gt:
                 # store adaptive walks by target phenotype
-                path = adaptive_walk(G, g,
+                path = greedy_adaptive_walk_no_neutral(G, g,
                                      fitness_function=ph_to_fitness, 
                                      max_steps=args.max_steps,
-                                     fixation_function=kimura_fixation,
-                                     population_size=args.population_size,
                                      rng=rng)
                 if ph_to_fitness[G.nodes[path[-1]]["phenotype"]] == 1:  # walk reached target
                     adaptive_walk_lengths[target_ph].append(len(path))

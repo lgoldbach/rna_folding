@@ -26,7 +26,6 @@ class GenotypePhenotypeGraph(nx.Graph):
         self.alphabet = alphabet
 
         self._phenotype_set = None
-
         self.phenotype_set = self.phenotypes  # turn phenotypes into a set
 
         if genotypes:
@@ -88,7 +87,6 @@ class GenotypePhenotypeGraph(nx.Graph):
 
         with open(genotype_ref_path, "r") as gt_file:
             genotype_ref = [line.strip() for line in gt_file]
-            
 
         with open(path, "r") as file:
             for line in file:
@@ -275,7 +273,6 @@ class GenotypePhenotypeGraph(nx.Graph):
             boundaries = None
 
         nc_sizes_all = []
-
         for ph in phenotypes:
             genotypes = self.genotypes_of_phenotype(ph) # get all genotypes for <ph>
             # track which genotype were visited already in dict
@@ -288,7 +285,6 @@ class GenotypePhenotypeGraph(nx.Graph):
                 if not visited[init_gt]:  # only if it wasn't visited in a previous DFS
                     stack = [init_gt]  # initialize a stack
                     nc_counter += 1  # new stack, new nc
-                    print(nc_counter, flush=True)
 
                     count_before = sum(visited.values())  # count how many genotype have been visited before this DFS
                     while stack:

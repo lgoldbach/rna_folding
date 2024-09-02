@@ -18,7 +18,7 @@ if __name__ ==  "__main__":
     parser.add_argument("-o", "--output", help="Output file name "
                         "(should end in .pdf)", required=True)
     parser.add_argument("-l", "--log", action="store_true")
-    
+
     args = parser.parse_args()
     fig, ax = plt.subplots()
 
@@ -47,7 +47,7 @@ if __name__ ==  "__main__":
             ax.plot(x, np.log10(nc_sizes), marker="", label=f"Base-pairing {args.bp_rule}, Ranking {i + 1}", color="tab:blue", markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])
         else:
             ax.plot(x, nc_sizes, marker="", label=f"Base-pairing {args.bp_rule}, Ranking {i + 1}", color="tab:blue", markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])
-
+    print(sum(nc_sizes))
     nc_sizes_all = []
     for i, filename in enumerate(args.ref_nc):
         nc_sizes_all.append([])  # add new list for new file
@@ -68,6 +68,7 @@ if __name__ ==  "__main__":
 
         x = range(nc_sizes.shape[0])
         if args.log:
+            print(sum(nc_sizes))
             ax.plot(x, np.log10(nc_sizes), marker="", label=f"Base-pairing {args.ref_bp_rule}, Ranking {i + 1}", color="black", markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])
         else:
             ax.plot(x, nc_sizes, marker="", label=f"Base-pairing {args.ref_bp_rule}, Ranking {i + 1}", color="black", markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])

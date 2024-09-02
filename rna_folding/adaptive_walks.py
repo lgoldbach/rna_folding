@@ -32,7 +32,6 @@ def adaptive_walk(gpmap: GenotypePhenotypeGraph,
         return path
     
     while len(path) < max_steps:
-        # np.random.seed(12343124*len(path)**4)
         candidate = rng.choice(gpmap._neighbors(path[-1]))
         f1 = fitness_function[gpmap.nodes[path[-1]]["phenotype"]]
         f2 = fitness_function[gpmap.nodes[candidate]["phenotype"]]
@@ -51,5 +50,100 @@ def adaptive_walk(gpmap: GenotypePhenotypeGraph,
             path.append(candidate)
         else:
             path.append(path[-1])
+    return path
+
+def productive_adaptive_walk(gpmap: GenotypePhenotypeGraph, 
+                  starting_genotype,
+                  fitness_function,
+                  max_steps,
+                  population_size,
+                  fixation_function,
+                  rng) -> list:
+    path = [starting_genotype]
+    if fitness_function[gpmap.nodes[path[-1]]["phenotype"]] == 1:
+        return path
+    
+    while len(path) < max_steps:
+        probs = []
+        f1 = fitness_function[gpmap.nodes[path[-1]]["phenotype"]]
+        neighbors = gpmap._neighbors(path[-1])
+        for neigh in neighbors:
+            f2 = fitness_function[gpmap.nodes[neigh]["phenotype"]]
+            s = f2-f1
+            p = fixation_function(s, N=population_size)
+            probs.append(p)
+        
+        if sum(probs) == 0:  # no way to go
+            break
+        normed_probs = np.array(probs) / sum(probs)
+        candidate = rng.choice(neighbors, p=normed_probs)
+
+        path.append(candidate)
+        if fitness_function[gpmap.nodes[candidate]["phenotype"]] == 1:  # found target phenotype
+            break
+    return path
+
+
+def greedy_adaptive_walk(gpmap: GenotypePhenotypeGraph, 
+                  starting_genotype,
+                  fitness_function,
+                  max_steps,
+                  rng) -> list:
+    path = [starting_genotype]
+    if fitness_function[gpmap.nodes[path[-1]]["phenotype"]] == 1:
+        return path
+    
+    while len(path) < max_steps:
+        s_coeffs = []
+        f1 = fitness_function[gpmap.nodes[path[-1]]["phenotype"]]
+        neighbors = gpmap._neighbors(path[-1])
+        for neigh in neighbors:
+            f2 = fitness_function[gpmap.nodes[neigh]["phenotype"]]
+            s = f2-f1
+            s_coeffs.append(s)
+        
+        s_coeffs = np.array(s_coeffs)
+        m = np.max(s_coeffs)  # find max
+        if m >= 0:
+            maxima = np.where(s_coeffs==m)[0]  # find all maxima
+            next_gt = rng.choice(maxima)  # pick one at random
+            path.append(neighbors[next_gt])
+            if fitness_function[gpmap.nodes[path[-1]]["phenotype"]] == 1:  # found target phenotype
+                break
+        else:
+            break  # no higher or equal fitness found, end path
+        
+    return path
+
+
+def greedy_adaptive_walk_no_neutral(gpmap: GenotypePhenotypeGraph, 
+                  starting_genotype,
+                  fitness_function,
+                  max_steps,
+                  rng) -> list:
+    path = [starting_genotype]
+    if fitness_function[gpmap.nodes[path[-1]]["phenotype"]] == 1:
+        return path
+    
+    while len(path) < max_steps:
+        s_coeffs = []
+        f1 = fitness_function[gpmap.nodes[path[-1]]["phenotype"]]
+        neighbors = gpmap._neighbors(path[-1])
+        for neigh in neighbors:
+            f2 = fitness_function[gpmap.nodes[neigh]["phenotype"]]
+            s = f2-f1
+            s_coeffs.append(s)
+        
+        s_coeffs = np.array(s_coeffs)
+        m = np.max(s_coeffs)  # find max
+        if m > 0:
+            maxima = np.where(s_coeffs==m)[0]  # find all maxima
+            next_gt = rng.choice(maxima)  # pick one at random
+            path.append(neighbors[next_gt])
+            if fitness_function[gpmap.nodes[path[-1]]["phenotype"]] == 1:  # found target phenotype
+                break
+        else:
+            break  # no higher fitness found, end path
+        
     return path
 
