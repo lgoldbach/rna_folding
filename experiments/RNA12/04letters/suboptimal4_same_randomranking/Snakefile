@@ -30,8 +30,8 @@ rule all:
         #        rankings=config["rankings"]),
         # expand("bp_graph{bp_rule}/analysis/neutral_component_sizes.pdf", bp_rule=config["mapping_params"]["base_pairing"]),
         # expand("bp_graph{bp_rule}/analysis/phenotype_bias.pdf", bp_rule=config["mapping_params"]["base_pairing"]),
-        "analysis/ranking4/greedy_no_neutral_adaptive_walk_lengths.pdf"
-        # expand("bp_graph{bp}/ranking{rank}/adaptive_walk_ncs_{pop_size}.csv", bp=config["mapping_params"]["base_pairing"], rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes']),
+        expand("analysis/ranking{rank}/adaptive_walk_lengths_{pop_size}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes']),
+        expand("analysis/ranking{rank}/productive_walk_lengths_{pop_size}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes']),
         # expand("analysis/ranking{rankings}/shortest_path_lengths_nc_navigability.pdf", rankings=config["rankings"])
 
         # expand("analysis/ranking{ranking}/navigability_neutral_components.pdf", ranking=config["rankings"])
@@ -613,6 +613,17 @@ rule plot_adaptive_walks_lengths:
         "-i {input} "
         "-o {output} "
 
+rule plot_productive_walks_lengths:
+    input:
+        expand("bp_graph{bp}/ranking{rank}/productive_walk_lengths_{{pop_size}}.csv", bp=config["mapping_params"]["base_pairing"],
+               rank=config["rankings"])
+    output:
+        "analysis/ranking4/productive_walk_lengths_{pop_size}.pdf"
+    shell:
+        "plot_adaptive_walk_lengths.py "
+        "-i {input} "
+        "-o {output} "
+
 rule plot_shortest_path_lengths:
     input:
         expand("bp_graph{bp}/ranking{rank}/shortest_path_lengths.txt", bp=config["mapping_params"]["base_pairing"],
@@ -629,7 +640,7 @@ rule run_adaptive_walks_productive:
     input:
         "bp_graph{bp}/ranking{rank}/gp_map.pickle"
     output:
-        "bp_graph{bp}/ranking{rank}/productive_adaptive_walk_lengths_{pop_size}.csv",
+        "bp_graph{bp}/ranking{rank}/productive_walk_lengths_{pop_size}.csv",
     params:
         max_steps=config["adaptive_walks"]["max_steps"],
         sample_size_walks=config["adaptive_walks"]["sample_size_walks"],
@@ -711,3 +722,5 @@ rule plot_greedy_adaptive_walks_lengths_no_neutral:
         "-i {input} "
         "-o {output} "
 
+rule shuffle_gp_map:
+    

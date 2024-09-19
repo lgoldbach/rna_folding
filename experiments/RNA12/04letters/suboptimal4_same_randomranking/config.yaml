@@ -60,5 +60,5 @@ adaptive_walks:
     # - 100000
   max_steps: 1000
   sample_size_landscapes: 10
-  sample_size_walks: 50
+  sample_size_walks: 100
 
