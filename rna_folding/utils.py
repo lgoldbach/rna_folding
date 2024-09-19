@@ -267,23 +267,6 @@ def dotbracket_to_genotype_random(dotbracket: str,
     return genotype
 
 
-def dict_to_gpmap(ph_to_gt: dict, file: str) -> None:
-    """Take a dict that maps phenotype to list of genotypes and save it
-    as a space-separated "c"sv file, where each line looks like this:
-    "{ph} {gt_id} {gt_id} {gt_id}"
-
-    Args:
-        ph_to_gt (dict): _description_
-        file (str): _description_
-    """
-    # Write to output file (
-    with open(file, "w") as file_out:
-        for p in ph_to_gt:
-            line = p + " " + " ".join(map(str, ph_to_gt[p])) + "\n"
-            file_out.write(line)
-    file_out.close()
-
-
 def ranked_ph_distribution(ph_distr_file, log=False) -> tuple:
     """Rank phenotypes by their count and return log10 frequency
 
@@ -310,27 +293,4 @@ def ranked_ph_distribution(ph_distr_file, log=False) -> tuple:
     order = np.argsort(distr)[::-1]
     distr = distr[order]
     phenotypes = phenotypes[order]
-    return phenotypes, distr
-
-
-def load_phenotype_and_metric_from_file(file: str, dtype=float):
-    """Take a file in the common phenotype (col1) metric (col2) data-type 
-    I am using and reat it as two array.
-    Example file:
-    ((...)) 0.8
-    (.....) 0.7
-    ...
-
-    Args:
-        file (str): Path to the file
-
-    Retruns:
-        phentypes, data
-    """
-    file_data = np.loadtxt(file, dtype=str)
-    if file_data.ndim == 1:  # in case there is only one phenotype
-        file_data = np.expand_dims(file_data, axis=0)
-    phenotypes = file_data[:,0]
-    distr = file_data[:,1].astype(dtype)
-
     return phenotypes, distr

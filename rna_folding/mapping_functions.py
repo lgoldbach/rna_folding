@@ -8,7 +8,8 @@ from typing import Callable
 
 from rna_folding.base_pairing import BasePairing
 from rna_folding.nussinov import BasePairMatrixNussinov
-from rna_folding.utils import bp_to_dotbracket, dotbracket_to_genotype, dotbracket_to_genotype_random, dict_to_gpmap
+from rna_folding.utils import bp_to_dotbracket, dotbracket_to_genotype, dotbracket_to_genotype_random
+from rna_folding.parsing import dict_to_gpmap
 import RNA
 
 

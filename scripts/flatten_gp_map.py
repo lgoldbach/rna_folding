@@ -2,7 +2,7 @@
 
 import argparse
 import numpy as np
-from rna_folding.utils import dict_to_gpmap
+from rna_folding.parsing import dict_to_gpmap
 
 
 if __name__ ==  "__main__":
