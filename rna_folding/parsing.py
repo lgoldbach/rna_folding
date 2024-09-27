@@ -211,3 +211,18 @@ def load_phenotype_and_metric_from_file(file: str, dtype=float):
     distr = file_data[:,1].astype(dtype)
 
     return phenotypes, distr
+
+def genotype_file_to_numpy(filepath):
+    """Take genotype file and return numpy array with each line as one line
+    in the numpy array, so a single column, n=#genotyopes row array
+
+    Args:
+        filepath (str): Path to genotype file
+    
+    Returns:
+        np.array (dtype='<U4'): Array containing genotypes row by row
+
+    """
+    A = np.loadtxt(filepath, dtype=str)
+
+    return A

@@ -35,4 +35,4 @@ rankings:
   # - 4
 
 ranking_files:
-  - "win_ratio_ranking.txt"
+  - "phenotype_ranking_full.txt"

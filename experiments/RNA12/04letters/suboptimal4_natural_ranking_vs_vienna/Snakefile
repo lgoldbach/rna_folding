@@ -75,22 +75,6 @@ rule nussinov_gp_map:
         "-a {params.alphabet} "
         "-p {params.base_pairing} "
 
-rule extract_phenotype_list:
-    input:
-        config["nussinov_gp_map"]
-    output:
-        "phenotypes.txt"
-    shell:
-        "awk '{{print $1}}' {input} | sort | uniq > {output}"
-
-# take phenotype file and randomly shuffle it using shuf function
-rule create_rankings:
-    input:
-        "phenotypes.txt"
-    output:
-        "ranking{rank}/phenotype_ranking.txt"
-    shell:
-        "shuf {input} > {output} "
 
 rule extract_unfolded_genotypes_from_reference:
     input: 

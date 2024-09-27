@@ -18,7 +18,10 @@ rule all:
         # expand("bp_graph{base_pairing}/ranking{rankings}/.mkdir_placeholder", 
         #        base_pairing=config["mapping_params"]["base_pairing"],
         #        rankings=config["rankings"]),
-
+        expand("bp_graph{base_pairing}/ranking{rankings}/analysis/phenotype_robustness_distributions.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
+        expand("bp_graph{base_pairing}/ranking{rankings}/analysis/phenotype_bias.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
+        expand("bp_graph{base_pairing}/ranking{rankings}/analysis/neutral_component_sizes.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
+        expand("bp_graph{base_pairing}/unique_sets.txt", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
         # expand("bp_graph{base_pairing}/ranking{rankings}/navigability_phenotype.txt", 
         #        base_pairing=config["mapping_params"]["base_pairing"],
         #        rankings=config["rankings"]),
@@ -30,8 +33,9 @@ rule all:
         #        rankings=config["rankings"]),
         # expand("bp_graph{bp_rule}/analysis/neutral_component_sizes.pdf", bp_rule=config["mapping_params"]["base_pairing"]),
         # expand("bp_graph{bp_rule}/analysis/phenotype_bias.pdf", bp_rule=config["mapping_params"]["base_pairing"]),
-        expand("analysis/ranking{rank}/adaptive_walk_lengths_{pop_size}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes']),
-        expand("analysis/ranking{rank}/productive_walk_lengths_{pop_size}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes']),
+        # expand("analysis/ranking{rank}/adaptive_walk_lengths_{pop_size}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes']),
+        expand("analysis/ranking4/shuffled_productive_adaptive_walk_lengths_{pop_size}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes']),
+        expand("bp_graph{bp}/ranking{rank}/gp_map_shuffled.pickle", rank=config["rankings"], bp=config["mapping_params"]["base_pairing"]),
         # expand("analysis/ranking{rankings}/shortest_path_lengths_nc_navigability.pdf", rankings=config["rankings"])
 
         # expand("analysis/ranking{ranking}/navigability_neutral_components.pdf", ranking=config["rankings"])
@@ -39,7 +43,6 @@ rule all:
 
         # expand("bp_graph{bp}/phenotype_robustness_freq_all.pdf", bp=config["mapping_params"]["base_pairing"]),
         # expand("bp_graph{bp}/analysis/ph_to_gt_dist.pdf", bp=config["mapping_params"]["base_pairing"]),
-        # expand("bp_graph{bp}/unique_sets.txt", bp=config["mapping_params"]["base_pairing"])
         
 rule create_subdirectories:
     priority: 1
@@ -143,7 +146,7 @@ rule nussinov_gp_map:
 
 rule unique_suboptimal_sets:
     input:
-        "bp_graph{base_pairing,[0-9]+}/gp_map.txt"
+        "/home/lgold/phd/research/projects/connectivity/rna_folding/experiments/RNA12/04letters/data/nussinov_maps/gp_map{base_pairing,[0-9]+}_suboptimal4.txt"
     output:
         "bp_graph{base_pairing,[0-9]+}/unique_sets.txt"
     shell:
@@ -241,7 +244,7 @@ rule plot_joint_phenotype_bias:
         ph_distr=expand("bp_graph{{bp_rule}}/ranking{rank}/phenotype_distribution.txt", rank=config["rankings"]),
         ref_ph_distr=expand("bp_graph%s/ranking{rank}/phenotype_distribution.txt" % config["ref_bp_rule"], rank=config["rankings"])
     output:
-        "bp_graph{bp_rule}/analysis/phenotype_bias.pdf"
+        "bp_graph{bp_rule}/ranking{rank}/analysis/phenotype_bias.pdf"
     params:
         ref_bp_rule=config["ref_bp_rule"]
     shell:
@@ -270,7 +273,7 @@ rule plot_joint_neutral_component_sizes:
         nc=expand("bp_graph{{bp_rule}}/ranking{rank}/neutral_component_sizes.txt", rank=config["rankings"]),
         ref_nc=expand("bp_graph%s/ranking{rank}/neutral_component_sizes.txt" % config["ref_bp_rule"], rank=config["rankings"])
     output:
-        "bp_graph{bp_rule}/analysis/neutral_component_sizes.pdf"
+        "bp_graph{bp_rule}/ranking{rank}/analysis/neutral_component_sizes.pdf"
     params:
         rank_cutoff=config["neutral_component_plotting_param"]["rank_cutoff"],
         ref_bp_rule=config["ref_bp_rule"]
@@ -693,7 +696,6 @@ rule plot_greedy_adaptive_walks_lengths:
         "-i {input} "
         "-o {output} "
 
-
 rule run_adaptive_walks_greedy_no_neutral:
     input:
         "bp_graph{bp}/ranking{rank}/gp_map.pickle"
@@ -723,4 +725,57 @@ rule plot_greedy_adaptive_walks_lengths_no_neutral:
         "-o {output} "
 
 rule shuffle_gp_map:
-    
+    input:
+        "bp_graph{bp}/ranking{rank}/gp_map.txt"
+    output:
+         "bp_graph{bp}/ranking{rank}/gp_map_shuffled.txt"
+    shell:
+        "shuffle_gp_map.py "
+        "-i {input} "
+        "-o {output} "
+
+rule build_shuffled_gpmap_python_object:
+    input:
+        gp_map="bp_graph{bp}/ranking{rank}/gp_map_shuffled.txt",
+        genotypes="genotypes.txt"
+    output:
+        "bp_graph{bp}/ranking{rank}/gp_map_shuffled.pickle",
+    params:
+        alphabet=config["alphabet"]
+    resources:
+        mem_mb=60000
+    shell:
+        "build_gpmap_pickle.py "
+        "-f {input.gp_map} "
+        "-g {input.genotypes} "
+        "-a {params.alphabet} "
+        "-o {output}"
+
+rule run_adaptive_walks_productive_shuffled:
+    input:
+        "bp_graph{bp}/ranking{rank}/gp_map_shuffled.pickle"
+    output:
+        "bp_graph{bp}/ranking{rank}/shuffled_productive_adaptive_walk_lengths_{pop_size}.csv",
+    params:
+        max_steps=config["adaptive_walks"]["max_steps"],
+        sample_size_walks=config["adaptive_walks"]["sample_size_walks"],
+        sample_size_landscapes=config["adaptive_walks"]["sample_size_landscapes"]
+    shell:
+        "adaptive_walks_productive.py "
+        "-i {input} "
+        "-o {output} "
+        "-n {wildcards.pop_size} "
+        "-m {params.max_steps} "
+        "-l {params.sample_size_landscapes} "
+        "-s {params.sample_size_walks} "
+
+rule plot_productive_adaptive_walks_lengths_shuffled:
+    input:
+        expand("bp_graph{bp}/ranking{rank}/shuffled_productive_adaptive_walk_lengths_{{pop_size}}.csv", bp=config["mapping_params"]["base_pairing"],
+               rank=config["rankings"])
+    output:
+        "analysis/ranking4/shuffled_productive_adaptive_walk_lengths_{pop_size}.pdf"
+    shell:
+        "plot_adaptive_walk_lengths.py "
+        "-i {input} "
+        "-o {output} "

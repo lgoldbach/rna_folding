@@ -173,7 +173,7 @@ def debug_nussinov_mfe(genotype: str,
     return [mfe_ph], phenotypes, g_fe_map
 
 
-def viennaRNA_mfe(genotype: str) -> list:
+def viennaRNA_mfe(genotype: str, return_mfe=False) -> list:
     """Predict RNA secondary structure using default ViennaRNA mfe function.
     Args:
         genotype (str): Input genotype
@@ -183,9 +183,10 @@ def viennaRNA_mfe(genotype: str) -> list:
         
     """
     mfe_ph, mfe = RNA.fold(genotype)
-
-    return [mfe_ph]
-
+    if return_mfe:
+        return mfe_ph, mfe
+    else:
+        return [mfe_ph]
 
 def nussinov_canonical_fe(genotype: str, 
                  base_pairing: BasePairing, 
