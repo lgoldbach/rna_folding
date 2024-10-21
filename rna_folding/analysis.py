@@ -1,5 +1,6 @@
 import numpy as np
 from itertools import product
+from scipy.stats.mstats import gmean
 
 
 def count_gt_per_ph_and_ph_per_gt(gp_map_file, sep=" "):
@@ -66,3 +67,22 @@ def pairwise_consensus_matrix(phenotypes, pg_map, ref_gp_map):
                 elif ref_gp_map[gt][0] == ph_j:
                     A[j, i] += 1
     return A
+
+
+def infer_bradley_terry_scores(pairwise_rankings, max_iter=10**3, conv_crit=10**-3):
+    p = np.ones(pairwise_rankings.shape[0])  # initialize probabilities to 1
+
+    for n in range(max_iter):
+        old_p = p
+        for i in range(len(p)):  # update each value once
+            denom = p + p[i]
+            p[i] = np.sum((p * pairwise_rankings[i]) / denom) / np.sum(pairwise_rankings.T[i] / denom)
+
+        p = p/gmean(p)
+
+        if np.sum(np.abs((p - old_p))) < conv_crit:
+            print(f"converged after {n} steps")
+            return p
+        
+    raise AssertionError(f"Not converged after {n} steps. Error: {np.sum(np.abs((p - old_p)))}")
+

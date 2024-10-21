@@ -8,8 +8,8 @@ rule all:
         # expand("bp_graph{bp}/ranking{rank}/productive_walk_stats_{pop_size}.csv", bp=config["mapping_params"]["base_pairing"], rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes']),
         # expand("bp_graph{bp}/ranking{rank}/greedy_walk_stats.csv", bp=config["mapping_params"]["base_pairing"], rank=config["rankings"]),
         # expand("bp_graph{bp}/ranking{rank}/greedy_no_neutral_walk_stats.csv", bp=config["mapping_params"]["base_pairing"], rank=config["rankings"]),
-        expand("bp_graph{bp}/ranking{rank}/analysis/adaptive_walk_stats_{pop_size}.pdf", bp=config["mapping_params"]["base_pairing"], rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes']),
-        expand("analysis/ranking{rank}/adaptive_walk_lengths_{pop_size}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes']),
+        # expand("bp_graph{bp}/ranking{rank}/analysis/adaptive_walk_stats_{pop_size}.pdf", bp=config["mapping_params"]["base_pairing"], rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes']),
+        expand("analysis/ranking{rank}/productive_adaptive_walk_lengths_{pop_size}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes']),
         
 
 
@@ -544,7 +544,6 @@ rule run_greedy_walks_w_stats:
         "-l {params.sample_size_landscapes} "
         "-s {params.sample_size_walks} "
 
-
 rule run_greedy_no_neutral_walks_w_stats:
     input:
         gp_map="bp_graph{bp}/ranking{rank}/gp_map.pickle",
@@ -616,10 +615,9 @@ rule run_adaptive_walks_productive:
 
 rule plot_productive_adaptive_walks_lengths:
     input:
-        expand("bp_graph{bp}/ranking{rank}/productive_adaptive_walk_lengths_{{pop_size}}.csv", bp=config["mapping_params"]["base_pairing"],
-               rank=config["rankings"])
+        expand("bp_graph{bp}/ranking{{rank}}/productive_adaptive_walk_lengths_{{pop_size}}.csv", bp=config["mapping_params"]["base_pairing"])
     output:
-         "analysis/ranking4/productive_adaptive_walk_lengths_{pop_size}.pdf"
+         "analysis/ranking{rank}/productive_adaptive_walk_lengths_{pop_size}.pdf"
     shell:
         "plot_adaptive_walk_lengths.py "
         "-i {input} "
@@ -671,16 +669,16 @@ rule run_adaptive_walks_greedy_no_neutral:
         "-l {params.sample_size_landscapes} "
         "-s {params.sample_size_walks} "
 
-rule plot_greedy_adaptive_walks_lengths_no_neutral:
-    input:
-        expand("bp_graph{bp}/ranking{rank}/greedy_no_neutral_adaptive_walk_lengths.csv", bp=config["mapping_params"]["base_pairing"],
-               rank=config["rankings"])
-    output:
-         "analysis/ranking4/greedy_no_neutral_adaptive_walk_lengths.pdf"
-    shell:
-        "plot_adaptive_walk_lengths.py "
-        "-i {input} "
-        "-o {output} "
+# rule plot_greedy_adaptive_walks_lengths_no_neutral:
+#     input:
+#         expand("bp_graph{bp}/ranking{rank}/greedy_no_neutral_adaptive_walk_lengths.csv", bp=config["mapping_params"]["base_pairing"],
+#                rank=config["rankings"])
+#     output:
+#          "analysis/ranking4/greedy_no_neutral_adaptive_walk_lengths.pdf"
+#     shell:
+#         "plot_adaptive_walk_lengths.py "
+#         "-i {input} "
+#         "-o {output} "
 
 
 

@@ -1,0 +1,20 @@
+configfile: "./config.yaml"
+
+# define the directories to be created (.mkdir_placeholder) simply serves
+# to trick snakemake into making the creation of directories its own job
+rule all:
+    input:
+        "ranking.csv"
+
+rule bradley_terry_ranking:
+    input:
+        matrix="pairwise_consensus_matrix.pickle",
+        phenotypes="phenotypes.txt"
+    output:
+        "ranking.csv"
+    shell:
+        "bradley_terry_ranking.py "
+        "-i {input.matrix} "
+        "-o {output} "
+        "-p {input.phenotypes} "
+

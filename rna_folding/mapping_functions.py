@@ -225,3 +225,32 @@ def nussinov_canonical_fe(genotype: str,
     sorted_gf_map = [p+","+str(np.round(e, 2)) for e, p in sorted(zip(energies, phenotypes), key=lambda pair: pair[0])]
 
     return sorted_gf_map
+
+
+def nussinov_with_probabilistic_scoring(genotype: str, scores: dict, rng=None, *args, **kwargs) -> list:
+    """Generate suboptimal set with nussinov's algorithm and pick phenotype
+    based on probabilistic scores.
+
+    Args:
+        genotype (str):     Genotypes string, e.g. "AUGGCA"
+        scores (dict):      Dictionary that maps phenotypes (str) to a score 
+                            (float).
+
+    Returns:
+        list:               Phenotype string inside a list.
+
+    """
+    if not rng:
+        rng = np.random.Generator()
+
+    phenotypes = nussinov(genotype, *args, **kwargs)
+
+    scores_subset = np.array([scores[ph] for ph in phenotypes])
+    scores_norm = scores_subset/np.sum(scores_subset)  # normalize
+
+    phenotype = rng.choice(phenotypes, p=scores_norm)  # choose based on score
+
+    return [phenotype]
+
+
+

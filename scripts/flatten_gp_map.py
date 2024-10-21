@@ -47,7 +47,6 @@ if __name__ ==  "__main__":
             elif rank < flat_gp_map[gt]:
                 flat_gp_map[gt] = rank  # update to better ranked ph
 
-    print("rank:", ph_to_rank.keys())
     # delete random genotypes from map
     if args.dropout:
         phenotypes.append(args.unfolded)  # add unfolded phenotype to end of ranking for reference

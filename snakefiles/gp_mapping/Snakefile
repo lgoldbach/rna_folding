@@ -1,0 +1,62 @@
+
+rule generate_genotype_space:
+    output:
+        "genotypes.txt"
+    params:
+        alphabet=config["alphabet"],
+        seq_len=config["sequence_lengths"]
+    shell:
+        "build_genotype_space.py "
+        "-a {params.alphabet} "
+        "-l {params.seq_len} "
+        "-o {output} "
+
+#####
+# VIENNARNA
+#####
+
+rule nussinov_gp_map_external:
+    input:
+        "genotypes.txt"
+    output:
+        # regex to constrain to numbers and prevent matching subdirectory gp_map.txt
+        f"{config['nussinov_gp_map_dir']}/gp_map{{base_pairing,[0-9]+}}_suboptimal{config["mapping_params"]["suboptimal"]}.txt"
+    params:
+        graph_path=config["graph_path"],
+        min_loop_size=config["mapping_params"]["min_loop_size"],
+        suboptimal=config["mapping_params"]["suboptimal"],
+        structures_max=config["mapping_params"]["structures_max"],
+        alphabet=config["alphabet"]
+    shell:
+        "nussinov_gp_mapping.py "
+        "-i {input} "
+        "-o {output} "
+        "-m {params.min_loop_size} "
+        "-s {params.suboptimal} "
+        "-z {params.structures_max} "
+        "-g {params.graph_path} "
+        "-a {params.alphabet} "
+        "-p {wildcards.base_pairing} "
+
+
+rule nussinov_gp_map_local:
+    input:
+        "genotypes.txt"
+    output:
+        "bp_graph{base_pairing,[0-9]+}/gp_map.txt"  # regex to constrain to numbers and prevent matching subdirectory gp_map.txt
+    params:
+        graph_path=config["graph_path"],
+        min_loop_size=config["mapping_params"]["min_loop_size"],
+        suboptimal=config["mapping_params"]["suboptimal"],
+        structures_max=config["mapping_params"]["structures_max"],
+        alphabet=config["alphabet"],
+    shell:
+        "nussinov_gp_mapping.py "
+        "-i {input} "
+        "-o {output} "
+        "-m {params.min_loop_size} "
+        "-s {params.suboptimal} "
+        "-z {params.structures_max} "
+        "-g {params.graph_path} "
+        "-a {params.alphabet} "
+        "-p {wildcards.base_pairing} "

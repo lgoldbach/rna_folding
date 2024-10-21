@@ -25,11 +25,14 @@ rule all:
         "analysis/neutral_component_sizes.pdf",
         # "analysis/neutral_path_lenth_dist.pdf",
         # "analysis/neutral_path_length_over_freq_and_dist.png",
-        "analysis/phenotype_robustness_freq_all.pdf",
-        
+        # "analysis/phenotype_robustness_freq_all.pdf",
+        expand("analysis/ref_productive_adaptive_walk_lengths_{pop_size}.pdf", pop_size=config["adaptive_walks"]["population_sizes"]),
+        expand("analysis/productive_adaptive_walk_lengths_{pop_size}.pdf", pop_size=config["adaptive_walks"]["population_sizes"]),
         # "analysis/shape_space_covering.pdf",
         
         # "ranking1/analysis/neutral_paths.txt",
+
+        expand("analysis/productive_walk_success_over_freq_{pop_size}.pdf", pop_size=config["adaptive_walks"]["population_sizes"]),
 
         
 rule create_subdirectories:
@@ -94,19 +97,19 @@ rule extract_unfolded_genotypes_from_reference:
 rule flatten_gp_map:
     input:
         gp_map=config["nussinov_gp_map"],
-        ranking="ranking{rank}/phenotype_ranking.txt"
+        ranking="ranking{rank}/phenotype_ranking.txt",
+        unfolded_genotypes="ref_unfolded_genotypes.txt"
     output:
         "ranking{rank}/gp_map.txt"
     params:
         # dropout=config["mapping_params"]["dropout"],
         unfolded=config["mapping_params"]["unfolded"],
-        unfolded_genotypes="ref_unfolded_genotypes.txt"
     shell:
         "flatten_gp_map.py "
         "-i {input.gp_map} "
         "-r {input.ranking} "
-        # "-g {params.unfolded_genotypes} "
-        # "-u {params.unfolded} "
+        "-g {input.unfolded_genotypes} "
+        "-u {params.unfolded} "
         "-o {output} "
 
 rule build_gpmap_python_object:
@@ -378,3 +381,78 @@ rule plot_robustness_over_freq_all:
         "-l {params.rank_label} "
         "-e True " 
         "-o {output} "
+
+
+rule run_ref_adaptive_walks_productive:
+    input:
+        "ref_gp_map.pickle"
+    output:
+        "ref_productive_walk_lengths_{pop_size}.csv",
+    params:
+        max_steps=config["adaptive_walks"]["max_steps"],
+        sample_size_walks=config["adaptive_walks"]["sample_size_walks"],
+        sample_size_landscapes=config["adaptive_walks"]["sample_size_landscapes"]
+    shell:
+        "adaptive_walks_productive.py "
+        "-i {input} "
+        "-o {output} "
+        "-n {wildcards.pop_size} "
+        "-m {params.max_steps} "
+        "-l {params.sample_size_landscapes} "
+        "-s {params.sample_size_walks} "
+
+rule plot_ref_productive_adaptive_walks_lengths:
+    input:
+        "ref_productive_walk_lengths_{pop_size}.csv"
+    output:
+        "analysis/ref_productive_adaptive_walk_lengths_{pop_size}.pdf"
+    shell:
+        "plot_adaptive_walk_lengths.py "
+        "-i {input} "
+        "-o {output} "
+
+
+rule run_adaptive_walks_productive:
+    input:
+        "ranking1/gp_map.pickle"
+    output:
+        "ranking1/productive_walk_lengths_{pop_size}.csv",
+    params:
+        max_steps=config["adaptive_walks"]["max_steps"],
+        sample_size_walks=config["adaptive_walks"]["sample_size_walks"],
+        sample_size_landscapes=config["adaptive_walks"]["sample_size_landscapes"]
+    shell:
+        "adaptive_walks_productive.py "
+        "-i {input} "
+        "-o {output} "
+        "-n {wildcards.pop_size} "
+        "-m {params.max_steps} "
+        "-l {params.sample_size_landscapes} "
+        "-s {params.sample_size_walks} "
+
+rule plot_productive_adaptive_walks_lengths:
+    input:
+        "ranking1/productive_walk_lengths_{pop_size}.csv"
+    output:
+        "analysis/productive_adaptive_walk_lengths_{pop_size}.pdf"
+    shell:
+        "plot_adaptive_walk_lengths.py "
+        "-i {input} "
+        "-o {output} "
+        
+rule plot_productive_walk_success_over_frequency:
+    input:
+        walks="ranking1/productive_walk_lengths_{pop_size}.csv",
+        ref_walks="ref_productive_walk_lengths_{pop_size}.csv",
+        ph_distr="ranking1/phenotype_distribution.txt",
+        ref_ph_distr="ref_phenotype_distribution.txt"
+    output:
+        "analysis/productive_walk_success_over_freq_{pop_size}.pdf"
+    shell:
+        "plot_adaptive_walk_success_over_freq.py "
+        "--reffreq {input.ref_ph_distr} "
+        "--refwalks {input.ref_walks} "
+        "--freq {input.ph_distr} "
+        "--walks {input.walks} "
+        "-o {output} "
+

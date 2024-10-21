@@ -36,3 +36,14 @@ rankings:
 
 ranking_files:
   - "phenotype_ranking_full.txt"
+
+
+adaptive_walks:
+  population_sizes: 
+    # - 1
+    - 10
+    # - 100
+    # - 100000
+  max_steps: 1000
+  sample_size_landscapes: 10
+  sample_size_walks: 100
