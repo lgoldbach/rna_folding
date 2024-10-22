@@ -7,8 +7,6 @@ import numpy as np
 
 from rna_folding.analysis import infer_bradley_terry_scores
 
-
-
 if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", help="Input consensus matrix, 2D "

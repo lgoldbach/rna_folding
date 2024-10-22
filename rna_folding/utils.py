@@ -4,6 +4,36 @@ import networkx as nx
 from rna_folding.parsing import load_phenotype_and_metric_from_file
 
 
+def is_compatible(genotype: str, phenotype: str, base_pairing_rule) -> bool:
+    """Check whether genotype and phenotype are compatible given a base pairing
+    rule
+
+    Args:
+        genotype (str): Genotype string
+        phenotype (str): Phenotype string
+        base_pairing_rule: A class with a method pairs() that 
+            takes two strings of single nucleotides and returns True or False
+            depending on whether a pairing between the two is allowed, e.g.
+            BasePairing from rna_folding.base_pairing
+
+    Returns:
+        bool:   True if the genotype can fold into the phenotype and false
+                otherwise
+
+    """
+    print(phenotype)
+    ph = np.array(list(phenotype))
+    print(ph)
+    forw = np.where(ph == "(")[0]
+    backw = np.where(ph == ")")[0][::-1]
+    print(forw, backw)
+    for b1, b2 in zip(forw, backw):
+        print(b1, b2)
+        if not base_pairing_rule.pairs(genotype[b1], genotype[b2]):
+            return False
+    return True
+
+
 def remove_nonadaptive_edges(gp_graph: nx.graph) -> nx.graph:
     """Remove edges that connect two nodes i and j where node j has higher 
     fitness than node i.

@@ -4,17 +4,47 @@ configfile: "./config.yaml"
 # to trick snakemake into making the creation of directories its own job
 rule all:
     input:
-        "ranking.csv"
+        "gp_map.txt"
 
 rule bradley_terry_ranking:
     input:
         matrix="pairwise_consensus_matrix.pickle",
         phenotypes="phenotypes.txt"
     output:
-        "ranking.csv"
+        "phenotype_ranking.csv"
     shell:
         "bradley_terry_ranking.py "
         "-i {input.matrix} "
         "-o {output} "
         "-p {input.phenotypes} "
 
+rule generate_genotype_space:
+    output:
+        "genotypes.txt"
+    params:
+        alphabet=config["alphabet"],
+        seq_len=config["sequence_lengths"]
+    shell:
+        "build_genotype_space.py " 
+        "-a {params.alphabet} "
+        "-l {params.seq_len} "
+        "-o {output}"
+
+rule nussinov_probabilistic_ranking_gp_map:
+    input:
+        genotypes="genotypes.txt",
+        phenotype_ranking="phenotype_ranking.csv"
+    output:
+        "gp_map.txt"
+    params:
+        graph_path=config["graph_path"],
+        alphabet=config["alphabet"],
+        base_pairing=config["mapping_params"]["base_pairing"]
+    shell:
+        "nussinov_prob_ranking_gp_mapping.py "
+        "-i {input.genotypes} "
+        "-o {output} "
+        "-p {input.phenotype_ranking} "
+        "-g {params.graph_path} "
+        "-a {params.alphabet} "
+        "-b {params.base_pairing} "
