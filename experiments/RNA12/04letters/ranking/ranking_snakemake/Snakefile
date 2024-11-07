@@ -1,14 +1,10 @@
 configfile: "./config.yaml"
 
-# define the directories to be created (.mkdir_placeholder) simply serves
-# to trick snakemake into making the creation of directories its own job
 rule all:
     input:
-        # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/.mkdir_placeholder", 
-        #        base_pairing=config["mapping_params"]["base_pairing"],
-        #        rankings=config["rankings"]),
-        "rankings.csv"
-        # "consensus_matrix_plot.pdf"
+        # "rankings.csv"
+        "pairwise_consensus_matrix.pickle",
+        "consensus_matrix_plot.pdf"
 
 
 rule preprocess_suboptimal_map:

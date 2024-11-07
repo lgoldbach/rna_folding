@@ -208,9 +208,9 @@ def load_phenotype_and_metric_from_file(file: str, dtype=float):
     if file_data.ndim == 1:  # in case there is only one phenotype
         file_data = np.expand_dims(file_data, axis=0)
     phenotypes = file_data[:,0]
-    distr = file_data[:,1].astype(dtype)
+    metric = file_data[:,1].astype(dtype)
 
-    return phenotypes, distr
+    return phenotypes, metric
 
 def genotype_file_to_numpy(filepath):
     """Take genotype file and return numpy array with each line as one line

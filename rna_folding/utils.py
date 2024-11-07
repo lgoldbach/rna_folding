@@ -21,14 +21,10 @@ def is_compatible(genotype: str, phenotype: str, base_pairing_rule) -> bool:
                 otherwise
 
     """
-    print(phenotype)
     ph = np.array(list(phenotype))
-    print(ph)
     forw = np.where(ph == "(")[0]
     backw = np.where(ph == ")")[0][::-1]
-    print(forw, backw)
     for b1, b2 in zip(forw, backw):
-        print(b1, b2)
         if not base_pairing_rule.pairs(genotype[b1], genotype[b2]):
             return False
     return True

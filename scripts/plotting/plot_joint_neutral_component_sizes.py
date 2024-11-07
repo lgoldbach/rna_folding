@@ -66,7 +66,7 @@ if __name__ ==  "__main__":
         x = range(nc_sizes.shape[0])
         # ignore first one for unfolded
         x = x[1:]
-        nc_sizes = [nc * 0.13 for nc in nc_sizes[1:]]  # to account for unfolded
+        nc_sizes = [nc for nc in nc_sizes[1:]]  # to account for unfolded
         if args.log:
             ax.plot(x, np.log10(nc_sizes), marker="", label=f"Random ranking {i + 1}")
         else:

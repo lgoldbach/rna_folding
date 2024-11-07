@@ -34,6 +34,10 @@ if __name__ ==  "__main__":
     ph = np.delete(ph, unf_idx)
     freq = np.delete(freq, unf_idx)
 
+    unf_idx = np.where(ref_ph=="............")
+    ref_ph = np.delete(ref_ph, unf_idx)
+    ref_freq = np.delete(ref_freq, unf_idx)
+
 
     sum_f = np.sum(ref_freq)
     ref_freq = [fre/sum_f for fre in ref_freq]
@@ -67,21 +71,26 @@ if __name__ ==  "__main__":
     walk_success = read_walk_file(args.walks)
     ref_walk_success = read_walk_file(args.refwalks)
 
-    
-    y_ref = [ref_walk_success[p] for p in ref_ph_sort]
+    y_ref = []
+    x_ref = []
+    for i, p in enumerate(ref_ph_sort):
+        if p in ref_walk_success:
+            y_ref.append(ref_walk_success[p])
+            x_ref.append(ref_freq_sort[i])
+    # y_ref = [ref_walk_success[p] for p in ref_ph_sort if p in ref_walk_success]
     
     x_query = []
     y_query = []
     for p in ref_ph_sort:
-        if p in walk_success:
+        if p in walk_success and p in query_d:
             y_query.append(walk_success[p])  # get walk success
             x_query.append(query_d[p])  # get freq
 
 
     fig, ax = plt.subplots()
 
-    ax.scatter(np.log10(ref_freq_sort), y_ref, label="ViennaRNA", marker="x")
-    ax.scatter(np.log10(x_query), y_query, label="Ranking approach", marker="x")
+    ax.scatter(np.log10(x_ref), y_ref, label="Ref", marker="x")
+    ax.scatter(np.log10(x_query), y_query, label="Query", marker="x")
 
     ax.legend()
 
@@ -104,7 +113,6 @@ if __name__ ==  "__main__":
     for j, p in enumerate(ref_ph_sort[::-1]):
         if p in ph_sort:        
             i = np.where(ph_sort[::-1]==p)[0][0]
-            print(p, j, i)
             y.append(i)
             y_f.append(freq_sort[i])
         else:
@@ -115,8 +123,8 @@ if __name__ ==  "__main__":
     plt.gca().invert_xaxis()
     plt.gca().invert_yaxis()
     plt.gca().set_aspect('equal')
-    ax.set_xlabel("Phenotype frequency ViennaRNA")
-    ax.set_ylabel("Phenotype frequency ranking approach")
+    ax.set_xlabel("Phenotype frequency reference")
+    ax.set_ylabel("Phenotype frequency query")
     plt.savefig("frequency_correlation.pdf", format="pdf", dpi=30)
 
     fig, ax = plt.subplots()

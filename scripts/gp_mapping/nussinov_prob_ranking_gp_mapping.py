@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 import argparse
+import numpy as np
 
 from rna_folding.base_pairing import BasePairing
-from rna_folding.mapping_functions import gp_mapper, nussinov
-from rna_folding.utils import is_compatible
+from rna_folding.mapping_functions import gp_mapper, nussinov_with_probabilistic_scoring
+from rna_folding.parsing import load_phenotype_and_metric_from_file
 
 
 if __name__ ==  "__main__":
@@ -21,20 +22,21 @@ if __name__ ==  "__main__":
                         "for info on where these graphs come from.")
 
     args = parser.parse_args()
+
+    rng = np.random.default_rng(858292)
     
     pairing = BasePairing(bases=args.alphabet,
-                          graph_path=args.graph_path, 
+                          graph_path=args.graph_path,
                           id=args.base_pairing)
     
-    # mapping = lambda seq: nussinov(seq, 
-    #                                base_pairing=pairing, 
-    #                                min_loop_size=args.min_loop_size, 
-    #                                suboptimal=args.suboptimal,
-    #                                structures_max=args.structures_max)
+    phenotypes, scores = load_phenotype_and_metric_from_file(args.phenotype_scores)
+    ph_scores = dict(zip(phenotypes, scores))
+
+    mapping = lambda seq: nussinov_with_probabilistic_scoring(seq,
+                                                              scores=ph_scores,
+                                                              base_pairing=pairing, 
+                                                              rng=rng)
 
     # generate g-p map and save to output file
-    # gp_mapper(input=args.input, output=args.output, 
-    #           mapping_function=mapping)
-
-    with open(args.output, "w") as file:
-        file.write("  \n")
+    gp_mapper(input=args.input, output=args.output, 
+              mapping_function=mapping)

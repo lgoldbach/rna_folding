@@ -8,7 +8,7 @@ from typing import Callable
 
 from rna_folding.base_pairing import BasePairing
 from rna_folding.nussinov import BasePairMatrixNussinov
-from rna_folding.utils import bp_to_dotbracket, dotbracket_to_genotype, dotbracket_to_genotype_random
+from rna_folding.utils import bp_to_dotbracket, dotbracket_to_genotype, dotbracket_to_genotype_random, is_compatible
 from rna_folding.parsing import dict_to_gpmap
 import RNA
 
@@ -227,12 +227,13 @@ def nussinov_canonical_fe(genotype: str,
     return sorted_gf_map
 
 
-def nussinov_with_probabilistic_scoring(genotype: str, scores: dict, rng=None, *args, **kwargs) -> list:
+def nussinov_with_probabilistic_scoring(genotype: str, base_pairing, scores: dict, rng=None) -> list:
     """Generate suboptimal set with nussinov's algorithm and pick phenotype
     based on probabilistic scores.
 
     Args:
         genotype (str):     Genotypes string, e.g. "AUGGCA"
+        base_pairing (BasePairing): A BasePairing object defining pairing rules
         scores (dict):      Dictionary that maps phenotypes (str) to a score 
                             (float).
 
@@ -243,8 +244,7 @@ def nussinov_with_probabilistic_scoring(genotype: str, scores: dict, rng=None, *
     if not rng:
         rng = np.random.Generator()
 
-    phenotypes = nussinov(genotype, *args, **kwargs)
-
+    phenotypes = [ph for ph in scores if is_compatible(genotype, ph, base_pairing)]
     scores_subset = np.array([scores[ph] for ph in phenotypes])
     scores_norm = scores_subset/np.sum(scores_subset)  # normalize
 
