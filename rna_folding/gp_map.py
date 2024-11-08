@@ -29,6 +29,7 @@ class GenotypePhenotypeGraph(nx.Graph):
         self.phenotype_set = self.phenotypes  # turn phenotypes into a set
 
         if genotypes:
+            gt = []
             for i, (g, p) in enumerate(zip(self.genotypes, self.phenotypes)):
                 self.add_node(g, phenotype=p, id=i)
 

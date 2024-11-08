@@ -21,8 +21,8 @@ if __name__ ==  "__main__":
     phenotypes = [ph.strip() for ph in open(args.ranking, "r")]
 
     # remove unfolded phenotype from ranking and add to the end
-    if args.unfolded in phenotypes:
-        phenotypes.remove(args.unfolded)
+    # if args.unfolded in phenotypes:
+    #     phenotypes.remove(args.unfolded)
 
     ph_to_rank = dict([(ph, i) for i, ph in enumerate(phenotypes)])
 
@@ -33,13 +33,21 @@ if __name__ ==  "__main__":
         line_ = line.strip().split(" ")
         ph = line_[0]
 
-        if ph not in ph_to_rank:  # add phenotype if it's not part of ranking
-            rank = max(list(ph_to_rank.values())) + 1
-            ph_to_rank[ph] = rank
-            print("Added to ranking:", ph, flush=True)
-            continue
 
-        rank = ph_to_rank[ph]
+        # if ph not in ph_to_rank:  # add phenotype if it's not part of ranking
+        #     rank = max(list(ph_to_rank.values())) + 1
+        #     if ph == args.unfolded:
+        #         ph_to_rank[ph] = -1
+        #     else:    
+        #         ph_to_rank[ph] = rank
+        #     print("Added to ranking:", ph, flush=True)
+
+        try:
+            rank = ph_to_rank[ph]
+        except KeyError:
+            raise KeyError(f"Phenotype {ph} is in the genotype-phenotype map "
+                            "but not part of the phenotype ranking. "
+                            "Please provide a complete phenotype ranking. ")
 
         for gt in line_[1:]:
             if gt not in flat_gp_map:  # O(1) operation because dict
@@ -56,18 +64,23 @@ if __name__ ==  "__main__":
         for key in dropout_keys:
             flat_gp_map[key] = -1  # -1 references the last unfolded phenotype
 
-    # set all genotypes from the unfolded_genotypes file to unfolded
+
+    # # set all genotypes from the unfolded_genotypes file to unfolded
     if args.unfolded_genotypes:
-        phenotypes.append(args.unfolded)  # add unfolded phenotype to end of ranking for reference
         with open(args.unfolded_genotypes, "r") as unf_gts:
             for line in unf_gts:
                 gt = line.strip()
-                flat_gp_map[int(gt)] = -1  # -1 references the last unfolded phenotype
+                flat_gp_map[gt] = ph_to_rank[args.unfolded]  # -1 references the last unfolded phenotype
 
     # turn into ph_to_gt dict
     ph_to_gt = dict([(ph, []) for ph in phenotypes])
-    for gt in flat_gp_map:
+    for i, gt in enumerate(flat_gp_map):
         ph = phenotypes[flat_gp_map[gt]]  # change rank to ph
         ph_to_gt[ph].append(gt)
+
+    count = 0
+    for ph in ph_to_gt:
+        count += len(ph_to_gt[ph])
+
     # save to file
     dict_to_gpmap(ph_to_gt, args.output)

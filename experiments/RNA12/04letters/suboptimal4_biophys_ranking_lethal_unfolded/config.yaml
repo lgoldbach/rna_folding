@@ -4,6 +4,10 @@ sequence_lengths:
 alphabet:
   - JKLM
 
+random_seeds:
+  - 7339311
+  - 45273
+
 file_format_params:
   gp_map_col_sep: " "
 
@@ -57,7 +61,7 @@ adaptive_walks:
     # - 1
     - 10
     # - 100
-    - 1000
+    # - 1000
     # - 10000
     - 1000000
   max_steps: 1000
