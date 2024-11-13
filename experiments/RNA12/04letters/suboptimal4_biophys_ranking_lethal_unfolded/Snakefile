@@ -9,6 +9,7 @@ rule all:
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/neutral_component_sizes.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/neutral_component_size_histogram.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
         expand("analysis/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"]),
+        expand("bp_graph{bp}/ranking{rank}/analysis/productive_walk_success_over_freq_{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
         # expand("bp_graph{bp}/ranking{rank}/analysis/productive_walk_success_over_freq_{pop_size}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"]),
 
         
@@ -434,9 +435,9 @@ rule run_adaptive_walks_w_nc_tracing:
 
 rule plot_productive_walks_lengths:
     input:
-        expand("bp_graph{bp}/ranking{{rank}}/productive_walk_lengths_{{pop_size}}_{{seed}}.csv", bp=config["mapping_params"]["base_pairing"])
+        expand("bp_graph{bp}/ranking{{rank}}/productive_walk_lengths_{{pop_size}}_seed{{seed}}.csv", bp=config["mapping_params"]["base_pairing"])
     output:
-        "analysis/ranking{rank}/productive_walk_lengths_{pop_size}_{seed}.pdf"
+        "analysis/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}.pdf"
     shell:
         "plot_adaptive_walk_lengths.py "
         "-i {input} "
@@ -446,7 +447,7 @@ rule run_adaptive_walks_productive:
     input:
         "bp_graph{bp}/ranking{rank}/gp_map.pickle"
     output:
-        "bp_graph{bp}/ranking{rank}/productive_walk_lengths_{pop_size}_{seed}csv",
+        "bp_graph{bp}/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}.csv",
     params:
         max_steps=config["adaptive_walks"]["max_steps"],
         sample_size_walks=config["adaptive_walks"]["sample_size_walks"],
@@ -466,12 +467,12 @@ rule run_adaptive_walks_productive:
 
 rule plot_productive_walk_success_over_frequency:
     input:
-        walks="bp_graph{bp_rule}/ranking{rank}/productive_walk_lengths_{pop_size}.csv",
-        ref_walks="bp_graph%s/ranking{rank}/productive_walk_lengths_{pop_size}.csv" % config["ref_bp_rule"],
+        walks="bp_graph{bp_rule}/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}.csv",
+        ref_walks="bp_graph%s/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}.csv" % config["ref_bp_rule"],
         ph_distr="bp_graph{bp_rule}/ranking{rank}/phenotype_distribution.txt",
         ref_ph_distr="bp_graph%s/ranking{rank}/phenotype_distribution.txt" % config["ref_bp_rule"]
     output:
-        "bp_graph{bp_rule}/ranking{rank}/analysis/productive_walk_success_over_freq_{pop_size}.pdf"
+        "bp_graph{bp_rule}/ranking{rank}/analysis/productive_walk_success_over_freq_{pop_size}_seed{seed}.pdf"
     shell:
         "plot_adaptive_walk_success_over_freq.py "
         "--reffreq {input.ref_ph_distr} "
