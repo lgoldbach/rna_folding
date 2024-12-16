@@ -10,6 +10,7 @@ rule all:
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/neutral_component_size_histogram.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
         expand("analysis/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"]),
         expand("bp_graph{bp}/ranking{rank}/analysis/productive_walk_success_over_freq_{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
+        expand("analysis/ranking{rank}/productive_walk_lengths_over_navigability_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"])
         # expand("bp_graph{bp}/ranking{rank}/analysis/productive_walk_success_over_freq_{pop_size}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"]),
 
         
@@ -432,17 +433,16 @@ rule run_adaptive_walks_w_nc_tracing:
         "-l {params.sample_size_landscapes} "
         "-s {params.sample_size_walks} "
 
-
 rule plot_productive_walks_lengths:
     input:
         expand("bp_graph{bp}/ranking{{rank}}/productive_walk_lengths_{{pop_size}}_seed{{seed}}.csv", bp=config["mapping_params"]["base_pairing"])
     output:
-        "analysis/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}.pdf"
+        "analysis/ranking{rank}/productive_walk_lengths_pop_size{pop_size}_seed{seed}.pdf"
     shell:
         "plot_adaptive_walk_lengths.py "
         "-i {input} "
         "-o {output} "
-    
+
 rule run_adaptive_walks_productive:
     input:
         "bp_graph{bp}/ranking{rank}/gp_map.pickle"
@@ -464,7 +464,6 @@ rule run_adaptive_walks_productive:
         "-u {params.lethal} "
         "-r {wildcards.seed} "
 
-
 rule plot_productive_walk_success_over_frequency:
     input:
         walks="bp_graph{bp_rule}/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}.csv",
@@ -480,3 +479,14 @@ rule plot_productive_walk_success_over_frequency:
         "--freq {input.ph_distr} "
         "--walks {input.walks} "
         "-o {output} "
+
+rule plot_productive_walks_length_over_navigability:
+    input:
+        expand("bp_graph{bp}/ranking{{rank}}/productive_walk_lengths_{{pop_size}}_seed{{seed}}.csv", bp=config["mapping_params"]["base_pairing"])
+    output:
+        "analysis/ranking{rank}/productive_walk_lengths_over_navigability_pop_size{pop_size}_seed{seed}.pdf"
+    shell:
+        "plot_adaptive_walk_length_over_navigability.py "
+        "-i {input} "
+        "-o {output} "
+    

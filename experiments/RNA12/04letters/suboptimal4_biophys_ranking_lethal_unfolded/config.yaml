@@ -58,10 +58,11 @@ navigability_sample_size: 100
 
 adaptive_walks:
   population_sizes: 
-    - 1
-    - 10
-    # - 100
-    - 1000
+    # - 1
+    - 5
+    # - 10
+    - 100
+    # - 1000
     # - 10000
     - 1000000
   max_steps: 1000
