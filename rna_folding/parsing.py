@@ -189,7 +189,6 @@ def dict_to_gpmap(ph_to_gt: dict, file: str) -> None:
             file_out.write(line)
     file_out.close()
 
-
 def load_phenotype_and_metric_from_file(file: str, dtype=float):
     """Take a file in the common phenotype (col1) metric (col2) data-type 
     I am using and reat it as two array.
@@ -202,7 +201,7 @@ def load_phenotype_and_metric_from_file(file: str, dtype=float):
         file (str): Path to the file
 
     Retruns:
-        phentypes, data
+        phenotypes, data
     """
     file_data = np.loadtxt(file, dtype=str)
     if file_data.ndim == 1:  # in case there is only one phenotype

@@ -5,15 +5,18 @@ rule all:
         # expand("analysis/ranking{rank}/.mkdir_placeholder", rank=config["rankings"]),
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/phenotype_robustness_freq_all.pdf", rankings=config["rankings"], base_pairing=config["mapping_params"]["base_pairing"]),
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/phenotype_robustness_distributions.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
-        # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/phenotype_bias.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
-        # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/neutral_component_sizes.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
+        expand("bp_graph{base_pairing}/ranking{rankings}/analysis/phenotype_bias.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
+        expand("bp_graph{base_pairing}/ranking{rankings}/analysis/neutral_component_sizes.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/neutral_component_size_histogram.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
-        expand("analysis/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"]),
+        expand("analysis/ranking{rank}/productive_walk_lengths_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"]),
         expand("bp_graph{bp}/ranking{rank}/analysis/productive_walk_success_over_freq_{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
-        expand("analysis/ranking{rank}/productive_walk_lengths_over_navigability_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"])
+        expand("analysis/ranking{rank}/productive_walk_lengths_over_navigability_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"]),
+        expand("analysis/ranking{rank}/productive_walk_lengths_and_navigability_seed{seed}.pdf", rank=config["rankings"], seed=config["random_seeds"]),
         # expand("bp_graph{bp}/ranking{rank}/analysis/productive_walk_success_over_freq_{pop_size}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"]),
+        # expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_frequency_over_bt_score_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
+        expand("bp_graph{bp}/ranking{rank}/analysis/frequency_over_bt_ranking_seed{seed}.pdf", bp=config["mapping_params"]["base_pairing"], rank=config["rankings"], seed=config["random_seeds"]),
 
-        
+
 rule create_subdirectories:
     priority: 1
     output:
@@ -489,4 +492,30 @@ rule plot_productive_walks_length_over_navigability:
         "plot_adaptive_walk_length_over_navigability.py "
         "-i {input} "
         "-o {output} "
+
+rule plot_productive_walks_length_and_navigability:
+    input:
+        low=expand("bp_graph{bp}/ranking{{rank}}/productive_walk_lengths_{pop_size}_seed{{seed}}.csv", bp=config["mapping_params"]["base_pairing"], pop_size=config["plotting"]["pop_size"]["low"]),
+        medium=expand("bp_graph{bp}/ranking{{rank}}/productive_walk_lengths_{pop_size}_seed{{seed}}.csv", bp=config["mapping_params"]["base_pairing"], pop_size=config["plotting"]["pop_size"]["medium"]),
+        high=expand("bp_graph{bp}/ranking{{rank}}/productive_walk_lengths_{pop_size}_seed{{seed}}.csv", bp=config["mapping_params"]["base_pairing"], pop_size=config["plotting"]["pop_size"]["high"]),
+    output:
+        "analysis/ranking{rank}/productive_walk_lengths_and_navigability_seed{seed}.pdf"
+    shell:
+        "plot_adaptive_walk_length_and_navigability.py "
+        "-l {input.low} "
+        "-m {input.medium} "
+        "-g {input.high} "
+        "-o {output} "
     
+rule plot_frequency_over_bt_ranking:
+    input:
+        ph_distr="bp_graph{bp}/ranking{rank}/phenotype_distribution.txt",
+        bt_ranking="phenotype_ranking{rank}.txt"
+    output:
+        "bp_graph{bp}/ranking{rank}/analysis/frequency_over_bt_ranking_seed{seed}.pdf"
+    shell:
+        "plot_frequency_over_rank.py "
+        "-p {input.ph_distr} "
+        "-r {input.bt_ranking} "
+        "-o {output} "
+

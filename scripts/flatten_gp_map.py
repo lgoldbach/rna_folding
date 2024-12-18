@@ -10,7 +10,7 @@ if __name__ ==  "__main__":
     parser.add_argument("-o", "--output", help="Output file", type=str)
     parser.add_argument("-i", "--input", help="input gp_map", type=str)
     parser.add_argument("-d", "--dropout", help="How many nodes to drop out", type=int, required=False)
-    parser.add_argument("-u", "--unfolded", help="The unfolded genotype", type=str, required=False)
+    parser.add_argument("-u", "--unfolded", help="The unfolded genotype", type=str, required=True)
     parser.add_argument("-g", "--unfolded_genotypes", help="Text file containing genotypes that are supposed to be unfolded", type=str, required=False)
     parser.add_argument("-r", "--ranking", help="A file containing phenotypes that defines the ranking", type=str)
 
@@ -44,10 +44,10 @@ if __name__ ==  "__main__":
 
         try:
             rank = ph_to_rank[ph]
+        # if suboptimal phenotype not in ranking then we assign it the rank
+        # of the unfolded genotype (usually the lowest rank)
         except KeyError:
-            raise KeyError(f"Phenotype {ph} is in the genotype-phenotype map "
-                            "but not part of the phenotype ranking. "
-                            "Please provide a complete phenotype ranking. ")
+            rank = ph_to_rank[args.unfolded] 
 
         for gt in line_[1:]:
             if gt not in flat_gp_map:  # O(1) operation because dict
