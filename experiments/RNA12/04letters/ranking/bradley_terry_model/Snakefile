@@ -4,7 +4,9 @@ configfile: "./config.yaml"
 # to trick snakemake into making the creation of directories its own job
 rule all:
     input:
-        "gp_map.txt"
+        # "gp_map.txt",
+        "scores_barplot.pdf"
+
 
 rule bradley_terry_ranking:
     input:
@@ -48,3 +50,26 @@ rule nussinov_probabilistic_ranking_gp_map:
         "-g {params.graph_path} "
         "-a {params.alphabet} "
         "-b {params.base_pairing} "
+
+rule normalize_bt_scores_geom_mean:
+    input:
+        "phenotype_ranking.csv"
+    output:
+        "phenotype_ranking_normalized.csv"
+    shell:
+        "normalize_by_geom_mean.py "
+        "-i {input} "
+        "-o {output} "
+        
+rule plot_scores:
+    input:
+        "phenotype_ranking_normalized.csv"
+    output:
+        "scores_barplot.pdf"
+    params:
+        ignore=config["dead_pheno"]  # phenotype to ignore, e.g. unfolded
+    shell:
+        "plot_bt_scores.py "
+        "-i {input} "
+        "-d {params.ignore} "
+        "-o {output} "

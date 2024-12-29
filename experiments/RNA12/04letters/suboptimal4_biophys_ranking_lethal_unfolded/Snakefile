@@ -3,18 +3,21 @@ configfile: "./config.yaml"
 rule all:
     input:
         # expand("analysis/ranking{rank}/.mkdir_placeholder", rank=config["rankings"]),
-        # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/phenotype_robustness_freq_all.pdf", rankings=config["rankings"], base_pairing=config["mapping_params"]["base_pairing"]),
+        expand("bp_graph{base_pairing}/ranking{rankings}/analysis/phenotype_robustness_freq_all.pdf", rankings=config["rankings"], base_pairing=config["mapping_params"]["base_pairing"]),
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/phenotype_robustness_distributions.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
         expand("bp_graph{base_pairing}/ranking{rankings}/analysis/phenotype_bias.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
-        expand("bp_graph{base_pairing}/ranking{rankings}/analysis/neutral_component_sizes.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
+        # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/neutral_component_sizes.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/neutral_component_size_histogram.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
-        expand("analysis/ranking{rank}/productive_walk_lengths_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"]),
-        expand("bp_graph{bp}/ranking{rank}/analysis/productive_walk_success_over_freq_{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
-        expand("analysis/ranking{rank}/productive_walk_lengths_over_navigability_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"]),
+        # expand("analysis/ranking{rank}/productive_walk_lengths_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"]),
+        # expand("bp_graph{bp}/ranking{rank}/analysis/productive_walk_success_over_freq_{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
+        # expand("analysis/ranking{rank}/productive_walk_lengths_over_navigability_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"]),
         expand("analysis/ranking{rank}/productive_walk_lengths_and_navigability_seed{seed}.pdf", rank=config["rankings"], seed=config["random_seeds"]),
         # expand("bp_graph{bp}/ranking{rank}/analysis/productive_walk_success_over_freq_{pop_size}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"]),
         # expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_frequency_over_bt_score_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
-        expand("bp_graph{bp}/ranking{rank}/analysis/frequency_over_bt_ranking_seed{seed}.pdf", bp=config["mapping_params"]["base_pairing"], rank=config["rankings"], seed=config["random_seeds"]),
+        # expand("bp_graph{bp}/ranking{rank}/analysis/frequency_over_bt_ranking_seed{seed}.pdf", bp=config["mapping_params"]["base_pairing"], rank=config["rankings"], seed=config["random_seeds"]),
+        expand("bp_graph{ref_bp}/ranking{rank}/analysis/phenotype_bias_vs_vienna.pdf", rank=config["rankings"], ref_bp=config["ref_bp_rule"]),
+        expand("bp_graph{ref_bp}/ranking{rank}/analysis/neutral_component_sizes_vs_vienna.pdf", rank=config["rankings"], ref_bp=config["ref_bp_rule"]),
+        expand("bp_graph{ref_bp}/ranking{rank}/analysis/phenotype_robustness_freq_vs_vienna.pdf", rank=config["rankings"], ref_bp=config["ref_bp_rule"])
 
 
 rule create_subdirectories:
@@ -168,6 +171,23 @@ rule plot_joint_phenotype_bias:
         "-l "
         "-o {output} "
 
+rule plot_joint_phenotype_bias_against_vienna:
+    input:
+        ph_distr=expand("bp_graph{{ref_bp}}/ranking{rank}/phenotype_distribution.txt", rank=config["rankings"]),
+        ref_ph_distr="%s/phenotype_distribution.txt" % config["ref_dir"]
+    output:
+        "bp_graph{ref_bp}/ranking{rank}/analysis/phenotype_bias_vs_vienna.pdf"
+    params:
+        ref_bp_rule=config["ref_bp_rule"]
+    shell:
+        "plot_joint_phenotype_bias_vs_vienna.py "
+        "-i {input.ph_distr} "
+        "-r {input.ref_ph_distr} "
+        "-b {wildcards.ref_bp} "
+        "-k {params.ref_bp_rule} "
+        "-l "
+        "-o {output} "
+
 rule get_neutral_component_sizes:
     input:
         "bp_graph{bp_rule}/ranking{rank}/gp_map.pickle"
@@ -195,6 +215,26 @@ rule plot_joint_neutral_component_sizes:
         "-r {input.ref_nc} "
         "-c {params.rank_cutoff} "
         "-b {wildcards.bp_rule} "
+        "-k {params.ref_bp_rule} "
+        "-o {output} "
+        "-l "
+
+
+rule plot_neutral_component_sizes_vs_vienna:
+    input:
+        nc=expand("bp_graph{{ref_bp}}/ranking{rank}/neutral_component_sizes.txt", rank=config["rankings"]),
+        ref_nc="%s/neutral_component_sizes.txt" % config["ref_dir"]
+    output:
+        "bp_graph{ref_bp}/ranking{rank}/analysis/neutral_component_sizes_vs_vienna.pdf"
+    params:
+        rank_cutoff=config["neutral_component_plotting_param"]["rank_cutoff"],
+        ref_bp_rule=config["ref_bp_rule"]
+    shell:
+        "plot_neutral_component_sizes_vs_vienna.py "
+        "-n {input.nc} "
+        "-r {input.ref_nc} "
+        "-c {params.rank_cutoff} "
+        "-b {wildcards.ref_bp} "
         "-k {params.ref_bp_rule} "
         "-o {output} "
         "-l "
@@ -260,6 +300,22 @@ rule plot_robustness_over_freq_all:
         "-r {params.ph_rob} "
         "-l {params.rank_label} "
         "-e False "
+        "-o {output} "
+
+rule plot_robustness_over_freq_vs_vienna:
+    input:
+        ph_distr=["%s/phenotype_distribution.txt" % config["ref_dir"]] + expand("bp_graph{{ref_bp}}/ranking{rank}/phenotype_distribution.txt", rank=config["rankings"]),
+        ph_rob=["%s/phenotype_robustness.txt" % config["ref_dir"]] + expand("bp_graph{{ref_bp}}/ranking{rank}/phenotype_robustness.txt", rank=config["rankings"])
+    output:
+        "bp_graph{ref_bp}/ranking{rank}/analysis/phenotype_robustness_freq_vs_vienna.pdf"
+    params:
+        rank_label=["ViennaRNA"] + [config["ref_bp_rule"]]
+    shell:
+        "plot_robustness_phenotype_freq_w_ref.py "
+        "-d {input.ph_distr} "
+        "-r {input.ph_rob} "
+        "-l {params.rank_label} "
+        "-e True " 
         "-o {output} "
 
 rule plot_phenotype_distribution:
@@ -519,3 +575,17 @@ rule plot_frequency_over_bt_ranking:
         "-r {input.bt_ranking} "
         "-o {output} "
 
+rule multi_plot_phenotype_bias:
+    input:
+        expand("bp_graph{bp}/ranking{rank}/phenotype_distribution.txt", bp=config["mapping_params"]["base_pairing"], rank=config["rankings"])
+    output:
+        "analysis/ranking{rank}/phenotype_bias.pdf"
+    params:
+        ref=config["ref_bp_rule"]
+    shell:
+        "plot_phenotype_bias_multiplot.pdf "
+        "-i {input} "
+        "-o {output} "
+        "-r {params.ref} "
+    
+    

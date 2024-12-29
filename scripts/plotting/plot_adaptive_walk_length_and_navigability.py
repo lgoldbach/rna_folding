@@ -51,7 +51,7 @@ if __name__ ==  "__main__":
     labels = ["low", "medium", "high"]
     cmap = colormaps['Oranges']
     colors = [cmap(.5), cmap(.75), cmap(.99)]
-    new_order = [2, 3, 5, 7, 6, 4, 9, 8, 10, 11]
+    new_order = [2, 3, 5, 6, 7, 4, 8, 9, 10, 11]
     new_order_idx = [i - 2 for i in new_order]
 
 
@@ -61,10 +61,10 @@ if __name__ ==  "__main__":
         walk_length_means = [np.mean(lengths) for lengths in walk_lengths]
         walk_length_medians = [np.median(lengths) for lengths in walk_lengths]
 
-        ax1.scatter(range(0, 10), [navigability[i] for i in new_order_idx], color=colors[i], label=labels[i])
+        ax1.scatter(range(0, 10), [navigability[i] for i in new_order_idx], color=colors[i], label=labels[i], alpha=0.8)
         ax1.xaxis.set_major_locator(MaxNLocator(integer=True))
 
-        ax2.scatter(range(0, 10), [walk_length_means[i] for i in new_order_idx], color=colors[i], label=labels[i])
+        ax2.scatter(range(0, 10), [walk_length_means[i] for i in new_order_idx], color=colors[i], label=labels[i], alpha=0.8)
         # ax2.scatter(range(2, 12), walk_length_medians, color=colors[i], label=labels[i])
         ax2.xaxis.set_major_locator(MaxNLocator(integer=True))
 

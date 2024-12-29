@@ -21,7 +21,7 @@ if __name__ ==  "__main__":
 
     nc_counts = gpm.neutral_component_sizes(add_labels=True)
     
-    pickle.dump(gpm, open(args.file, "wb"))
+    # pickle.dump(gpm, open(args.file, "wb"))
     with open(args.output, "w") as file:
         for counts in nc_counts:
             file.write(" ".join([str(c) for c in counts]) + "\n")

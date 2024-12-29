@@ -26,20 +26,20 @@ if __name__ ==  "__main__":
     for i, file in enumerate(args.phenotype_dist):
         phenotypes, distr = ranked_ph_distribution(ph_distr_file=file,
                                                     log=args.log)
-
+        distr = distr[1:]  # remove unfolded phenotype frequency
         x = range(distr.shape[0])
         
-        sc = ax.plot(x, distr, marker="", label=f"Base-pairing {args.bp_rule}, Ranking {i + 1}", color="tab:blue", markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])
+        sc = ax.plot(x, distr, marker="", label=f"Base-pairing 7", color="tab:blue", markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])
 
     
     for i, file in enumerate(args.ref):
         phenotypes, distr = ranked_ph_distribution(ph_distr_file=file,
                                                     log=args.log)
 
-
+        distr = distr[1:]  # remove unfolded phenotype frequency
         x = range(distr.shape[0])
         
-        sc = ax.plot(x, distr, marker="", label=f"Base-pairing {args.ref_bp_rule}, Ranking {i + 1}", color="black", markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])
+        sc = ax.plot(x, distr, marker="", label=f"ViennaRNA", color="black", markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])
 
     
     ax.set_xlabel("Rank")

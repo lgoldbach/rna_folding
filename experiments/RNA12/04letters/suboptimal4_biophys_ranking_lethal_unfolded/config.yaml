@@ -37,11 +37,10 @@ mapping_params:
 ref_bp_rule: 7   # base-pairing rule to compare detailed statistics to
 
 rankings:
-  - 1
+  # - 1
   - 2
-  # - 3
-  # - 4
-  # - 5
+
+ref_dir: "viennaRNA"  # the directory containing reference data 
 
 neutral_component_plotting_param:
   rank_cutoff: 10000  # how many ranks to show max.
@@ -61,7 +60,7 @@ adaptive_walks:
     # - 1
     - 5
     # - 10
-    # - 100
+    - 100
     - 1000
     # - 10000
     - 1000000
@@ -72,6 +71,6 @@ adaptive_walks:
 plotting:
   pop_size:
     low: 5
-    medium: 1000
+    medium: 100
     high: 1000000
 
