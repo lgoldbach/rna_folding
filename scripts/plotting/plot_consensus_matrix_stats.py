@@ -3,6 +3,7 @@
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import gaussian_kde
 import pickle
 
 def list_of_strings(arg):
@@ -64,8 +65,16 @@ if __name__ ==  "__main__":
     axes[1].set_ylabel("Cumulative count")
     axes[1].title.set_text('Cumulative count of consistency scores')
 
-    axes[2].scatter(unbalanced_list_count + balanced_list_count, unbalanced_list + ([1]*balanced))
-    axes[2].set_xlabel("How often the two phenotypes appear\nin same suboptimal set")
+    x = np.log10(np.array(unbalanced_list_count + balanced_list_count))
+    y = np.array(unbalanced_list + ([1]*balanced))
+    xy = np.vstack([x,y])
+    z = gaussian_kde(xy)(xy)
+    idx = z.argsort()
+    x, y, z = x[idx], y[idx], z[idx]
+
+    axes[2].scatter(x, y, c=z, s=25)
+    # axes[2].scatter(unbalanced_list_count + balanced_list_count, unbalanced_list + ([1]*balanced))
+    axes[2].set_xlabel("Frequency of matchup (log10)")
     axes[2].set_ylabel("Consistency of pairwise ranking")
     axes[2].title.set_text('Consistency over frequency of match-ups')
 

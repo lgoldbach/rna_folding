@@ -88,7 +88,3 @@ rule topological_sorting:
 
     
 
-rule plot_phenotype_frequencies:
-
-rule draw_phenotype_ranking:
-

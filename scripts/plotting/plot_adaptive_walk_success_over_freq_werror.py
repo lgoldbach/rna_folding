@@ -23,6 +23,8 @@ if __name__ ==  "__main__":
     parser.add_argument("--refwalks", help="Walk success of query", 
                         required=True, 
                         type=str)
+    parser.add_argument("--sample_size", help="How big is one set of samples per phenotype, i.e. how many samples are takend for a given fitness landscape instance of a phenotype",
+                        required=True, type=int)
     parser.add_argument("-o", "--output", help="pdf file", required=True, type=str)
     
     args = parser.parse_args()
@@ -50,9 +52,6 @@ if __name__ ==  "__main__":
     ph_sort = np.array(ph_sort)
     ref_ph_sort = np.array(ref_ph_sort)
 
-    print(freq_sort, ref_freq_sort)
-    print(len(freq_sort), len(ref_freq_sort))
-
     ref_d = dict(zip(ref_ph_sort, ref_freq_sort))  # make dict by ph
     query_d = dict(zip(ph, freq))  # make dict by ph
 
@@ -62,13 +61,17 @@ if __name__ ==  "__main__":
             for line_ in f:
                 line = line_.strip().split(" ")
                 p = line[0]
-                d[p] = 0
-                for walk_length in line[1:]:
-                    if int(walk_length) != -1:  # if not -1 which stands for unsuccessful walk
-                        d[p] += 1
-                if d[p] > 0:
-                    d[p] /= len(line[1:])
-
+                d[p] = []  # a list for all navigabilities for a phenotypes
+                # loop over sets of walk lengths, each set coming from one
+                # random fitness landscape instance
+                for sample_start in range(0, len(line[1:]), args.sample_size):
+                    d[p].append(0)  # init a counter for this sample
+                    for walk_length in line[1:][sample_start:sample_start+args.sample_size]:
+                        if int(walk_length) != -1:  # if not -1 which stands for unsuccessful walk
+                            d[p][-1] += 1
+                    if d[p][-1] > 0:
+                        # compute fraction of successful walks (navig.)
+                        d[p][-1] /= args.sample_size
         return d
     
     walk_success = read_walk_file(args.walks)
@@ -76,24 +79,53 @@ if __name__ ==  "__main__":
 
     y_ref = []
     x_ref = []
+    y_err_ref = []
     for i, p in enumerate(ref_ph_sort):
         if p in ref_walk_success:
-            y_ref.append(ref_walk_success[p])
+            y_ref.append(np.mean(ref_walk_success[p]))
             x_ref.append(ref_freq_sort[i])
+            y_err_ref.append(np.std(ref_walk_success[p]))
     # y_ref = [ref_walk_success[p] for p in ref_ph_sort if p in ref_walk_success]
     
     x_query = []
     y_query = []
+    y_err = []
     for p in ph_sort:
         if p in walk_success and p in query_d:
-            y_query.append(walk_success[p])  # get walk success
+            y_query.append(np.mean(walk_success[p]))  # get walk success
             x_query.append(query_d[p])  # get freq
+            y_err.append(np.std(ref_walk_success[p]))
 
 
     fig, ax = plt.subplots()
 
-    ax.scatter(np.log10(x_ref), y_ref, label="Ref", marker="x")
-    ax.scatter(np.log10(x_query), y_query, label="Query", marker="x")
+    # ax.scatter(np.log10(x_ref), y_ref, label="Ref", marker="x")
+    # ax.scatter(np.log10(x_query), y_query, label="Query", marker="x")
+
+    ax.errorbar(np.log10(x_ref), y_ref, yerr=y_err_ref, label="Ref", linestyle='', marker='x', elinewidth=.2)
+    ax.errorbar(np.log10(x_query), y_query, yerr=y_err, label="Query", linestyle='', marker='x', elinewidth=.2)
+
+    # ax.errorbar(x_ref, y_ref, yerr=y_err_ref, label="Ref", linestyle='', marker='x', elinewidth=.2)
+    # ax.errorbar(x_query, y_query, yerr=y_err, label="Query", linestyle='', marker='x', elinewidth=.2)
+
+    order = 1
+    def log_fit(x, y):
+        p = np.polyfit(np.log10(x), y, order)
+
+        func = lambda x: [p[0] * np.log10(i) + p[1] for i in x]
+        
+        x = np.logspace(min(np.log10(x)), max(np.log10(x)), 250)
+
+        return func, x
+
+    func, x = log_fit(x_ref, y_ref)
+    ax.plot(np.log10(x), func(x), color="blue")
+    func, x = log_fit(x_query, y_query)
+    ax.plot(np.log10(x), func(x), color="orange")
+
+    # p = np.poly1d(np.polyfit(x_query, y_query, order))
+    # t = np.logspace(min(np.log10(x_query)), max(np.log10(x_query)), 250)
+    # ax.plot(np.log10(t), p(t))
 
     ax.legend()
 

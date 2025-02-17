@@ -27,7 +27,7 @@ if __name__ ==  "__main__":
             if p == args.ignore:
                 p = phenotypes.pop(i)
                 scores.pop(i)
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(10, 10))
 
     ma =  max(scores)
     scores = [s/ma for s in scores]
@@ -37,9 +37,12 @@ if __name__ ==  "__main__":
     ax.set_xticks(range(len(scores)))
     ax.set_xticklabels(phenotypes)
     # ax.tick_params(axis='x', labelrotation=60, labelsize=8)
-    plt.xticks(fontsize=6, rotation=55, ha="right")
+    plt.xticks(fontsize=10, rotation=55, ha="right")
 
-    ax.set_xlabel("Phenotypes (dot-bracket notation)")
-    ax.set_ylabel("Bradley-Terry scores (a.u.)")
+    ax.tick_params(axis='y', which='major', labelsize=20)
+    ax.tick_params(axis='y', which='minor', labelsize=8)
+
+    ax.set_xlabel("Phenotypes (dot-bracket notation)", fontsize=30)
+    ax.set_ylabel("Bradley-Terry scores (a.u.)", fontsize=30)
     plt.tight_layout()
     plt.savefig(args.output, format="pdf", dpi=30)

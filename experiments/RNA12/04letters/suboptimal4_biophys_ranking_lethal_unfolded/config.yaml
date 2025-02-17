@@ -39,7 +39,10 @@ ref_bp_rule: 7   # base-pairing rule to compare detailed statistics to
 rankings:
   # - 1
   - 2
-
+  - 3
+  - 4
+  - 5
+  
 ref_dir: "viennaRNA"  # the directory containing reference data 
 
 neutral_component_plotting_param:
@@ -60,8 +63,8 @@ adaptive_walks:
     # - 1
     - 5
     # - 10
-    - 100
-    - 1000
+    # - 100
+    # - 1000
     # - 10000
     - 1000000
   max_steps: 1000
@@ -71,6 +74,6 @@ adaptive_walks:
 plotting:
   pop_size:
     low: 5
-    medium: 100
+    medium: 5
     high: 1000000
 

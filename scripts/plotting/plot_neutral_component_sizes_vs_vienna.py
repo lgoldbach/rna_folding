@@ -45,10 +45,10 @@ if __name__ ==  "__main__":
 
         x = range(nc_sizes.shape[0])
         if args.log:
-            ax.plot(x[1:], np.log10(nc_sizes)[1:], marker="", label=f"Base-pairing {args.bp_rule}", color="tab:blue", markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])
+            ax.plot(x[1:], np.log10(nc_sizes)[1:], marker="", label=f"Base-pairing 4", color="tab:orange", linewidth=5, zorder=10)
         else:
-            ax.plot(x, nc_sizes, marker="", label=f"Base-pairing {args.bp_rule}, Ranking {i + 1}", color="tab:blue", markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])
-    print(sum(nc_sizes))
+            ax.plot(x, nc_sizes, marker="", label=f"Base-pairing {args.bp_rule}, Ranking {i + 1}", color="tab:orange", linewidht=5, markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])
+
     nc_sizes_all = []
     for i, filename in enumerate(args.ref_nc):
         nc_sizes_all.append([])  # add new list for new file
@@ -70,17 +70,23 @@ if __name__ ==  "__main__":
 
         x = range(nc_sizes.shape[0])
         if args.log:
-            print("AA", sum(nc_sizes))
-            ax.plot(x[1:], np.log10(nc_sizes)[1:], marker="", label=f"ViennaRNA", color="black", markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])
+            ax.plot(x[1:], np.log10(nc_sizes)[1:], marker="", label=f"ViennaRNA", color="black", linewidth=3, markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])
         else:
-            ax.plot(x, nc_sizes, marker="", label=f"Base-pairing {args.ref_bp_rule}, Ranking {i + 1}", color="black", markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])
-    print(sum(nc_sizes))
+            ax.plot(x, nc_sizes, marker="", label=f"ViennaRNA", linewidth=3, color="black", markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])
+    
+    ax.tick_params(axis='both', which='major', labelsize=14)
+    ax.tick_params(axis='both', which='minor', labelsize=8)
+    # ax.set_ylim([-7, -1])
+    ax.set_xlim([1, 1040])
+    ax.set_xlabel("Rank")
+    ax.grid()
+    ax.legend(loc="upper right", prop={'size': 10}, frameon=True)
+
     ax.set_xlabel("Rank")
     if args.log:
         ax.set_ylabel("Neutral component size (log10)")
     else:
         ax.set_ylabel("Neutral component size")
         
-    plt.legend()
     plt.tight_layout()
     plt.savefig(args.output, format="pdf", dpi=30)

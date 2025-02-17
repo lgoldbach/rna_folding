@@ -312,7 +312,7 @@ def ranked_ph_distribution(ph_distr_file, log=False) -> tuple:
     # load data and get second column (fist only contains phenotype IDs)
     
     phenotypes, distr = load_phenotype_and_metric_from_file(ph_distr_file)
-    print(np.sort(distr))
+
     distr = distr / np.sum(distr)
     if log:
         distr = np.log10(distr)
