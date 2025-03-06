@@ -25,6 +25,7 @@ if __name__ ==  "__main__":
     parser.add_argument("-u", "--lethal_phenotype", help="Define a lethal phenotype whose fitness will be set to 0", type=str, required=False)
     parser.add_argument("-o", "--output", help="file for output data",
                         required=True)
+    parser.add_argument("-d", "--seldif", help="The maximum difference in fitness, i.e. the maximum selection coefficient", type=float, required=True)
     
     args = parser.parse_args()
 
@@ -52,7 +53,7 @@ if __name__ ==  "__main__":
             # assign random fitness to every phenotype
             ph_to_fitness = {}
             for ph in phenotypes:
-                f = rng.uniform(0.9, 1)  # in [0, 1) interval
+                f = rng.uniform(0, args.seldif)  # in [0, 1) interval
                 ph_to_fitness[ph] = f
             
             if args.lethal_phenotype:

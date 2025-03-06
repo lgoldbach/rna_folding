@@ -3,6 +3,7 @@
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.optimize import curve_fit
 
 from rna_folding.parsing import load_phenotype_and_metric_from_file
 
@@ -26,6 +27,10 @@ if __name__ ==  "__main__":
     parser.add_argument("--sample_size", help="How big is one set of samples per phenotype, i.e. how many samples are takend for a given fitness landscape instance of a phenotype",
                         required=True, type=int)
     parser.add_argument("-o", "--output", help="pdf file", required=True, type=str)
+    parser.add_argument("-l", "--labels", help="Legend labels for reference and query", 
+                        type=int, 
+                        nargs="*",
+                        required=True, default=["Ref.", "Query"])
     
     args = parser.parse_args()
 
@@ -72,6 +77,7 @@ if __name__ ==  "__main__":
                     if d[p][-1] > 0:
                         # compute fraction of successful walks (navig.)
                         d[p][-1] /= args.sample_size
+                        d[p][-1] *= 100
         return d
     
     walk_success = read_walk_file(args.walks)
@@ -80,21 +86,40 @@ if __name__ ==  "__main__":
     y_ref = []
     x_ref = []
     y_err_ref = []
+    y_err_2d_ref = [[],[]]
     for i, p in enumerate(ref_ph_sort):
         if p in ref_walk_success:
-            y_ref.append(np.mean(ref_walk_success[p]))
+            s = ref_walk_success[p]
+            m = np.median(s)
+            p_low = np.abs(m-np.percentile(s, q=25))
+            p_high = np.abs(m-np.percentile(s, q=75))
+
+            y_ref.append(m)
             x_ref.append(ref_freq_sort[i])
-            y_err_ref.append(np.std(ref_walk_success[p]))
+            y_err_ref.append(np.std(s))
+
+            y_err_2d_ref[0].append(p_low)
+            y_err_2d_ref[1].append(p_high)
     # y_ref = [ref_walk_success[p] for p in ref_ph_sort if p in ref_walk_success]
     
     x_query = []
     y_query = []
     y_err = []
+    y_err_2d = [[],[]]
     for p in ph_sort:
         if p in walk_success and p in query_d:
-            y_query.append(np.mean(walk_success[p]))  # get walk success
-            x_query.append(query_d[p])  # get freq
-            y_err.append(np.std(ref_walk_success[p]))
+            s = walk_success[p]
+            m = np.median(s)
+            p_low = np.abs(m-np.percentile(s, q=25))
+            p_high = np.abs(m-np.percentile(s, q=75))
+
+            y_query.append(m)
+            x_query.append(query_d[p])
+            y_err.append(np.std(s))
+
+            y_err_2d[0].append(p_low)
+            y_err_2d[1].append(p_high)
+            
 
 
     fig, ax = plt.subplots()
@@ -102,26 +127,61 @@ if __name__ ==  "__main__":
     # ax.scatter(np.log10(x_ref), y_ref, label="Ref", marker="x")
     # ax.scatter(np.log10(x_query), y_query, label="Query", marker="x")
 
-    ax.errorbar(np.log10(x_ref), y_ref, yerr=y_err_ref, label="Ref", linestyle='', marker='x', elinewidth=.2)
-    ax.errorbar(np.log10(x_query), y_query, yerr=y_err, label="Query", linestyle='', marker='x', elinewidth=.2)
-
-    # ax.errorbar(x_ref, y_ref, yerr=y_err_ref, label="Ref", linestyle='', marker='x', elinewidth=.2)
-    # ax.errorbar(x_query, y_query, yerr=y_err, label="Query", linestyle='', marker='x', elinewidth=.2)
-
+    new_order = [2, 3, 5, 7, 6, 4, 9, 8, 10, 11]
+    new_order_idx = [i - 2 for i in new_order]
+    
+    ref_l = new_order.index(args.labels[0])+1
+    query_l = new_order.index(args.labels[1])+1
+    ax.errorbar(np.log10(x_ref), y_ref, yerr=y_err_2d_ref, label=f"Base-pairing {ref_l}", linestyle='', marker='s', elinewidth=0.2, color="black", alpha=0.8, markeredgewidth=0)
+    ax.errorbar(np.log10(x_query), y_query, yerr=y_err_2d, label=f"Base-pairing {query_l}", linestyle='', marker='s', elinewidth=0.2, color="orange", alpha=0.8, markeredgewidth=0)
+  
     order = 1
     def log_fit(x, y):
         p = np.polyfit(np.log10(x), y, order)
 
-        func = lambda x: [p[0] * np.log10(i) + p[1] for i in x]
+        func = lambda x: [p[0] * i + p[1] for i in x]
         
         x = np.logspace(min(np.log10(x)), max(np.log10(x)), 250)
 
         return func, x
+    
+    def logarithm(x, a, b, c):
+        return a*np.log10(x+b)+c
+    
+    def sigmoid(x, L ,x0, k, b):
+        y = L / (1 + np.exp(-k*(x-x0))) + b
+        return (y)
+    
+    def fit(x, y):
+        p = np.polyfit(x, y, 5)
+        func = np.poly1d(p)
+        # try: 
+        #     p0 = [max(y), np.median(x),1,min(y)] # this is an mandatory initial guess
+        #     popt, popcov = curve_fit(sigmoid, x, y, p0, method='dogbox')
+        #     func = lambda x_: sigmoid(x_, *popt)
+            
+        # except RuntimeError:  # sigmoid fit failed
+        #     p0 = [2, np.median(x), min(y)] # this is an mandatory initial guess
+        #     popt, popcov = curve_fit(logarithm, x, y, p0, method='dogbox')
+        #     func = lambda x_: logarithm(x_, *popt)
 
-    func, x = log_fit(x_ref, y_ref)
-    ax.plot(np.log10(x), func(x), color="blue")
-    func, x = log_fit(x_query, y_query)
-    ax.plot(np.log10(x), func(x), color="orange")
+            # func, x_trash = log_fit(x, y)
+            
+        x__ = np.logspace(min(x), max(x), 250)
+
+        return func, x__
+
+    # func, x = fit(np.log10(x_query), y_query)
+    # ax.plot(np.log10(x), func(np.log10(x)), color="orange")
+
+    # func, x = fit(np.log10(x_ref), y_ref)
+    # ax.plot(np.log10(x), func(np.log10(x)), color="black")
+    
+
+    # func, x = log_fit(np.log10(np.array(x_ref)), y_ref)
+    # ax.plot(np.log10(x), func(x), color="black")
+    # func, x = log_fit(x_query, y_query)
+    # ax.plot(np.log10(x), func(x), color="orange")
 
     # p = np.poly1d(np.polyfit(x_query, y_query, order))
     # t = np.logspace(min(np.log10(x_query)), max(np.log10(x_query)), 250)
@@ -130,7 +190,16 @@ if __name__ ==  "__main__":
     ax.legend()
 
     ax.set_xlabel("Phenotype frequency (log10)")
-    ax.set_ylabel("Navigability")
+    ax.set_ylabel("Navigability (%)")
+
+    plt.tight_layout()
+
+    plt.yticks([0, 20, 40, 60, 80, 100])
+
+    ax.grid(axis="y", zorder=-1)
+
+    ax.set_ylim(-3, 103)
+    ax.legend(loc="lower right", frameon=False, fancybox=False)
 
     plt.savefig(args.output, format="pdf", dpi=30)
 

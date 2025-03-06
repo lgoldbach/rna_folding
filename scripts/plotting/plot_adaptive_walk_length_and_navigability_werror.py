@@ -65,31 +65,31 @@ if __name__ ==  "__main__":
             nav.append(j)
             x.append(i)
 
-    ax = sns.boxplot(x=x,
-                y=nav, 
-                ax=ax1,
-                color="0.9",
-                linewidth=0.2,
-                linecolor="black",
-                legend=False,
-                showfliers=False,
-                zorder=3,
-                whis=[0, 95])
+    # ax = sns.boxplot(x=x,
+    #             y=nav, 
+    #             ax=ax1,
+    #             color="0.9",
+    #             linewidth=0.2,
+    #             linecolor="black",
+    #             legend=False,
+    #             showfliers=False,
+    #             zorder=3,
+    #             whis=[0, 95])
     
-    # ax = sns.violinplot(x=x,
-    #                y=nav, 
-    #                ax=ax1,
-    #                legend=False,
-    #                density_norm="area",
-    #                width=0.95,
-    #                common_norm=True,
-    #                cut=0,
-    #                inner="quart",
-    #                linewidth=0.2,
-    #                linecolor="black",
-    #                color="0.9",
-    #                zorder=3,
-    #                inner_kws={"zorder": 4})
+    ax = sns.violinplot(x=x,
+                   y=nav, 
+                   ax=ax1,
+                   legend=False,
+                   density_norm="area",
+                   width=0.95,
+                   common_norm=True,
+                   cut=0,
+                   inner="quart",
+                   linewidth=0.2,
+                   linecolor="black",
+                   color="0.9",
+                   zorder=3,
+                   inner_kws={"zorder": 4})
     
     for l in ax.lines:
         l.set_linestyle('-')
@@ -118,20 +118,42 @@ if __name__ ==  "__main__":
     walks = []
     x = []
     for i, id in enumerate(new_order_idx, start=1):
+        tmp = []
         for j in walk_lengths[id]:
-            walks.append(j)
-            x.append(i)
+            tmp.append(j)
+        p5 = np.percentile(tmp, q=0)
+        p95 = np.percentile(tmp, q=95)
 
-    ax = sns.boxplot(x=x,
-                y=walks, 
-                ax=ax2,
-                color="0.9",
-                linewidth=0.2,
-                linecolor="black",
-                legend=False,
-                showfliers=False,
-                zorder=3,
-                whis=[0, 95])
+        for k in tmp:
+            if k < p95 and k > p5:
+                walks.append(k)
+                x.append(i)
+        
+    # ax = sns.boxplot(x=x,
+    #             y=walks, 
+    #             ax=ax2,
+    #             color="0.9",
+    #             linewidth=0.2,
+    #             linecolor="black",
+    #             legend=False,
+    #             showfliers=False,
+    #             zorder=3,
+    #             whis=[0, 95])
+    
+    ax = sns.violinplot(x=x,
+                   y=walks, 
+                   ax=ax2,
+                   legend=False,
+                   density_norm="area",
+                   width=0.95,
+                   common_norm=True,
+                   cut=0,
+                   inner="quart",
+                   linewidth=0.2,
+                   linecolor="black",
+                   color="0.9",
+                   zorder=3,
+                   inner_kws={"zorder": 4})
     
     for i, id in enumerate(new_order_idx):
         d = walk_lengths[id]
@@ -140,9 +162,9 @@ if __name__ ==  "__main__":
         ax2.scatter(i, mean, color="black", marker="s", s=4, zorder=10) 
 
 
-    ax1.set_ylabel("Navigability", fontsize=15)
+    ax1.set_ylabel("Navigability (%)", fontsize=15)
     ax1.set_xlabel("Base-pairing rule", fontsize=15)
-    ax2.set_ylabel("Adaptive walk length of successful walks", fontsize=15)
+    ax2.set_ylabel("Length of successful adaptive walks", fontsize=15)
     ax2.set_xlabel("Base-pairing rule", fontsize=15)
 
     ax1.tick_params(axis='both', which='major', labelsize=13)
@@ -160,9 +182,9 @@ if __name__ ==  "__main__":
     # l = ax2.legend(title="Selection pressure", prop={'size': 12})
     # plt.setp(l.get_title(),fontsize=12)
 
-    # ax1.legend()
+    # ax1.legend(loc="lower center", frameon=False, fancybox=False)
 
-    # ax1.set_ylim(0, 100)
+    ax1.set_ylim(0, 100)
 
     plt.tight_layout()
     plt.savefig(args.output, format="pdf", dpi=30)

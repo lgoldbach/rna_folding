@@ -7,7 +7,7 @@ import numpy as np
 import datetime
 import time
 
-from rna_folding.adaptive_walks import productive_adaptive_walk, kimura_fixation
+from rna_folding.adaptive_walks import productive_adaptive_walk_w_T, kimura_fixation_from_fitness, pairwise_transition_prob_dict
 
 
 if __name__ ==  "__main__":
@@ -70,6 +70,11 @@ if __name__ ==  "__main__":
             #     if G.nodes[candidate_gt]["phenotype"] != target_ph:
             #         start_gt.append(candidate_gt)
 
+            # pre compute fixation probability for all phenotype pairs
+            fix_prob = lambda x, y: kimura_fixation_from_fitness(x, y, N=args.population_size)
+            
+            T = pairwise_transition_prob_dict(f_map=ph_to_fitness, func=fix_prob, loop=False)
+
             all_nodes = set(G.nodes)
             # get list of target nodes. Do not start walks from there (would be redundant)
             non_starting_nodes = [x for x,y in G.nodes(data=True) if y['phenotype']==target_ph]
@@ -86,11 +91,10 @@ if __name__ ==  "__main__":
             # print(f"Start walks", datetime.datetime.now().hour, datetime.datetime.now().minute, flush=True)
             for g in start_gt:
                 # store adaptive walks by target phenotype
-                path = productive_adaptive_walk(G, g,
+                path = productive_adaptive_walk_w_T(G, g,
                                      fitness_function=ph_to_fitness, 
+                                     T=T,
                                      max_steps=args.max_steps,
-                                     fixation_function=kimura_fixation,
-                                     population_size=args.population_size,
                                      rng=rng)
                 if ph_to_fitness[G.nodes[path[-1]]["phenotype"]] == 1:  # walk reached target
                     adaptive_walk_lengths[target_ph].append(len(path))

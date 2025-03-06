@@ -217,6 +217,7 @@ class GenotypePhenotypeGraph(nx.Graph):
             # translate the components from full sequences to numeric id
             # for memory efficiency
             if return_ids:
+                
                 final_cc = []
                 for c in cc:
                     final_cc.append({self.nodes[node]["id"] for node in c})

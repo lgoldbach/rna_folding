@@ -7,7 +7,7 @@ import numpy as np
 import datetime
 import time
 
-from rna_folding.adaptive_walks import productive_adaptive_walk, kimura_fixation
+from rna_folding.adaptive_walks import kimura_fixation_from_fitness, pairwise_transition_prob_dict, kimura_fixation, productive_adaptive_walk_w_T
 
 
 if __name__ ==  "__main__":
@@ -25,8 +25,9 @@ if __name__ ==  "__main__":
     parser.add_argument("-r", "--seed", help="random seed", type=int,
                         required=False)
     parser.add_argument("-u", "--lethal_phenotype", help="Define a lethal phenotype whose fitness will be set to 0", type=str, required=False)
-    parser.add_argument("-o", "--output", help="file for output data",
+    parser.add_argument("-o", "--walk_success", help="file for output data",
                         required=True)
+    parser.add_argument("-p", "--paths", help="File where all paths are saved", required=True)
     parser.add_argument("-d", "--seldif", help="The maximum difference in fitness, i.e. the maximum selection coefficient", type=float, required=True)
     
     args = parser.parse_args()
@@ -47,7 +48,9 @@ if __name__ ==  "__main__":
     navigability = {}
 
     adaptive_walk_lengths = {}  # store adaptive walk lenghts for each phenotype
+    paths={}
     for target_ph in phenotypes:  # loop over target phenotypes
+        paths[target_ph] = []
         adaptive_walk_lengths[target_ph] = []
 
         # print(f"Start {target_ph}", datetime.datetime.now().hour, datetime.datetime.now().minute, flush=True)
@@ -70,6 +73,20 @@ if __name__ ==  "__main__":
             #     if G.nodes[candidate_gt]["phenotype"] != target_ph:
             #         start_gt.append(candidate_gt)
 
+            # pre compute fixation probability for all phenotype pairs
+            fix_prob = lambda x, y: kimura_fixation_from_fitness(x, y, N=args.population_size)
+            
+            T = pairwise_transition_prob_dict(f_map=ph_to_fitness, func=fix_prob)
+
+            for pair in T:
+                if pair[0] == pair[1]:
+                    print(pair, ph_to_fitness[pair[0]], ph_to_fitness[pair[1]], T[pair], flush=True)
+                    
+            # print(ph_to_fitness, flush=True)
+            # for i in ph_to_fitness:
+            #     for j in ph_to_fitness:
+            #         print(i, j, kimura_fixation(ph_to_fitness[j]-ph_to_fitness[i], N=args.population_size), flush=True)
+            
             all_nodes = set(G.nodes)
             # get list of target nodes. Do not start walks from there (would be redundant)
             non_starting_nodes = [x for x,y in G.nodes(data=True) if y['phenotype']==target_ph]
@@ -86,21 +103,31 @@ if __name__ ==  "__main__":
             # print(f"Start walks", datetime.datetime.now().hour, datetime.datetime.now().minute, flush=True)
             for g in start_gt:
                 # store adaptive walks by target phenotype
-                path = productive_adaptive_walk(G, g,
+                path = productive_adaptive_walk_w_T(G, g,
                                      fitness_function=ph_to_fitness, 
+                                     T=T,
                                      max_steps=args.max_steps,
-                                     fixation_function=kimura_fixation,
-                                     population_size=args.population_size,
                                      rng=rng)
                 if ph_to_fitness[G.nodes[path[-1]]["phenotype"]] == 1:  # walk reached target
                     adaptive_walk_lengths[target_ph].append(len(path))
+                    paths[target_ph].append(path)  # save successful path
                 else:
                     adaptive_walk_lengths[target_ph].append(-1)  # walk didn't reach target
-            
-    with open(args.output, "w") as file:
+                    paths[target_ph].append(path)  # save unsuccessful path
+
+    with open(args.paths, "w") as file:
+            for ph in paths:
+                file.write(ph + "\n")
+                for path in paths[ph]:
+                    file.write(" ".join(path) + "\n")
+                    
+    with open(args.walk_success, "w") as file:
         for target_ph in adaptive_walk_lengths:
             file.write(f"{target_ph}")
             for path_len in adaptive_walk_lengths[target_ph]:
                 file.write(" " + str(path_len))
             file.write("\n")
+
+    
+
         

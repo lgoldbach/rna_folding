@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Iterable
 from itertools import product
 import networkx as nx
 from rna_folding.parsing import load_phenotype_and_metric_from_file
@@ -321,3 +322,23 @@ def ranked_ph_distribution(ph_distr_file, log=False) -> tuple:
     distr = distr[order]
     phenotypes = phenotypes[order]
     return phenotypes, distr
+
+
+def sequence_to_integers(sequence, letters: Iterable):
+    """Turn an ATGC sequence into integer sequence.
+    e.g. [[T, T, A, G, C],  -->  [[2, 2, 1, 3, 4],
+          [A, G, C, T, T]]        [1, 3, 4, 2, 2]]
+
+    Args:
+        sequence (str): ATGC based sequence
+        letters (Iterable): Iterable of letters (str)
+
+    Returns:
+        np.array: Array where bases (str) are replaced by integers
+
+    """
+    sequence_ = np.empty(sequence.shape, dtype=int)
+    for i, l in enumerate(letters, 1):
+        sequence_[sequence == l] = i
+
+    return sequence_

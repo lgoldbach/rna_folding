@@ -39,6 +39,11 @@ ref_bp_rule: 7   # base-pairing rule to compare detailed statistics to
 rankings:
   # - 1
   - 2
+  # - 3
+  # - 4
+  # - 5
+
+random_rankings:
   - 3
   - 4
   - 5
@@ -66,10 +71,11 @@ adaptive_walks:
     # - 100
     # - 1000
     # - 10000
-    - 1000000
+    # - 1000000
   max_steps: 1000
   sample_size_landscapes: 10
   sample_size_walks: 100
+  selection_diff: 1
 
 plotting:
   pop_size:

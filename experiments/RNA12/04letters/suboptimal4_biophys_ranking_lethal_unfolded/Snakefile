@@ -6,14 +6,15 @@ rule all:
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/phenotype_robustness_freq_all.pdf", rankings=config["rankings"], base_pairing=config["mapping_params"]["base_pairing"]),
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/phenotype_robustness_distributions.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/phenotype_bias.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
+        # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/phenotype_bias_random_rankings.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/neutral_component_sizes.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
         # expand("bp_graph{base_pairing}/ranking{rankings}/analysis/neutral_component_size_histogram.pdf", base_pairing=config["mapping_params"]["base_pairing"], rankings=config["rankings"]),
         # expand("analysis/ranking{rank}/productive_walk_lengths_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"]),
         # expand("bp_graph{bp}/ranking{rank}/analysis/productive_walk_success_over_freq_{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
-        # expand("bp_graph{bp}/ranking{rank}/analysis/productive_walk_success_over_freq_werror_{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
+        # expand("bp_graph{bp}/ranking{rank}/analysis/productive_walk_success_over_freq_werror_{pop_size}_seed{seed}_seldif{seldif}.pdf", seldif=config['adaptive_walks']["selection_diff"], rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
         # expand("analysis/ranking{rank}/productive_walk_lengths_over_navigability_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"]),
-        expand("analysis/ranking{rank}/productive_walk_lengths_and_navigability_seed{seed}_pop{pop_size}.pdf", rank=config["rankings"], seed=config["random_seeds"], pop_size=config['adaptive_walks']['population_sizes']),
-        expand("analysis/ranking{rank}/greedy_walk_lengths_and_navigability_seed{seed}.pdf", rank=config["rankings"], seed=config["random_seeds"]),
+        expand("analysis/ranking{rank}/productive_walk_lengths_and_navigability_seed{seed}_pop{pop_size}_seldif{seldif}.pdf", seldif=config['adaptive_walks']["selection_diff"], rank=config["rankings"], seed=config["random_seeds"], pop_size=config['adaptive_walks']['population_sizes']),
+        # expand("analysis/ranking{rank}/greedy_walk_lengths_and_navigability_seed{seed}.pdf", rank=config["rankings"], seed=config["random_seeds"]),
         # # expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_frequency_over_bt_score_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
         # # expand("bp_graph{bp}/ranking{rank}/analysis/frequency_over_bt_ranking_seed{seed}.pdf", bp=config["mapping_params"]["base_pairing"], rank=config["rankings"], seed=config["random_seeds"]),
         # expand("bp_graph{ref_bp}/ranking{rank}/analysis/phenotype_bias_vs_vienna.pdf", rank=config["rankings"], ref_bp=config["ref_bp_rule"]),
@@ -22,7 +23,6 @@ rule all:
         # expand("analysis/ranking{rank}/phenotype_bias.pdf", rank=config["rankings"]),
         # expand("analysis/ranking{rank}/neutral_component_sizes.pdf", rank=config["rankings"]),
         # expand("bp_graph{ref_bp}/ranking{rank}/analysis/productive_walk_success_over_freq_pop{pop_size}_seed{seed}_vs_vienna.pdf", rank=config["rankings"], ref_bp=config["ref_bp_rule"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"]),
-        expand("bp_graph{bp_rule}/ranking{rank}/analysis/greedy_walk_success_over_freq_werror_seed{seed}.pdf", bp_rule=config["mapping_params"]["base_pairing"], rank=config["rankings"], seed=config["random_seeds"])
 
 
 rule create_subdirectories:
@@ -165,6 +165,23 @@ rule plot_joint_phenotype_bias:
         ref_ph_distr=expand("bp_graph%s/ranking{rank}/phenotype_distribution.txt" % config["ref_bp_rule"], rank=config["rankings"])
     output:
         "bp_graph{bp_rule}/ranking{rank}/analysis/phenotype_bias.pdf"
+    params:
+        ref_bp_rule=config["ref_bp_rule"]
+    shell:
+        "plot_joint_phenotype_bias_w_join_ref.py "
+        "-i {input.ph_distr} "
+        "-r {input.ref_ph_distr} "
+        "-b {wildcards.bp_rule} "
+        "-k {params.ref_bp_rule} "
+        "-l "
+        "-o {output} "
+
+rule plot_joint_phenotype_bias_random_ranking:
+    input:
+        ph_distr=expand("bp_graph{{bp_rule}}/ranking{rank}/phenotype_distribution.txt", rank=config["random_rankings"]),
+        ref_ph_distr=expand("bp_graph{{bp_rule}}/ranking{rank}/phenotype_distribution.txt", rank=config["rankings"])
+    output:
+        "bp_graph{bp_rule}/ranking{rank}/analysis/phenotype_bias_random_rankings.pdf"
     params:
         ref_bp_rule=config["ref_bp_rule"]
     shell:
@@ -475,26 +492,26 @@ rule plot_navigability:
         "-i {input} "
         "-o {output} "
 
-rule run_adaptive_walks_w_nc_tracing:
-    input:
-        gp_map="bp_graph{bp}/ranking{rank}/gp_map.pickle",
-        nc_temp="bp_graph{bp}/ranking{rank}/neutral_component_sizes.txt"  # only here to trigger neutral component script before
-    output:
-        nc_paths="bp_graph{bp}/ranking{rank}/adaptive_walk_ncs_{pop_size}.csv",
-        fitness_paths="bp_graph{bp}/ranking{rank}/adaptive_walk_fitnesses_{pop_size}.csv"
-    params:
-        max_steps=config["adaptive_walks"]["max_steps"],
-        sample_size_walks=config["adaptive_walks"]["sample_size_walks"],
-        sample_size_landscapes=config["adaptive_walks"]["sample_size_landscapes"]
-    shell:
-        "adaptive_walks_trace_neutral_components.py "
-        "-i {input.gp_map} "
-        "-o {output.nc_paths} "
-        "-p {output.fitness_paths} "
-        "-n {wildcards.pop_size} "
-        "-m {params.max_steps} "
-        "-l {params.sample_size_landscapes} "
-        "-s {params.sample_size_walks} "
+# rule run_adaptive_walks_w_nc_tracing:
+#     input:
+#         gp_map="bp_graph{bp}/ranking{rank}/gp_map.pickle",
+#         nc_temp="bp_graph{bp}/ranking{rank}/neutral_component_sizes.txt"  # only here to trigger neutral component script before
+#     output:
+#         nc_paths="bp_graph{bp}/ranking{rank}/adaptive_walk_ncs_{pop_size}.csv",
+#         fitness_paths="bp_graph{bp}/ranking{rank}/adaptive_walk_fitnesses_{pop_size}.csv"
+#     params:
+#         max_steps=config["adaptive_walks"]["max_steps"],
+#         sample_size_walks=config["adaptive_walks"]["sample_size_walks"],
+#         sample_size_landscapes=config["adaptive_walks"]["sample_size_landscapes"]
+#     shell:
+#         "adaptive_walks_trace_neutral_components.py "
+#         "-i {input.gp_map} "
+#         "-o {output.nc_paths} "
+#         "-p {output.fitness_paths} "
+#         "-n {wildcards.pop_size} "
+#         "-m {params.max_steps} "
+#         "-l {params.sample_size_landscapes} "
+#         "-s {params.sample_size_walks} "
 
 rule plot_productive_walks_lengths:
     input:
@@ -506,18 +523,40 @@ rule plot_productive_walks_lengths:
         "-i {input} "
         "-o {output} "
 
-rule run_adaptive_walks_productive:
+# rule run_adaptive_walks_productive:
+#     input:
+#         "bp_graph{bp}/ranking{rank}/gp_map.pickle"
+#     output:
+#         "bp_graph{bp}/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}_seldif{seldif}.csv",
+#     params:
+#         max_steps=config["adaptive_walks"]["max_steps"],
+#         sample_size_walks=config["adaptive_walks"]["sample_size_walks"],
+#         sample_size_landscapes=config["adaptive_walks"]["sample_size_landscapes"],
+#         lethal=config["mapping_params"]["unfolded"]
+#     shell:
+#         "adaptive_walks_productive.py "
+#         "-i {input} "
+#         "-o {output} "
+#         "-n {wildcards.pop_size} "
+#         "-m {params.max_steps} "
+#         "-l {params.sample_size_landscapes} "
+#         "-s {params.sample_size_walks} "
+#         "-u {params.lethal} "
+#         "-r {wildcards.seed} "
+#         "-d {wildcards.seldif} "
+
+rule run_adaptive_walks_productive_w_T:
     input:
         "bp_graph{bp}/ranking{rank}/gp_map.pickle"
     output:
-        "bp_graph{bp}/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}.csv",
+        "bp_graph{bp}/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}_seldif{seldif}.csv",
     params:
         max_steps=config["adaptive_walks"]["max_steps"],
         sample_size_walks=config["adaptive_walks"]["sample_size_walks"],
         sample_size_landscapes=config["adaptive_walks"]["sample_size_landscapes"],
         lethal=config["mapping_params"]["unfolded"]
     shell:
-        "adaptive_walks_productive.py "
+        "adaptive_walks_productive_precomp_T.py "
         "-i {input} "
         "-o {output} "
         "-n {wildcards.pop_size} "
@@ -526,6 +565,31 @@ rule run_adaptive_walks_productive:
         "-s {params.sample_size_walks} "
         "-u {params.lethal} "
         "-r {wildcards.seed} "
+        "-d {wildcards.seldif} "
+
+# rule run_adaptive_walks_productive_w_T_save_path:
+#     input:
+#         "bp_graph{bp}/ranking{rank}/gp_map.pickle"
+#     output:
+#         walk_success="bp_graph{bp}/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}_seldif{seldif}.csv",
+#         paths="bp_graph{bp}/ranking{rank}/productive_walk_paths_{pop_size}_seed{seed}_seldif{seldif}.csv"
+#     params:
+#         max_steps=config["adaptive_walks"]["max_steps"],
+#         sample_size_walks=config["adaptive_walks"]["sample_size_walks"],
+#         sample_size_landscapes=config["adaptive_walks"]["sample_size_landscapes"],
+#         lethal=config["mapping_params"]["unfolded"]
+#     shell:
+#         "adaptive_walks_productive_precomp_T_save_path.py "
+#         "-i {input} "
+#         "-o {output.walk_success} "
+#         "-p {output.paths} "
+#         "-n {wildcards.pop_size} "
+#         "-m {params.max_steps} "
+#         "-l {params.sample_size_landscapes} "
+#         "-s {params.sample_size_walks} "
+#         "-u {params.lethal} "
+#         "-r {wildcards.seed} "
+#         "-d {wildcards.seldif} "
 
 rule run_adaptive_walks_productive_vienna:
     input:
@@ -586,14 +650,15 @@ rule run_adaptive_walks_greedy:
 
 rule plot_productive_walk_success_over_frequency_werror:
     input:
-        walks="bp_graph{bp_rule}/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}.csv",
-        ref_walks="bp_graph%s/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}.csv" % config["ref_bp_rule"],
+        walks="bp_graph{bp_rule}/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}_seldif{seldif}.csv",
+        ref_walks="bp_graph%s/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}_seldif{seldif}.csv" % config["ref_bp_rule"],
         ph_distr="bp_graph{bp_rule}/ranking{rank}/phenotype_distribution.txt",
         ref_ph_distr="bp_graph%s/ranking{rank}/phenotype_distribution.txt" % config["ref_bp_rule"]
     output:
-        "bp_graph{bp_rule}/ranking{rank}/analysis/productive_walk_success_over_freq_werror_{pop_size}_seed{seed, [0-9]+}.pdf"
+        "bp_graph{bp_rule}/ranking{rank}/analysis/productive_walk_success_over_freq_werror_{pop_size}_seed{seed, [0-9]+}_seldif{seldif}.pdf"
     params:
-        sample_size=config["adaptive_walks"]["sample_size_walks"]  # how many walks per phenotype per random fitness landscape instance
+        sample_size=config["adaptive_walks"]["sample_size_walks"],  # how many walks per phenotype per random fitness landscape instance
+        ref_bp_rule=config["ref_bp_rule"]
     shell:
         "plot_adaptive_walk_success_over_freq_werror.py "
         "--reffreq {input.ref_ph_distr} "
@@ -601,6 +666,7 @@ rule plot_productive_walk_success_over_frequency_werror:
         "--freq {input.ph_distr} "
         "--walks {input.walks} "
         "--sample_size {params.sample_size} "
+        "--labels {params.ref_bp_rule} {wildcards.bp_rule} "
         "-o {output} "
 
 rule plot_productive_walk_success_over_frequency_greedy:
@@ -634,9 +700,9 @@ rule plot_productive_walks_length_over_navigability:
 
 rule plot_productive_walks_length_and_navigability:
     input:
-        expand("bp_graph{bp}/ranking{{rank}}/productive_walk_lengths_{{pop_size}}_seed{{seed}}.csv", bp=config["mapping_params"]["base_pairing"]),
+        expand("bp_graph{bp}/ranking{{rank}}/productive_walk_lengths_{{pop_size}}_seed{{seed}}_seldif{{seldif}}.csv", bp=config["mapping_params"]["base_pairing"]),
     output:
-        "analysis/ranking{rank}/productive_walk_lengths_and_navigability_seed{seed}_pop{pop_size}.pdf"
+        "analysis/ranking{rank}/productive_walk_lengths_and_navigability_seed{seed}_pop{pop_size}_seldif{seldif}.pdf"
     shell:
         "plot_adaptive_walk_length_and_navigability_werror.py "
         "-w {input} "
@@ -705,3 +771,52 @@ rule plot_walk_success_over_frequency_vs_vienna:
         "--freq {input.ph_distr} "
         "--walks {input.walks} "
         "-o {output} "
+
+
+
+"""I started to implement the precomputation of transition matrices to speed
+up adaptive walks but realized that it would be complicated by the fact that
+I sample random fitness assignments and would thus need a transition matrix
+for each fitness assignment.
+
+rule extract_phenotypes_from_pg_map:
+    input:
+        "bp_graph{base_pairing}/ranking{rank}/gp_map.txt"
+    output:
+        "bp_graph{base_pairing}/ranking{rank}/phenotypes.txt"
+    shell:
+        "extract_phenotypes.py "
+        "-i {input} "
+        "-o {output} "
+
+rule genotypes_to_integers:
+    input:
+        "genotypes.txt"
+    output:
+        "genotypes_numeric.npy"
+    params:
+        letters=config["alphabet"]
+    shell:
+        "genotypes_to_integers.py "
+        "-i {input} "
+        "-o {output} "
+
+rule compute_hamming_distances:
+    input:
+        "genotypes_numeric.npy"
+    output:
+        "hamming_distances.npy"
+    shell:
+        "compute_hamming_distances.py "
+        "-i {input} "
+        "-o {output} "
+    
+
+rule compute_transition_matrix:
+    input:
+        hamming_distances="hamming_distances.npy"
+        phenotypes=""
+    output:
+        "bp_graph{ref_bp}/ranking{rank}/transition_matrix_{pop_size}.npz"
+
+"""

@@ -21,6 +21,3 @@ if __name__ ==  "__main__":
     with open(args.out, "w") as file:
         for gt in sorted(pg_dict.keys()):
             file.write(gt + " " + " ".join(pg_dict[gt])+ "\n")
-
-
-    
