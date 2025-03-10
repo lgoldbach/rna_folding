@@ -16,9 +16,11 @@ if __name__ ==  "__main__":
                         "file", required=True)
     parser.add_argument("-i", "--ignore", help="Phenotype to ignore, e.g "
                         "unfolded", type=str, required=False)
-    parser.add_argument("-o", "--output", help="File output for phenotype "
-                        "Should end in .pickle",
+    parser.add_argument("-g", "--nc_graph", help="File output for neutral "
+                        "component graph. Should end in .pickle",
                         required=True)
+    parser.add_argument("-m", "--nc_to_g", help="Output file for neutral component"
+                        "to genotype map", required=True)
     
 
     args = parser.parse_args()
@@ -70,10 +72,12 @@ if __name__ ==  "__main__":
             # (ni, nj) or (nj, ni) are the same edge
             nc_graph.edges[(nc_i, nc_j)]["weight"] += .5 
         
+    pickle.dump(nc_graph, open(args.nc_graph, "wb"))
 
-
-
-    pickle.dump(nc_graph, open(args.output, "wb"))
+    with open(args.nc_to_g, "w") as f:
+        for ph in ncs:
+            for nc in ncs[ph]:
+                f.write(str(nc) + " " + str(ph) + " " + " ".join(ncs[ph][nc]) + "\n")
     
     # arr = nx.to_numpy_array(ph_graph)
     # attr = nx.get_node_attributes(ph_graph, "phenotype")
