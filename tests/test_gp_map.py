@@ -35,7 +35,7 @@ def test_connected_component_sizes():
 def test_connected_components():
     # define the correct neutral components per phenotype
     ref_nc = {')..': [{'AAA', 'AUU', 'AAU'}, {'UUA'}], 
-              ').(': [{'UAU', 'UUU'}], 
+              ').(': [{'UAU', 'UUU'}],
               ')((': [{'AUA'}, {'UAA'}]}
     
     gpm = example_gp()

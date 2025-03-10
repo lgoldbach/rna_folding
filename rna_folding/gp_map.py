@@ -241,7 +241,131 @@ class GenotypePhenotypeGraph(nx.Graph):
                      if attr['phenotype']==phenotype]
         
         return genotypes
+    
+    def get_neutral_components(self, 
+                               phenotypes: list = [], 
+                               add_labels: bool = False,
+                               return_boundaries: bool = False) -> list:
+        """Compute all neutral component sizes for given phenotypes. A neutral 
+        component is defined as a connected set of nodes that all map to the
+        same phenotype. A phenotype can have between one and #(phenotype) 
+        neutral components.
+
+        Args:
+            phenotypes (list, optional):    List of phenotypes for which 
+                                            neutral components will be 
+                                            returned. If none are given, 
+                                            neutral components for all 
+                                            phenotypes will be returned. 
+                                            Defaults to [].
+           
+        Returns:
+            list:   list of lists where the ith list contains all neutral 
+                    component sizes for the ith phenotype, e.g. [[10, 3], [1]] 
+
+        """
+        if not phenotypes:
+            phenotypes = self.phenotype_set
         
+        if return_boundaries:
+                boundaries = []
+        else:
+            boundaries = None
+
+        ncs = {}
+        nc_counter = 0
+        for ph in phenotypes:
+            genotypes = self.genotypes_of_phenotype(ph) # get all genotypes for <ph>
+            # track which genotype were visited already in dict
+            visited = dict(zip(genotypes, [False]*len(genotypes)))
+            ncs[ph] = {}
+            # start a DFS from every genotype
+            for init_gt in genotypes:
+                if not visited[init_gt]:  # only if it wasn't visited in a previous DFS
+                    stack = [init_gt]  # initialize a stack
+                    nc_counter += 1
+                    ncs[ph][nc_counter] = []  # new stack -> new nc
+                    
+                    while stack:
+                        g = stack.pop()  # get next genotype from stack
+
+                        if not visited[g]:
+                            if add_labels:
+                                nx.set_node_attributes(self, {g: nc_counter}, "neutral_component")  # add as node attribute
+                            ncs[ph][nc_counter].append(g)  # add genotype
+                            stack = self.neutral_DFS_helper(genotype=g,
+                                                    phenotype=ph,
+                                                    visited=visited,
+                                                    stack=stack,
+                                                    track_boundaries=return_boundaries,
+                                                    boundaries=boundaries)
+                        
+        
+        if return_boundaries:
+            return ncs, boundaries
+        else:
+            return ncs
+
+    def neutral_DFS_helper(self, genotype, phenotype, visited, stack, track_boundaries, boundaries):
+        """Perform a neutral depth-first search. Only accept steps to genotypes
+        with same phenotype
+
+        Args:
+            genotype (str):     The current genotype
+            phenotype (str):    The phenotype that has to be matched
+            visited (np.array): Array that keeps track of which genotypes have 
+                                been visited
+            stack (list):       Stack with all genotypes to be visited
+            track_boundaries (bool): Track boundaries or not.
+            boundaries (list):  List of tuples to track where neutral component
+                                boundaries are. Only used of track_boundaries
+                                is True
+
+        Returns:
+            stack (list):       Returns the updated stack. The return is not
+                                necessary as stack is changed in-place but
+                                this makes more explicit what the result of 
+                                this method is
+        """
+        visited[genotype] = True
+        for neighbor in self._neighbors(genotype):
+            neigh_ph = self.nodes[neighbor]["phenotype"]
+            if neigh_ph == phenotype and not visited[neighbor]:
+                stack.append(neighbor)
+            elif track_boundaries and neigh_ph != phenotype:
+                boundaries.append((genotype, neighbor))
+        return stack
+
+    def neutral_DFS_helper_for_nc_sizes(self, genotype, phenotype, visited, stack, track_boundaries, boundaries):
+        """Perform a neutral depth-first search. Only accept steps to genotypes
+        with same phenotype
+
+        Args:
+            genotype (str):     The current genotype
+            phenotype (str):    The phenotype that has to be matched
+            visited (np.array): Array that keeps track of which genotypes have 
+                                been visited
+            stack (list):       Stack with all genotypes to be visited
+            track_boundaries (bool): Track boundaries or not.
+            boundaries (list):  List of tuples to track where neutral component
+                                boundaries are. Only used of track_boundaries
+                                is True
+
+        Returns:
+            stack (list):       Returns the updated stack. The return is not
+                                necessary as stack is changed in-place but
+                                this makes more explicit what the result of 
+                                this method is
+        """
+        visited[genotype] = True
+        for neighbor in self._neighbors(genotype):
+            neigh_ph = self.nodes[neighbor]["phenotype"]
+            if neigh_ph == phenotype and not visited[neighbor]:
+                stack.append(neighbor)
+            elif track_boundaries and neigh_ph != phenotype:
+                boundaries.append((genotype, neighbor))
+        return stack
+
     def neutral_component_sizes(self, 
                                 phenotypes: list = [], 
                                 add_labels: bool = False,
@@ -291,11 +415,11 @@ class GenotypePhenotypeGraph(nx.Graph):
                     count_before = sum(visited.values())  # count how many genotype have been visited before this DFS
                     while stack:
                         g = stack.pop()  # get next genotype from stack
-                        if add_labels:
-                            nx.set_node_attributes(self, {g: nc_counter}, "neutral_component")  # add as node attribute
 
                         if not visited[g]:
-                            stack = self.neutral_DFS_helper(genotype=g,
+                            if add_labels:
+                                nx.set_node_attributes(self, {g: nc_counter}, "neutral_component")  # add as node attribute
+                            stack = self.neutral_DFS_helper_for_nc_sizes(genotype=g,
                                                     phenotype=ph,
                                                     visited=visited,
                                                     stack=stack,
@@ -307,40 +431,11 @@ class GenotypePhenotypeGraph(nx.Graph):
                     
             nc_sizes_all.append(nc_sizes)  # add values for ph to the results
         
-        if return_boundaries:
+        if return_boundaries:                
             return nc_sizes_all, boundaries
         else:
             return nc_sizes_all
 
-    def neutral_DFS_helper(self, genotype, phenotype, visited, stack, track_boundaries, boundaries):
-        """Perform a neutral depth-first search. Only accept steps to genotypes
-        with same phenotype
-
-        Args:
-            genotype (str):     The current genotype
-            phenotype (str):    The phenotype that has to be matched
-            visited (np.array): Array that keeps track of which genotypes have 
-                                been visited
-            stack (list):       Stack with all genotypes to be visited
-            track_boundaries (bool): Track boundaries or not.
-            boundaries (list):  List of tuples to track where neutral component
-                                boundaries are. Only used of track_boundaries
-                                is True
-
-        Returns:
-            stack (list):       Returns the updated stack. The return is not
-                                necessary as stack is changed in-place but
-                                this makes more explicit what the result of 
-                                this method is
-        """
-        visited[genotype] = True
-        for neighbor in self._neighbors(genotype):
-            neigh_ph = self.nodes[neighbor]["phenotype"]
-            if neigh_ph == phenotype and not visited[neighbor]:
-                stack.append(neighbor)
-            elif track_boundaries and neigh_ph != phenotype:
-                boundaries.append((genotype, neighbor))
-        return stack
 
     def neutral_paths(self, source_genotype: str, n: int) -> list:
         """Start n random walks from <genotype> along genotypes with the same

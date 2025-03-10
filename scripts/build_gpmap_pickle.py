@@ -25,5 +25,4 @@ if __name__ ==  "__main__":
                                               genotype_ref_path=args.genotypes,
                                               alphabet=args.alphabet)
 
-    print("AA", len([x for x,y in gpm.nodes(data=True) if y['phenotype']=="((()))"]))
     pickle.dump(gpm, open(args.output, "wb"))
