@@ -55,9 +55,7 @@ if __name__ ==  "__main__":
         fitness = ph_to_f[ph]
         nc_path = [fitness]
         for i, gt in enumerate(path[1:]):
-            try:
-                nc = gt_to_nc[gt]
-            except KeyError:
+            nc = gt_to_nc[gt]
             ph = nc_graph.nodes[nc]["phenotype"]
             fitness = ph_to_f[ph]
             if fitness != nc_path[-1]:  # ignore neutral steps
