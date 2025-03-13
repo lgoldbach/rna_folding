@@ -9,6 +9,8 @@ if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", help="Input genotype-phenotype map "
                         "file", required=True)
+    parser.add_argument("-i", "--ignore", help="Phenotype to ignore, e.g "
+                        "unfolded", type=str, required=False)
     parser.add_argument("-o", "--output", help="File output for neutral components",
                         required=True)
     
@@ -19,7 +21,12 @@ if __name__ ==  "__main__":
     gpm = pickle.load(open(args.file, "rb"))
     print("done", datetime.now())
 
-    nc_counts = gpm.neutral_component_sizes(add_labels=True)
+    if args.ignore:
+        phenotypes = [ph for ph in gpm.phenotype_set if ph != args.ignore]
+    else:
+        phenotypes = None
+
+    nc_counts = gpm.neutral_component_sizes(phenotypes=phenotypes, add_labels=False)
     
     # pickle.dump(gpm, open(args.file, "wb"))
     with open(args.output, "w") as file:

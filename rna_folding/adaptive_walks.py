@@ -140,10 +140,12 @@ def productive_adaptive_walk_w_T(gpmap: GenotypePhenotypeGraph,
         if sum(probs) == 0:  # no way to go
             break
         normed_probs = np.array(probs) / sum(probs)
+        # print(path[-1], fitness_function[gpmap.nodes[path[-1]]["phenotype"]], [fitness_function[gpmap.nodes[i]["phenotype"]] for i in neighbors], neighbors, probs, normed_probs)
         candidate = rng.choice(neighbors, p=normed_probs)
-
+        # print(candidate)
         path.append(candidate)
         if fitness_function[gpmap.nodes[candidate]["phenotype"]] == 1:  # found target phenotype
+            # print("Done")
             break
     return path
 

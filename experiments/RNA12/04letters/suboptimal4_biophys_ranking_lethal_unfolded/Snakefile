@@ -13,12 +13,12 @@ rule all:
         # expand("bp_graph{bp}/ranking{rank}/analysis/productive_walk_success_over_freq_{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
         # expand("bp_graph{bp}/ranking{rank}/analysis/productive_walk_success_over_freq_werror_{pop_size}_seed{seed}_seldif{seldif}.pdf", seldif=config['adaptive_walks']["selection_diff"], rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
         # expand("analysis/ranking{rank}/productive_walk_lengths_over_navigability_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"]),
-        expand("analysis/ranking{rank}/productive_walk_lengths_and_navigability_seed{seed}_pop{pop_size}_seldif{seldif}.pdf", seldif=config['adaptive_walks']["selection_diff"], rank=config["rankings"], seed=config["random_seeds"], pop_size=config['adaptive_walks']['population_sizes']),
+        # expand("analysis/ranking{rank}/productive_walk_lengths_and_navigability_seed{seed}_pop{pop_size}_seldif{seldif}.pdf", seldif=config['adaptive_walks']["selection_diff"], rank=config["rankings"], seed=config["random_seeds"], pop_size=config['adaptive_walks']['population_sizes']),
         # expand("analysis/ranking{rank}/greedy_walk_lengths_and_navigability_seed{seed}.pdf", rank=config["rankings"], seed=config["random_seeds"]),
         # # expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_frequency_over_bt_score_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
         # # expand("bp_graph{bp}/ranking{rank}/analysis/frequency_over_bt_ranking_seed{seed}.pdf", bp=config["mapping_params"]["base_pairing"], rank=config["rankings"], seed=config["random_seeds"]),
         # expand("bp_graph{ref_bp}/ranking{rank}/analysis/phenotype_bias_vs_vienna.pdf", rank=config["rankings"], ref_bp=config["ref_bp_rule"]),
-        # expand("bp_graph{ref_bp}/ranking{rank}/analysis/neutral_component_sizes_vs_vienna.pdf", rank=config["rankings"], ref_bp=config["ref_bp_rule"]),
+        expand("bp_graph{ref_bp}/ranking{rank}/analysis/neutral_component_sizes_vs_vienna.pdf", rank=config["rankings"], ref_bp=config["ref_bp_rule"]),
         # # expand("bp_graph{ref_bp}/ranking{rank}/analysis/phenotype_robustness_freq_vs_vienna.pdf", rank=config["rankings"], ref_bp=config["ref_bp_rule"]),
         # expand("analysis/ranking{rank}/phenotype_bias.pdf", rank=config["rankings"]),
         # expand("analysis/ranking{rank}/neutral_component_sizes.pdf", rank=config["rankings"]),
@@ -215,6 +215,18 @@ rule get_neutral_component_sizes:
         "bp_graph{bp_rule}/ranking{rank}/gp_map.pickle"
     output:
         "bp_graph{bp_rule}/ranking{rank}/neutral_component_sizes.txt"
+    resources:
+        mem_mb=60000
+    shell:
+        "neutral_components.py "
+        "-f {input} "
+        "-o {output} "
+
+rule get_neutral_component_sizes_vienna:
+    input:
+        "%s/gp_map.pickle" % config["ref_dir"]
+    output:
+        "%s/neutral_component_sizes.txt" % config["ref_dir"]
     resources:
         mem_mb=60000
     shell:

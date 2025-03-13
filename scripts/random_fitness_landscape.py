@@ -57,7 +57,9 @@ if __name__ ==  "__main__":
     if args.global_peak:
         ph_to_f[args.global_peak] = args.upp_f
     else:  # if not global peak given, pick one at random.
-        global_peak = np.random.choice(phenotypes)
+        global_peak = args.lethal_ph
+        while global_peak == args.lethal_ph:  # don't allow lethal ph to be global peak
+            global_peak = np.random.choice(phenotypes)
         ph_to_f[global_peak] = args.upp_f
 
     with open(args.output, "w") as f:

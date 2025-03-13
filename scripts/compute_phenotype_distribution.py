@@ -53,6 +53,7 @@ if __name__ ==  "__main__":
                     continue  # ignore this phenotype
 
                 count = len(line) - 1
+                print(line[1])
                 outfile.write(line[0] + " " + str(count) + "\n")
     file.close()
     outfile.close()

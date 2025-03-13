@@ -1,6 +1,6 @@
 import numpy as np
 import networkx as nx
-
+import RNA
 
 class GenotypePhenotypeGraph(nx.Graph):
     """Storing genotype-phenotype map data as a graph and wrap 
@@ -271,17 +271,17 @@ class GenotypePhenotypeGraph(nx.Graph):
                 boundaries = []
         else:
             boundaries = None
-
+        print("Phenotypes", phenotypes, flush=True)
         ncs = {}
         nc_counter = 0
         for ph in phenotypes:
             genotypes = self.genotypes_of_phenotype(ph) # get all genotypes for <ph>
             # track which genotype were visited already in dict
-            visited = dict(zip(genotypes, [False]*len(genotypes)))
+            visited = {}
             ncs[ph] = {}
             # start a DFS from every genotype
             for init_gt in genotypes:
-                if not visited[init_gt]:  # only if it wasn't visited in a previous DFS
+                if init_gt not in visited:  # only if it wasn't visited in a previous DFS
                     stack = [init_gt]  # initialize a stack
                     nc_counter += 1
                     ncs[ph][nc_counter] = []  # new stack -> new nc
@@ -289,10 +289,11 @@ class GenotypePhenotypeGraph(nx.Graph):
                     while stack:
                         g = stack.pop()  # get next genotype from stack
 
-                        if not visited[g]:
+                        if g not in visited:
                             if add_labels:
                                 nx.set_node_attributes(self, {g: nc_counter}, "neutral_component")  # add as node attribute
-                            ncs[ph][nc_counter].append(g)  # add genotype
+                            ncs[ph][nc_counter].append(g)  # add genotype to nc
+
                             stack = self.neutral_DFS_helper(genotype=g,
                                                     phenotype=ph,
                                                     visited=visited,
@@ -328,12 +329,17 @@ class GenotypePhenotypeGraph(nx.Graph):
                                 this method is
         """
         visited[genotype] = True
+    
         for neighbor in self._neighbors(genotype):
             neigh_ph = self.nodes[neighbor]["phenotype"]
-            if neigh_ph == phenotype and not visited[neighbor]:
-                stack.append(neighbor)
-            elif track_boundaries and neigh_ph != phenotype:
-                boundaries.append((genotype, neighbor))
+             # we only care about the unvisited neighbors
+             # if it was visited already then it was dealt with already both
+             # for nc assignment and boundaries
+            if neighbor not in visited:  # O(1) time because dict
+                if neigh_ph == phenotype:  # still within same nc
+                    stack.append(neighbor)
+                elif track_boundaries:  # boundary to other nc
+                    boundaries.append((genotype, neighbor))
         return stack
 
     def neutral_DFS_helper_for_nc_sizes(self, genotype, phenotype, visited, stack, track_boundaries, boundaries):

@@ -90,10 +90,15 @@ def lists_to_gp_map(genotypes, phenotypes, output_filename) -> None:
                                     ...
 
     """
-    
+    pg_map = {}
+    for (gt, ph) in zip(genotypes, phenotypes):
+        if ph in pg_map:
+            pg_map[ph].append(gt)
+        else:
+            pg_map[ph] = [gt]
 
-
-
+    dict_to_gpmap(pg_map, output_filename)
+        
 
 def gpmap_to_dict(gpmap_file: str, genotype_file: str = None) -> dict:
     """Takes a file that stores genotype-phenotype mapping and a list of 
