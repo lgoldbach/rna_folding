@@ -12,16 +12,18 @@ rule all:
         # expand("analysis/ranking{rank}/productive_walk_lengths_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"]),
         # expand("bp_graph{bp}/ranking{rank}/analysis/productive_walk_success_over_freq_{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
         # expand("bp_graph{bp}/ranking{rank}/analysis/productive_walk_success_over_freq_werror_{pop_size}_seed{seed}_seldif{seldif}.pdf", seldif=config['adaptive_walks']["selection_diff"], rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
+        # expand("bp_graph{bp}/ranking{rank}/analysis/vs_vienna_productive_walk_success_over_freq_werror_{pop_size}_seed{seed}_seldif{seldif}.pdf", seldif=config['adaptive_walks']["selection_diff"], rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["ref_bp_rule"], seed=config["random_seeds"]),
         # expand("analysis/ranking{rank}/productive_walk_lengths_over_navigability_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"]),
         # expand("analysis/ranking{rank}/productive_walk_lengths_and_navigability_seed{seed}_pop{pop_size}_seldif{seldif}.pdf", seldif=config['adaptive_walks']["selection_diff"], rank=config["rankings"], seed=config["random_seeds"], pop_size=config['adaptive_walks']['population_sizes']),
         # expand("analysis/ranking{rank}/greedy_walk_lengths_and_navigability_seed{seed}.pdf", rank=config["rankings"], seed=config["random_seeds"]),
         # # expand("bp_graph{bp}/ranking{rank}/analysis/phenotype_frequency_over_bt_score_pop_size{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], bp=config["mapping_params"]["base_pairing"], seed=config["random_seeds"]),
         # # expand("bp_graph{bp}/ranking{rank}/analysis/frequency_over_bt_ranking_seed{seed}.pdf", bp=config["mapping_params"]["base_pairing"], rank=config["rankings"], seed=config["random_seeds"]),
         # expand("bp_graph{ref_bp}/ranking{rank}/analysis/phenotype_bias_vs_vienna.pdf", rank=config["rankings"], ref_bp=config["ref_bp_rule"]),
-        expand("bp_graph{ref_bp}/ranking{rank}/analysis/neutral_component_sizes_vs_vienna.pdf", rank=config["rankings"], ref_bp=config["ref_bp_rule"]),
+        # expand("bp_graph{ref_bp}/ranking{rank}/analysis/neutral_component_sizes_vs_vienna.pdf", rank=config["rankings"], ref_bp=config["ref_bp_rule"]),
         # # expand("bp_graph{ref_bp}/ranking{rank}/analysis/phenotype_robustness_freq_vs_vienna.pdf", rank=config["rankings"], ref_bp=config["ref_bp_rule"]),
-        # expand("analysis/ranking{rank}/phenotype_bias.pdf", rank=config["rankings"]),
-        # expand("analysis/ranking{rank}/neutral_component_sizes.pdf", rank=config["rankings"]),
+        expand("analysis/ranking{rank}/phenotype_bias.pdf", rank=config["rankings"]),
+        expand("analysis/ranking{rank}/neutral_component_sizes.pdf", rank=config["rankings"]),
+        expand("bp_graph{ref_bp}/ranking{rank}/analysis/vienna_comparison_triple_plot_pop{pop_size}_seed{seed}_seldif{seldif}.pdf", ref_bp=config["ref_bp_rule"], rank=config["rankings"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"], seldif=config["adaptive_walks"]["selection_diff"]),
         # expand("bp_graph{ref_bp}/ranking{rank}/analysis/productive_walk_success_over_freq_pop{pop_size}_seed{seed}_vs_vienna.pdf", rank=config["rankings"], ref_bp=config["ref_bp_rule"], pop_size=config['adaptive_walks']['population_sizes'], seed=config["random_seeds"]),
 
 
@@ -193,7 +195,7 @@ rule plot_joint_phenotype_bias_random_ranking:
         "-l "
         "-o {output} "
 
-rule plot_joint_phenotype_bias_against_vienna:
+rule plot_joint_phenotype_bias_vs_vienna:
     input:
         ph_distr="bp_graph{ref_bp}/ranking{rank}/phenotype_distribution.txt",
         ref_ph_distr="%s/phenotype_distribution.txt" % config["ref_dir"]
@@ -271,6 +273,52 @@ rule plot_neutral_component_sizes_vs_vienna:
         "-k {params.ref_bp_rule} "
         "-o {output} "
         "-l "
+
+rule plot_navigability_over_frequency_werror_vs_vienna:
+    input:
+        walks="bp_graph{ref_bp}/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}_seldif{seldif}.csv",
+        ref_walks="%s/productive_walk_lengths_{pop_size}_seed{seed}.csv" % config["ref_dir"],
+        ph_distr="bp_graph{ref_bp}/ranking{rank}/phenotype_distribution.txt",
+        ref_ph_distr="%s/phenotype_distribution.txt" % config["ref_dir"]
+    output:
+        "bp_graph{ref_bp}/ranking{rank}/analysis/vs_vienna_productive_walk_success_over_freq_werror_{pop_size}_seed{seed, [0-9]+}_seldif{seldif}.pdf"
+    params:
+        sample_size=config["adaptive_walks"]["sample_size_walks"],  # how many walks per phenotype per random fitness landscape instance
+        ref_bp_rule=config["ref_bp_rule"]
+    shell:
+        "plot_adaptive_walk_success_over_freq_werror_vs_vienna.py "
+        "--reffreq {input.ref_ph_distr} "
+        "--refwalks {input.ref_walks} "
+        "--freq {input.ph_distr} "
+        "--walks {input.walks} "
+        "--sample_size {params.sample_size} "
+        "--label_ref_bp {wildcards.ref_bp} "
+        "-o {output} "
+
+rule plot_vienna_comparison_triple_plot:
+    input:
+        ph_distr="bp_graph{ref_bp}/ranking{rank}/phenotype_distribution.txt",
+        ref_ph_distr="%s/phenotype_distribution.txt" % config["ref_dir"],
+        nc="bp_graph{ref_bp}/ranking{rank}/neutral_component_sizes.txt",
+        ref_nc="%s/neutral_component_sizes.txt" % config["ref_dir"],
+        walks="bp_graph{ref_bp}/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}_seldif{seldif}.csv",
+        ref_walks="%s/productive_walk_lengths_{pop_size}_seed{seed}.csv" % config["ref_dir"],
+    output:
+        "bp_graph{ref_bp}/ranking{rank}/analysis/vienna_comparison_triple_plot_pop{pop_size}_seed{seed}_seldif{seldif}.pdf"
+    params:
+        rank_cutoff=config["neutral_component_plotting_param"]["rank_cutoff"],
+        sample_size=config["adaptive_walks"]["sample_size_walks"],  # how many walks per phenotype per random fitness landscape instance
+    shell:
+        "plot_viennaRNA_comparison_triple_plot.py "
+        "-i {input.ph_distr} "
+        "-r {input.ref_ph_distr} "
+        "-n {input.nc} "
+        "-m {input.ref_nc} "
+        "-c {params.rank_cutoff} "
+        "--refwalks {input.ref_walks} "
+        "--walks {input.walks} "
+        "--sample_size {params.sample_size} "
+        "-o {output} "
 
 rule plot_neutral_component_histogram:
     input:
@@ -775,7 +823,7 @@ rule plot_walk_success_over_frequency_vs_vienna:
         ph_distr="bp_graph{ref_bp}/ranking{rank}/phenotype_distribution.txt",
         ref_ph_distr="%s/phenotype_distribution.txt" % config["ref_dir"]
     output:
-        "bp_graph{ref_bp}/ranking{rank}/analysis/productive_walk_success_over_freq_pop{pop_size}_seed{seed, [0-9]+}_vs_vienna.pdf"
+        "bp_graph{ref_bp}/ranking{rank}/analysis/productive_walk_success_over_freq_pop{pop_size}_seed{seed, [0-9]+}.pdf"
     shell:
         "plot_adaptive_walk_success_over_freq.py "
         "--reffreq {input.ref_ph_distr} "

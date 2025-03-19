@@ -76,8 +76,11 @@ if __name__ ==  "__main__":
     #             zorder=3,
     #             whis=[0, 95])
     
+    
+    palette = ["0.9" if i != 4 else "0.6" for i in range(1, len(x))]
     ax = sns.violinplot(x=x,
-                   y=nav, 
+                   y=nav,
+                   palette=palette,
                    ax=ax1,
                    legend=False,
                    density_norm="area",
@@ -87,7 +90,6 @@ if __name__ ==  "__main__":
                    inner="quart",
                    linewidth=0.2,
                    linecolor="black",
-                   color="0.9",
                    zorder=3,
                    inner_kws={"zorder": 4})
     
@@ -143,6 +145,7 @@ if __name__ ==  "__main__":
     ax = sns.violinplot(x=x,
                    y=walks, 
                    ax=ax2,
+                   palette=palette,
                    legend=False,
                    density_norm="area",
                    width=0.95,
@@ -151,10 +154,12 @@ if __name__ ==  "__main__":
                    inner="quart",
                    linewidth=0.2,
                    linecolor="black",
-                   color="0.9",
+                #    color="0.9",
                    zorder=3,
                    inner_kws={"zorder": 4})
     
+    
+
     for i, id in enumerate(new_order_idx):
         d = walk_lengths[id]
         mean = np.mean(d)

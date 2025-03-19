@@ -56,7 +56,7 @@ if __name__ ==  "__main__":
         distr = distr[1:]
         x = range(1, distr.shape[0]+1)
      
-        ax.plot(x, distr, label=f"Base-pairing {i+1}", color="tab:blue", linewidth=7, zorder=10)
+        ax.plot(x, distr, label=f"Base-pairing {i+1}", color="black", linewidth=7, zorder=0)
 
     ref_file = ph_dist_files[args.ref-1]
     phenotypes, ref_distr = ranked_ph_distribution(ph_distr_file=ref_file,
@@ -64,7 +64,7 @@ if __name__ ==  "__main__":
     ref_distr = ref_distr[1:]   # ignore unfolded
     ref_x = range(1, ref_distr.shape[0]+1)
     for ax in axes:
-        ax.plot(ref_x, ref_distr, color="0.4", linewidth=5, label="Base-pairing 4")
+        ax.plot(ref_x, ref_distr, color="0.4", linewidth=7, label="Natural base-pairing", linestyle="dotted", zorder=1)
         ax.legend(loc="lower left", prop={'size': 25}, frameon=False)
     
         ax.tick_params(axis='both', which='major', labelsize=20)

@@ -66,15 +66,18 @@ if __name__ ==  "__main__":
         nc = read_nc_file(file)
     
         x = range(1, len(nc)+1)
-        ax.plot(x, np.log10(nc), label=f"Base-pairing {i+1}", color="tab:orange", linewidth=7, zorder=10)
+        ax.plot(x, np.log10(nc), label=f"Base-pairing {i+1}", color="black", linewidth=7, zorder=0)
 
     ref_file = nc_files[args.ref-1]
     
     ref_nc = read_nc_file(ref_file)
+    # only take every step'th data point
+    step = 20
 
-    ref_x = range(1, len(ref_nc)+1)
+    ref_nc_coarse = [ref_nc[i] for i in range(0, len(ref_nc), step)]  
+    ref_x = range(1, len(ref_nc)+1, step)
     for ax in axes:
-        ax.plot(ref_x, np.log10(ref_nc), color="0.4", linewidth=5, label="Base-pairing 4")
+        ax.plot(ref_x, np.log10(ref_nc_coarse), color="0.4", linewidth=7, label="Natural base-pairing", zorder=1, linestyle="dotted")
         ax.legend(loc="upper right", prop={'size': 25}, frameon=False)
     
         ax.tick_params(axis='both', which='major', labelsize=20)
