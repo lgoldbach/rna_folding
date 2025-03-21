@@ -7,7 +7,6 @@ rule all:
         # "gp_map.txt",
         "scores_barplot.pdf"
 
-
 rule bradley_terry_ranking:
     input:
         matrix="pairwise_consensus_matrix.pickle",

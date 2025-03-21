@@ -55,7 +55,7 @@ if __name__ ==  "__main__":
     ax1.tick_params(axis='both', which='major', labelsize=12)
     ax1.tick_params(axis='both', which='minor', labelsize=8)
 
-    ax1.set_xlabel("Rank", fontsize=15)
+    ax1.set_xlabel("Phenotypes", fontsize=15)
     ax1.set_ylabel("Phenotype frequency (log10)", fontsize=15)
     ax1.grid()
     ax1.legend(loc="lower left", prop={'size': 15}, frameon=False)
@@ -106,12 +106,11 @@ if __name__ ==  "__main__":
 
     ax2.tick_params(axis='both', which='major', labelsize=12)
     ax2.tick_params(axis='both', which='minor', labelsize=8)
-    # ax.set_ylim([-7, -1])
-    ax2.set_xlabel("Rank", fontsize=15)
+
+    ax2.set_xlabel("Neutral components", fontsize=15)
     ax2.grid()
     ax2.legend(loc="upper right", prop={'size': 15}, frameon=False)
 
-    ax2.set_xlabel("Rank", fontsize=15)
 
     ax2.set_ylabel("Neutral component size (log10)", fontsize=15)
     
