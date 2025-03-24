@@ -4,6 +4,7 @@ import argparse
 import pickle
 import RNA
 from rna_folding.adaptive_walks import kimura_fixation
+from rna_folding.analysis import get_peaks
 
 import matplotlib.pyplot as plt
 
@@ -65,28 +66,14 @@ if __name__ ==  "__main__":
 
     fig, (ax1,ax2) = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(10, 5))
 
-    peaks_nc = []
-    peaks_f = []
-    for nc in nc_graph.nodes:
-        neighbors = nc_graph.neighbors(nc)
-        nc_ph = nc_graph.nodes[nc]["phenotype"]
-        nc_f = ph_to_f[nc_ph]
-        peak = True
-        for ne in neighbors:
-            ne_ph = nc_graph.nodes[ne]["phenotype"]
-            ne_f = ph_to_f[ne_ph]
-            if ne_f >= nc_f:
-                peak = False
-        if peak:
-            peaks_nc.append(nc)
-            peaks_f.append(nc_f)
+    peaks_nc, peaks_f = get_peaks(nc_graph, ph_to_f)
 
-    success = 0
 
     l1 = False
     l2 = False
     l3 = False
 
+    success = 0
     plateau_end = 0
     peak_end = 0
     for path in nc_paths:

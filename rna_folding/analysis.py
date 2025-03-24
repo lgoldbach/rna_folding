@@ -86,3 +86,35 @@ def infer_bradley_terry_scores(pairwise_rankings, max_iter=10**3, conv_crit=10**
         
     raise AssertionError(f"Not converged after {n} steps. Error: {np.sum(np.abs((p - old_p)))}")
 
+def get_peaks(nc_graph, ph_to_f, local_only=False):
+    """Count number of peaks in an neutral component graph given a 
+    phenotype to fitness mapping"
+
+    Args:
+        nc_graph (nx.Graph):    A networkx graph. Nodes have to have a 
+                                "phenotype" property.
+        ph_to_f (dict):         Mapping from phenotypes to fitness (float). 
+    
+    Returns:
+        (peaks_nc, peaks_f):    (NC ids of peaks (list), 
+                                fitness of peaks [list])
+
+    
+    """
+    peaks_nc = []
+    peaks_f = []
+    for nc in nc_graph.nodes:
+        neighbors = nc_graph.neighbors(nc)
+        nc_ph = nc_graph.nodes[nc]["phenotype"]
+        nc_f = ph_to_f[nc_ph]
+        peak = True
+        for ne in neighbors:
+            ne_ph = nc_graph.nodes[ne]["phenotype"]
+            ne_f = ph_to_f[ne_ph]
+            if ne_f >= nc_f:
+                peak = False
+        if peak:
+            peaks_nc.append(nc)
+            peaks_f.append(nc_f)
+
+    return peaks_nc, peaks_f
