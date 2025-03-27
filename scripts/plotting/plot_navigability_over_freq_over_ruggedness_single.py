@@ -12,9 +12,9 @@ from rna_folding.parsing import load_phenotype_and_metric_from_file
 
 if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-l", "--walk_lengths", help="Adaptive walk length ", nargs="+", required=True)
-    parser.add_argument("-r", "--ruggedness", help="Ruggedness", nargs="+", required=True)
-    parser.add_argument("-f", "--ph_dist", help="phenotype distribution", nargs="+", required=True)
+    parser.add_argument("-l", "--walk_lengths", help="Adaptive walk length ", required=True)
+    parser.add_argument("-r", "--ruggedness", help="Ruggedness", required=True)
+    parser.add_argument("-f", "--ph_dist", help="phenotype distribution", required=True)
     parser.add_argument("-o", "--output", help="Output file for plot (.pdf)",
                         required=True)
     
@@ -71,46 +71,44 @@ if __name__ ==  "__main__":
                         print(peaks_sizes)
         return r
     
-    for i, (ph_dist, walk_lengths, ruggedness) in enumerate(zip(args.ph_dist, args.walk_lengths, args.ruggedness)):
-        phenotypes, counts = load_phenotype_and_metric_from_file(ph_dist)
-        walk_success = read_walk_file(walk_lengths)
+    phenotypes, counts = load_phenotype_and_metric_from_file(args.ph_dist)
+    walk_success = read_walk_file(args.walk_lengths)
 
-        # peak size
-        rugged = read_rugged_file_sum(ruggedness)
-        rugged_av = {}
-        for ph in rugged:
-            rugged_av[ph] = np.mean(rugged[ph])
-        
-        x = []
-        y = []
-        for ph, c in zip(phenotypes, counts):
-            if c > 0 and ph != "............":
-                x.append(c/(rugged_av[ph]+c))
-                y.append(walk_success[ph])
+    # peak size
+    rugged = read_rugged_file_sum(args.ruggedness)
+    rugged_av = {}
+    for ph in rugged:
+        rugged_av[ph] = np.mean(rugged[ph])
+    
+    x = []
+    y = []
+    for ph, c in zip(phenotypes, counts):
+        if c > 0 and ph != "............":
+            x.append(np.log10(c/rugged_av[ph]))
+            y.append(walk_success[ph])
 
-        ax1.scatter(x, y, label=f"GP map {i+1}", s=10, alpha=.7, linewidths=0)
+    ax1.scatter(x, y)
 
-        # peak count
-        rugged = read_rugged_file_len(ruggedness)
-        rugged_av = {}
-        for ph in rugged:
-            rugged_av[ph] = np.mean(rugged[ph])
-        
-        x = []
-        y = []
-        for ph, c in zip(phenotypes, counts):
-            if c > 0 and ph != "............":
-                x.append(c/(rugged_av[ph]+c))
-                y.append(walk_success[ph])
+    # peak count
+    rugged = read_rugged_file_len(args.ruggedness)
+    rugged_av = {}
+    for ph in rugged:
+        rugged_av[ph] = np.mean(rugged[ph])
+    
+    x = []
+    y = []
+    for ph, c in zip(phenotypes, counts):
+        if c > 0 and ph != "............":
+            x.append(np.log10(c/rugged_av[ph]))
+            y.append(walk_success[ph])
 
-        ax2.scatter(x, y, label=f"GP map {i+1}", s=10, alpha=.7, linewidths=0)
+    ax2.scatter(x, y)
 
-    ax1.set_xlabel("Target NN size / <Sum of all peak sizes>")
+    ax1.set_xlabel("Target NN size / <Sum of local peak sizes> (log10)")
     ax1.set_ylabel("Average Navigability")
 
     ax2.set_xlabel("Target NN size / <No. local peaks> (log10)")
     # ax.set_ylim(0, 100)
     # ax.set_xlim(-5, 3.2)
-    plt.legend(fontsize=6)
 
     plt.savefig(args.output, format="pdf", dpi=30)

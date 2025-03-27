@@ -61,12 +61,12 @@ if __name__ ==  "__main__":
 
     # bring both axes in order
     A_ratio = A_ratio[order, :]
-    A_ratio = A_ratio[:, order[::-1]] 
+    A_ratio = A_ratio[:, order[::-1]]
 
     A_ratio = np.flip(A_ratio, axis=1)  # mirror horizontally
 
 
-    sns.heatmap(A_ratio, ax=ax1, square=True, cmap="YlGnBu", cbar=False)
+    sns.heatmap(A_ratio, ax=ax1, square=True, cmap="YlGnBu", cbar=True)
     
     # make outlines visible
     for _, spine in ax1.spines.items():
@@ -111,10 +111,12 @@ if __name__ ==  "__main__":
                 balanced_list_count.append(sum([A[j,i], A[i, j]]))
             # both entries are non-zero, now we keep track of the ratio.
             else:
-                v = sorted([A[i,j],A[j, i]])  # sort so consistency is in [0,1]
+                v = max([A[i,j],A[j, i]])  # get max value
+                frac = v/sum([A[i,j],A[j, i]]) # get fraction
+                c = (frac-0.5)/0.5  # normalize to [0,1]
                 # compute the consistency as 1 minus the ratio
-                unbalanced_list.append(1-(v[0]/v[1]))
-                unbalanced_list_count.append(sum(v))
+                unbalanced_list.append(c)
+                unbalanced_list_count.append(sum([A[i,j],A[j, i]]))
                 unbalanced += 1
 
     # combine all except the unmatches pairs
@@ -173,5 +175,6 @@ if __name__ ==  "__main__":
 
      # plot colorbar separately
     fig_c, ax_c = plt.subplots(figsize=(7, 7))
-    sns.heatmap(A_ratio, ax=ax_c, square=True, cmap="YlGnBu", cbar_kws={'shrink': 1, 'label': 'Pairwise consistency'}, linecolor="white", linewidth=.05)
+    sns.heatmap(A_ratio, ax=ax_c, square=True, cmap="YlGnBu", cbar_kws={'shrink': 1, 'label': 'Fraction of genotypes where phenotype i ranks above phenotype j'}, linecolor="white", linewidth=.05)
+    ax_c.set_xlabel("Phenotype i    Phenotype j")
     plt.savefig("colorbar.pdf", format="pdf", dpi=30)
