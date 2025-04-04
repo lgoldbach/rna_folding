@@ -19,7 +19,7 @@ if __name__ ==  "__main__":
                         required=True)
     
     args = parser.parse_args()
-    fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 5), sharey=True)
+    fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(15, 5), sharey=False)
 
     def read_walk_file(filename):
         d = {}
@@ -82,33 +82,57 @@ if __name__ ==  "__main__":
     
     x = []
     y = []
+    x3 = []
+    y3 = [] 
+    c3 = []
     for ph, c in zip(phenotypes, counts):
         if c > 0 and ph != "............":
-            x.append(np.log10(c/rugged_av[ph]))
+            x.append(c/(rugged_av[ph]+c))
             y.append(walk_success[ph])
 
-    ax1.scatter(x, y)
+            x3.append(c/sum(counts))
+            y3.append(rugged_av[ph]/sum(counts))
+            c3.append(walk_success[ph])
 
+
+    ax1.scatter(x, y)
+    ax1.set_ylim(0, 100)
+    ax1.set_xlim(0, 1)
+
+    # target size over ruggedness color by navig
+    cm = plt.cm.get_cmap('YlGnBu')
+    im=ax3.scatter(np.log10(x3), np.log10(y3), c=c3, cmap=cm)
+    fig.colorbar(im, ax=ax3, label="Navigablity")
+    ax3.set_xlabel("Target frequency")
+    ax3.set_ylabel("Local peak frequency")
+    ax3.set_xlim(-7, -1)
+    ax3.set_ylim(-5, -1)
     # peak count
-    rugged = read_rugged_file_len(args.ruggedness)
-    rugged_av = {}
-    for ph in rugged:
-        rugged_av[ph] = np.mean(rugged[ph])
+    rugged_len = read_rugged_file_len(args.ruggedness)
+    rugged_len_av = {}
+    for ph in rugged_len:
+        rugged_len_av[ph] = np.mean(rugged_len[ph])
     
     x = []
     y = []
     for ph, c in zip(phenotypes, counts):
         if c > 0 and ph != "............":
-            x.append(np.log10(c/rugged_av[ph]))
+            x.append(np.log10(c/rugged_len_av[ph]))
             y.append(walk_success[ph])
 
     ax2.scatter(x, y)
+    ax2.set_ylim(0, 100)
+    
+
+
 
     ax1.set_xlabel("Target NN size / <Sum of local peak sizes> (log10)")
     ax1.set_ylabel("Average Navigability")
 
     ax2.set_xlabel("Target NN size / <No. local peaks> (log10)")
+
     # ax.set_ylim(0, 100)
     # ax.set_xlim(-5, 3.2)
 
+    plt.tight_layout()
     plt.savefig(args.output, format="pdf", dpi=30)

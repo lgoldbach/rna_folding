@@ -13,8 +13,8 @@ if __name__ ==  "__main__":
                         "files ", required=True, nargs="+")
     parser.add_argument("-o", "--output", help="Output file name "
                         "(should end in .pdf)", required=True)
-    parser.add_argument("-b", "--bp_rule", help="bp rule number ", required=True)
-    parser.add_argument("-k", "--ref_bp_rule", help="ref bp rule number ", required=True)
+    parser.add_argument("-b", "--bp_rule", help="bp rule number ", required=False)
+    parser.add_argument("-k", "--ref_bp_rule", help="ref bp rule number ", required=False)
     parser.add_argument("-l", "--log", action="store_true")
     
     args = parser.parse_args()

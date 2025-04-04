@@ -90,7 +90,7 @@ if __name__ ==  "__main__":
 
         ax1.scatter(x, y, label=f"GP map {i+1}", s=10, alpha=.7, linewidths=0)
 
-        # peak count
+        # average over targets
         rugged = read_rugged_file_len(ruggedness)
         rugged_av = {}
         for ph in rugged:
@@ -102,8 +102,14 @@ if __name__ ==  "__main__":
             if c > 0 and ph != "............":
                 x.append(c/(rugged_av[ph]+c))
                 y.append(walk_success[ph])
+        
+        x_m = np.mean(x)
+        x_std = np.std(x)
+        y_m = np.mean(y)
+        y_std = np.std(y)
+        ax2.errorbar(x_m, y_m, xerr=x_std, yerr=y_std, elinewidth=1, marker="s", markersize=5, label=f"GP map {i+2}")
 
-        ax2.scatter(x, y, label=f"GP map {i+1}", s=10, alpha=.7, linewidths=0)
+        # ax2.err(x, y, label=f"GP map {i+1}", s=10, alpha=.7, linewidths=0)
 
     ax1.set_xlabel("Target NN size / <Sum of all peak sizes>")
     ax1.set_ylabel("Average Navigability")

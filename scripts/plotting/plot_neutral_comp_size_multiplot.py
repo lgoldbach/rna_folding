@@ -30,7 +30,7 @@ if __name__ ==  "__main__":
     
     fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(20, 20), sharey=True, sharex=False)
     axes = axes.flatten()
-    
+            #   [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  
     new_order = [2, 3, 5, 7, 6, 4, 9, 8, 10, 11]
     new_order_idx = [i - 2 for i in new_order]
     nc_files = np.array(args.nc)[new_order_idx]
