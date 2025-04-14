@@ -15,7 +15,7 @@ class BasePairing:
         """Initialize base-pairing object
 
         Args:
-            n (list): Defines the names of the bases and thus the number of 
+            n (str): Defines the names of the bases and thus the number of 
                         bases, i.e. number of nodes of the base-pairing graph.
             id (int): Defines which of the possible base-pairing graphs to
                         choose. If -1 then canonical base-pairing is used
@@ -32,10 +32,8 @@ class BasePairing:
         self.n = len(bases)
         if self.id == -1:
             self.A = canonical_adjacency_matrix()
-            if self.bases != "AUGC":
-                raise(ValueError, f"If id is set to -1, canonical base-pairing"
-                      f" is assumed and bases should be 'AUGC' not "
-                      f"{self.bases}")
+            if self.bases != "UCAG":
+                raise(ValueError, f"If id is set to -1, canonical base-pairing is assumed and bases should be 'UCAG' not {self.bases}")
         else:
             self.A = self.get_adjacency_matrix(self.n, id)
         

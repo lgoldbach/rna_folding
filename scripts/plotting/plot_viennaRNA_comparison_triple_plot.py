@@ -75,6 +75,7 @@ if __name__ ==  "__main__":
             nc_sizes = nc_sizes_sort[:args.rank_cutoff]
         except IndexError:
             pass
+    print(len(nc_sizes))
 
     x = range(nc_sizes.shape[0])
     ax2.plot(x[1:], np.log10(nc_sizes)[1:], marker="", label=f"ViennaRNA", color="black", linewidth=7, markersize=5)
@@ -98,6 +99,8 @@ if __name__ ==  "__main__":
 
     step = 20
     nc_sizes = nc_sizes[1:]
+
+    print(len(nc_sizes[nc_sizes>1]))
 
     step_nc_sizes = [nc_sizes[i] for i in range(0, len(nc_sizes), step)]  
     

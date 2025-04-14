@@ -26,7 +26,7 @@ if __name__ ==  "__main__":
     else:
         phenotypes = None
 
-    nc_counts = gpm.neutral_component_sizes(phenotypes=phenotypes, add_labels=False)
+    nc_counts = gpm.neutral_components(phenotypes=phenotypes)
     
     # pickle.dump(gpm, open(args.file, "wb"))
     with open(args.output, "w") as file:

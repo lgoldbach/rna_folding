@@ -73,7 +73,7 @@ if __name__ ==  "__main__":
             # pre compute fixation probability for all phenotype pairs
             fix_prob = lambda x, y: kimura_fixation_from_fitness(x, y, N=args.population_size)
             
-            T = pairwise_transition_prob_dict(f_map=ph_to_fitness, func=fix_prob, loop=False)
+            T = pairwise_transition_prob_dict(f_map=ph_to_fitness, func=fix_prob)
 
             all_nodes = set(G.nodes)
             # get list of target nodes. Do not start walks from there (would be redundant)

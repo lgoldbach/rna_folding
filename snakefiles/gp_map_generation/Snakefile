@@ -1,0 +1,99 @@
+
+rule generate_genotype_space:
+    output:
+        "genotypes.txt"
+    params:
+        alphabet=config["alphabet"],
+        seq_len=config["sequence_lengths"]
+    shell:
+        "build_genotype_space.py " 
+        "-a {params.alphabet} "
+        "-l {params.seq_len} "
+        "-o {output}"
+
+rule nussinov_gp_map:
+    input:
+        "genotypes.txt"
+    output:
+        "{bp}/nussinov_gp_map.txt"  # regex to constrain to numbers and prevent matching subdirectory gp_map.txt
+    params:
+        graph_path=config["graph_path"],
+        min_loop_size=config["mapping_params"]["min_loop_size"],
+        suboptimal=config["mapping_params"]["suboptimal"],
+        structures_max=config["mapping_params"]["structures_max"],
+        alphabet=config["alphabet"],
+    shell:
+        "nussinov_gp_mapping.py "
+        "-i {input} "
+        "-o {output} "
+        "-m {params.min_loop_size} "
+        "-s {params.suboptimal} "
+        "-z {params.structures_max} "
+        "-g {params.graph_path} "
+        "-a {params.alphabet} "
+        "-p {wildcards.bp} "
+
+rule extract_phenotype_list:
+    input:
+        "nussinov_gp_map.txt"
+    output:
+        "phenotypes.txt"
+    shell:
+        "cat {input} > tmp_phenotypes && " 
+        "awk '{{print $1}}' {input} | sort | uniq > {output} && "
+        "rm tmp_phenotypes"
+
+rule extract_meta_list_of_phenotypes:
+    input:
+        expand("{some_dir}/phenotypes.txt", some_dir=["dir1, dir2"])
+    output:
+        "phenotypes.txt"
+    shell:
+        "cat {input} > tmp_phenotypes && " 
+        "awk '{{print $1}}' {input} | sort | uniq > {output} && "
+        "rm tmp_phenotypes"
+
+# take phenotype file and randomly shuffle it using shuf function
+rule create_random_ranking:
+    input:
+        "phenotypes.txt"
+    output:
+        "phenotype_ranking.txt"
+    params:
+        unviable=config["unviable"]
+    shell:
+        # remove unviable phenotype and shuffle rest
+        "grep -Fxv '{params.unviable}' {input} | shuf > {output}; "
+        "echo '{params.unviable}' >> {output}"  # attach unviable to bottom of ranking
+
+rule flatten_gp_map:
+    input:
+        gp_map="nussinov_gp_map.txt",
+        ranking="phenotype_ranking.txt"
+    output:
+        "gp_map.txt"
+    params:
+        unviable=config["unviable"]
+    shell:
+        "flatten_gp_map.py "
+        "-i {input.gp_map} "
+        "-r {input.ranking} "
+        "-u {params.unviable} "
+        "-o {output} "
+
+rule build_gpmap_python_object:
+    input:
+        gp_map="gp_map.txt",
+        genotypes="genotypes.txt"
+    output:
+        "gp_map.pickle"
+    params:
+        alphabet=config["alphabet"],
+        ignore_phenotype=config["unviable"]  # ignore unviable phenotype
+    shell:
+        "build_gpmap_pickle.py "
+        "-f {input.gp_map} "
+        "-g {input.genotypes} "
+        "-a {params.alphabet} "
+        "-i {params.ignore_phenotype} "
+        "-o {output}"

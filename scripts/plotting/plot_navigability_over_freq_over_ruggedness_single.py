@@ -80,11 +80,14 @@ if __name__ ==  "__main__":
     for ph in rugged:
         rugged_av[ph] = np.mean(rugged[ph])
     
+    # compute for each target phenoype
+
     x = []
     y = []
     x3 = []
     y3 = [] 
     c3 = []
+    ax3.plot([-7, -1], [-7, -1], color="grey")
     for ph, c in zip(phenotypes, counts):
         if c > 0 and ph != "............":
             x.append(c/(rugged_av[ph]+c))
@@ -105,8 +108,9 @@ if __name__ ==  "__main__":
     fig.colorbar(im, ax=ax3, label="Navigablity")
     ax3.set_xlabel("Target frequency")
     ax3.set_ylabel("Local peak frequency")
+
     ax3.set_xlim(-7, -1)
-    ax3.set_ylim(-5, -1)
+    ax3.set_ylim(-7, -1)
     # peak count
     rugged_len = read_rugged_file_len(args.ruggedness)
     rugged_len_av = {}

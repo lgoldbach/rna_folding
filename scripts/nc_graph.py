@@ -42,8 +42,7 @@ if __name__ ==  "__main__":
     a = datetime.datetime.now()
     print("Starting neutral_components", a, flush=True)
     ncs, boundaries = gpm.get_neutral_components(phenotypes=phenotypes,
-                                                return_boundaries=True,
-                                                add_labels=True)
+                                                return_boundaries=True)
 
     b = datetime.datetime.now()
     c = b-a
@@ -61,8 +60,8 @@ if __name__ ==  "__main__":
 
     for (i, j) in boundaries:
         try:
-            nc_i = gpm.nodes[i]["neutral_component"]  # get nc id
-            nc_j = gpm.nodes[j]["neutral_component"]  # get nc id
+            nc_i = gpm.neutral_components[i] # get nc id
+            nc_j = gpm.neutral_components[j]  # get nc id
 
             # edge weights are added in .5 increments because they will be
             # double counted, once from each direction
@@ -78,11 +77,11 @@ if __name__ ==  "__main__":
             # e.g the unfolded phenotype
             pass
 
-    b = datetime.datetime.now()
-    c = b-a
-    print(f"Done in {np.round(c.seconds/3600, 2), np.round(c.seconds/60, 2), c.seconds}, {b}", flush=True)
+    # b = datetime.datetime.now()
+    # c = b-a
+    # print(f"Done in {np.round(c.seconds/3600, 2), np.round(c.seconds/60, 2), c.seconds}, {b}", flush=True)
         
-    a = datetime.datetime.now()
+    # a = datetime.datetime.now()
     print("Dump nc graph", a, flush=True)
     pickle.dump(nc_graph, open(args.nc_graph, "wb"))
 
@@ -91,26 +90,26 @@ if __name__ ==  "__main__":
             for nc in ncs[ph]:
                 f.write(str(nc) + " " + str(ph) + " " + " ".join(ncs[ph][nc]) + "\n")
 
-    b = datetime.datetime.now()
-    c = b-a
-    print(f"Done in {np.round(c.seconds/3600, 2), np.round(c.seconds/60, 2), c.seconds}, {b}", flush=True)
-    # arr = nx.to_numpy_array(ph_graph)
-    # attr = nx.get_node_attributes(ph_graph, "phenotype")
-    # pickle.dump((arr, attr), open(args.output, "wb"))
+    # b = datetime.datetime.now()
+    # c = b-a
+    # print(f"Done in {np.round(c.seconds/3600, 2), np.round(c.seconds/60, 2), c.seconds}, {b}", flush=True)
+    # # arr = nx.to_numpy_array(ph_graph)
+    # # attr = nx.get_node_attributes(ph_graph, "phenotype")
+    # # pickle.dump((arr, attr), open(args.output, "wb"))
 
-    labels = {node: str(node) + " " + nc_graph.nodes[node]["phenotype"] for node in nc_graph}
-    pos = nx.spring_layout(nc_graph)
+    # labels = {node: str(node) + " " + nc_graph.nodes[node]["phenotype"] for node in nc_graph}
+    # pos = nx.spring_layout(nc_graph)
     
-    weights = [nc_graph[u][v]['weight']*3 for u,v in nc_graph.edges()]
+    # weights = [nc_graph[u][v]['weight']*3 for u,v in nc_graph.edges()]
 
-    color_by_ph = {ph: np.random.choice(range(256), size=3)/256 for ph in ncs}
-    colors = [color_by_ph[nc_graph.nodes[node]["phenotype"]] for node in nc_graph.nodes]
+    # color_by_ph = {ph: np.random.choice(range(256), size=3)/256 for ph in ncs}
+    # colors = [color_by_ph[nc_graph.nodes[node]["phenotype"]] for node in nc_graph.nodes]
 
-    nx.draw(nc_graph, pos=pos, labels=labels, node_color=colors, node_size=[s*1000 for s in nx.get_node_attributes(nc_graph, "size").values()], width=weights)
+    # nx.draw(nc_graph, pos=pos, labels=labels, node_color=colors, node_size=[s*1000 for s in nx.get_node_attributes(nc_graph, "size").values()], width=weights)
 
-    edge_labels = {(u, v): int(nc_graph[u][v]['weight']) for u,v in nc_graph.edges()}
-    nx.draw_networkx_edge_labels(nc_graph, pos=pos, edge_labels=edge_labels)
-    plt.savefig("neutral_component_graph.pdf", dpi=30)
+    # edge_labels = {(u, v): int(nc_graph[u][v]['weight']) for u,v in nc_graph.edges()}
+    # nx.draw_networkx_edge_labels(nc_graph, pos=pos, edge_labels=edge_labels)
+    # plt.savefig("neutral_component_graph.pdf", dpi=30)
     
     # plt.clf()
 

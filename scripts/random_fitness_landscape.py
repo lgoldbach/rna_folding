@@ -56,11 +56,11 @@ if __name__ ==  "__main__":
     # check if global peak phenotype was given and assign highest fitness
     if args.global_peak:
         ph_to_f[args.global_peak] = args.upp_f
-    else:  # if not global peak given, pick one at random.
-        global_peak = args.lethal_ph
-        while global_peak == args.lethal_ph:  # don't allow lethal ph to be global peak
-            global_peak = np.random.choice(phenotypes)
-        ph_to_f[global_peak] = args.upp_f
+    # else:  # if not global peak given, pick one at random.
+    #     global_peak = args.lethal_ph
+    #     while global_peak == args.lethal_ph:  # don't allow lethal ph to be global peak
+    #         global_peak = np.random.choice(phenotypes)
+    #     ph_to_f[global_peak] = args.upp_f
 
     with open(args.output, "w") as f:
         for ph in ph_to_f:

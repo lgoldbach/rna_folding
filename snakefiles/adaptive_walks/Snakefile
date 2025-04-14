@@ -1,0 +1,52 @@
+rule build_random_fitness_landscape:
+    input:
+        "phenotypes.txt"
+    output:
+        "fl.txt"
+    params:
+        min_f=config["random_fitness_landscape_params"]["min_f"],
+        max_f=config["random_fitness_landscape_params"]["max_f"],
+        lethal_ph=config["unviable"],
+    shell:
+        "random_fitness_landscape.py "
+        "--phenotypes {input} "
+        "--low_f {params.min_f} "
+        "--upp_f {params.max_f} "
+        "--lethal_ph {params.lethal_ph} "
+        "-o {output} "
+
+rule run_adaptive_walks_productive_trace_paths:
+    input:
+        fl="fl.txt",
+        gp_map="gp_map.pickle"
+    output:
+        walk_lengths="walk_lengths_seed{seed}.csv",
+        paths="paths_seed{seed}.csv"
+    params:        
+        max_steps=config["adaptive_walks"]["max_steps"],
+        sample_size_walks=config["adaptive_walks"]["sample_size_walks"],
+        avoid_phenotype=config["unviable"]
+    shell:
+        "adaptive_walks_productive_trace_path.py "
+        "-i {input.gp_map} "
+        "-f {input.fl} "
+        "-l {output.walk_lengths} "
+        "-p {output.paths} "
+        "-n {wildcards.pop_size} "
+        "-m {params.max_steps} "
+        "-a {params.avoid_phenotype} "
+        "-s {params.sample_size_walks} "
+        "-r {wildcards.seed} "
+
+rule compute_navigability_per_ph_per_fl:
+    input:
+        walk_length_files="walk_length_files"
+    output:
+        "navigability_per_ph_per_fl.txt"
+    params:
+        sample_size=1
+    shell:
+        "compute_navigability_per_ph_per_fl.py "
+        "-w {input.walk_length_files} "  # assumes one per fitness landscape
+        "-s {params.sample_size} "
+        "-o {output} "
