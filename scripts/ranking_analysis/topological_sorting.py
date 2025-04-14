@@ -22,8 +22,17 @@ if __name__ ==  "__main__":
 
     A = pickle.load(open(args.input, "rb"))
 
+    # # Code for extracting a quick and dirty full ranking 
+    # sums = A.sum(axis=1)
+    # order = np.argsort(sums)[::-1]
+    # print(phenotypes[order])
+    # with open("phenotype_ranking_full.txt", "w") as f:
+    #     for p in phenotypes[order]:
+    #         f.write(p+"\n")
+            
     # create a networkx directed graph using adjacecy matrix A
     G = nx.from_numpy_array(A, create_using=nx.DiGraph)
+
     # Some nodes may not be connected, i.e. some phenotypes have not appeared
     # in a suboptimal set together. This will lead to non-unique topological
     # sortings later on. To prevent that we add two edges connecting the nodes
@@ -61,12 +70,13 @@ if __name__ ==  "__main__":
 
     G_c = deepcopy(G)
     # G_c.remove_edges_from(G.edges)
-    print(len(G_c.edges))
+    # print(len(G_c.edges))
 
     G_c.add_edges_from(cycle_edges)
-    print(len(G_c.edges))
-    # G_c = G_c.subgraph(nodes_in_cycle).to_undirected()
-    # nc = nx.connected_components(G_c)
+    # print(len(G_c.edges))
+    G_c = G_c.subgraph(nodes_in_cycle).to_undirected()
+    nc = nx.connected_components(G_c)
+    print("AA", list(nc))
     G_c = G_c.subgraph(nodes_in_cycle)
     nc = list(nx.strongly_connected_components(G_c))
 
@@ -80,8 +90,8 @@ if __name__ ==  "__main__":
                         if (ni, nj) in G.edges:
                             conn.append((i, j))
     print(set(conn))
-    [[27], [20], [3], [8], [40], [44], [45], [13, 21, 29], [28], [43], [6, 12, 39, 22, 25, 4, 24, 9, 18, 38, 30], [34], [5, 14, 26, 2, 16, 37, 0, 10, 19], [42], [31, 36, 15, 11, 46, 17, 33, 7, 35]]
-    exit()
+    # [[27], [20], [3], [8], [40], [44], [45], [13, 21, 29], [28], [43], [6, 12, 39, 22, 25, 4, 24, 9, 18, 38, 30], [34], [5, 14, 26, 2, 16, 37, 0, 10, 19], [42], [31, 36, 15, 11, 46, 17, 33, 7, 35]]
+    # exit()
     
     #                                                             [{0, 2, 5, 7, 10, 11, 14, 15, 16, 17, 19, 26, 30, 31, 33, 35, 36, 37, 46}, {4, 38, 39, 6, 9, 12, 18, 22, 24, 25}, {21, 29, 13}]
     # extract the parts of the topoligcal sorting that are unique
@@ -149,7 +159,7 @@ if __name__ ==  "__main__":
                         inter_edges_up.append((node_j, node_i))
     
     print("XX", len(inter_edges_down), inter_edges_down, "\nXX", len(inter_edges_up), inter_edges_up) 
-    print("YY", len(cycle_edges), cycle_edges)
+    # print("YY", len(cycle_edges), cycle_edges)
 
     with open(args.output, "w") as file:
         for cluster in sort:

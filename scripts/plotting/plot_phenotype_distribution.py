@@ -23,7 +23,6 @@ if __name__ ==  "__main__":
     x = range(distr.shape[0])
 
 
-    print(phenotypes)
     fig, ax = plt.subplots()
     ax.bar(x, distr)
     ax.set_xticks(x, phenotypes, rotation=45, ha='right')

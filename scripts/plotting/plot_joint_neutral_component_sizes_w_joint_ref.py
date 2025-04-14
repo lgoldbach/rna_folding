@@ -31,7 +31,8 @@ if __name__ ==  "__main__":
             nc_sizes = []
             for line in file:
                 for size in line.strip().split(" "):
-                    nc_sizes_all[-1].append(int(size))
+                    if size:
+                        nc_sizes_all[-1].append(int(size))
 
     nc_sizes_all_sort = [np.sort(l)[::-1] for l in nc_sizes_all]
 
@@ -55,7 +56,8 @@ if __name__ ==  "__main__":
             nc_sizes = []
             for line in file:
                 for size in line.strip().split(" "):
-                    nc_sizes_all[-1].append(int(size))
+                    if size:
+                        nc_sizes_all[-1].append(int(size))
 
     nc_sizes_all_sort = [np.sort(l)[::-1] for l in nc_sizes_all]
 
@@ -72,7 +74,7 @@ if __name__ ==  "__main__":
             ax.plot(x, np.log10(nc_sizes), marker="", label=f"Base-pairing {args.ref_bp_rule}, Ranking {i + 1}", color="black", markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])
         else:
             ax.plot(x, nc_sizes, marker="", label=f"Base-pairing {args.ref_bp_rule}, Ranking {i + 1}", color="black", markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])
-
+    print(sum(nc_sizes))
     ax.set_xlabel("Rank")
     if args.log:
         ax.set_ylabel("Neutral component size (log10)")

@@ -27,7 +27,6 @@ if __name__ ==  "__main__":
         phenotypes, distr = ranked_ph_distribution(ph_distr_file=file,
                                                     log=args.log)
 
-
         x = range(distr.shape[0])
         
         sc = ax.plot(x, distr, marker="", label=f"Base-pairing {args.bp_rule}, Ranking {i + 1}", color="tab:blue", markevery=(i*3, 10), markersize=5, linestyle=linestyles[i])

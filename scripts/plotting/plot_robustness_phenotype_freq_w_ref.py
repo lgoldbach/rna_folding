@@ -56,9 +56,9 @@ if __name__ ==  "__main__":
         
         # assume the first element is the reference and plot that differently
         if i == 0:  
-            ax.scatter(x, y, s=20, label=l, marker="x", color="0.4")
+            ax.scatter(x, y, s=5, label=l, color="0.1")
         else:
-            ax.scatter(x, y, s=5, alpha=1, label=f"Random ranking {l}")
+            ax.scatter(x, y, s=5, alpha=1, label=f"Base-pairing {l}")
 
     ax.set_ylim(bottom=-0.05, top=1)
     ax.set_xlim(left=-8, right=0)
@@ -70,7 +70,7 @@ if __name__ ==  "__main__":
         for freq in np.arange(exp_of_xlim_min, 1, 0.01):
             x_expec.append(np.log10(freq))
             expec.append(freq)
-        ax.plot(x_expec, expec, color="grey", ls="--", lw="1", label="Null expectation")
+        ax.plot(x_expec, expec, color="grey", ls="--", lw="1", label="Null model")
         
     ax.set_xlabel("Phenotype frequency (log10)")
     ax.set_ylabel("Phenotype robustness")

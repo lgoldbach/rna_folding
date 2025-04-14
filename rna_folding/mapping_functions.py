@@ -8,7 +8,8 @@ from typing import Callable
 
 from rna_folding.base_pairing import BasePairing
 from rna_folding.nussinov import BasePairMatrixNussinov
-from rna_folding.utils import bp_to_dotbracket, dotbracket_to_genotype, dotbracket_to_genotype_random, dict_to_gpmap
+from rna_folding.utils import bp_to_dotbracket, dotbracket_to_genotype, dotbracket_to_genotype_random, is_compatible
+from rna_folding.parsing import dict_to_gpmap
 import RNA
 
 
@@ -172,7 +173,7 @@ def debug_nussinov_mfe(genotype: str,
     return [mfe_ph], phenotypes, g_fe_map
 
 
-def viennaRNA_mfe(genotype: str) -> list:
+def viennaRNA_mfe(genotype: str, return_mfe=False) -> list:
     """Predict RNA secondary structure using default ViennaRNA mfe function.
     Args:
         genotype (str): Input genotype
@@ -182,9 +183,10 @@ def viennaRNA_mfe(genotype: str) -> list:
         
     """
     mfe_ph, mfe = RNA.fold(genotype)
-
-    return [mfe_ph]
-
+    if return_mfe:
+        return mfe_ph, mfe
+    else:
+        return [mfe_ph]
 
 def nussinov_canonical_fe(genotype: str, 
                  base_pairing: BasePairing, 
@@ -223,3 +225,32 @@ def nussinov_canonical_fe(genotype: str,
     sorted_gf_map = [p+","+str(np.round(e, 2)) for e, p in sorted(zip(energies, phenotypes), key=lambda pair: pair[0])]
 
     return sorted_gf_map
+
+
+def nussinov_with_probabilistic_scoring(genotype: str, base_pairing, scores: dict, rng=None) -> list:
+    """Generate suboptimal set with nussinov's algorithm and pick phenotype
+    based on probabilistic scores.
+
+    Args:
+        genotype (str):     Genotypes string, e.g. "AUGGCA"
+        base_pairing (BasePairing): A BasePairing object defining pairing rules
+        scores (dict):      Dictionary that maps phenotypes (str) to a score 
+                            (float).
+
+    Returns:
+        list:               Phenotype string inside a list.
+
+    """
+    if not rng:
+        rng = np.random.Generator()
+
+    phenotypes = [ph for ph in scores if is_compatible(genotype, ph, base_pairing)]
+    scores_subset = np.array([scores[ph] for ph in phenotypes])
+    scores_norm = scores_subset/np.sum(scores_subset)  # normalize
+
+    phenotype = rng.choice(phenotypes, p=scores_norm)  # choose based on score
+
+    return [phenotype]
+
+
+

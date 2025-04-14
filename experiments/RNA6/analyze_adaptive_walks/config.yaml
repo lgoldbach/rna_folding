@@ -32,11 +32,11 @@ mapping_params:
 ref_bp_rule: 7   # base-pairing rule to compare detailed statistics to
 
 rankings:
-  # - 1
+  - 1
   # - 2
   # - 3
-  - 4
-  # - 5
+  # - 4
+  - 5
   # - 6
 
 neutral_component_plotting_param:
@@ -55,10 +55,10 @@ navigability_sample_size: 100
 adaptive_walks:
   population_sizes: 
     # - 1
-    - 10
+    # - 10
     # - 100
-    # - 100000
+    - 100000
   max_steps: 100
-  sample_size_landscapes: 10
-  sample_size_walks: 10
+  sample_size_landscapes: 100
+  sample_size_walks: 100
 

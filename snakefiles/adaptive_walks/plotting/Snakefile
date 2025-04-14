@@ -1,0 +1,17 @@
+
+
+rule plot_freq_over_peaks_vs_navigability:
+    input:
+        walk_lengths=expand("gp_map_{gp_map_id}/productive_walk_lengths_{{pop_size}}_seed7339311_seldif1.csv", gp_map_id=config["gp_maps"].keys()),
+        phenotype_distribution=expand("gp_map_{gp_map_id}/phenotype_distribution.txt", gp_map_id=config["gp_maps"].keys()),
+        phenotype_ruggedness=expand("gp_map_{gp_map_id}/peak_sizes.txt", gp_map_id=config["gp_maps"].keys()),
+        peak_heights=expand("gp_map_{gp_map_id}/peak_height_avg.txt", gp_map_id=config["gp_maps"].keys()),
+    output:
+        "analysis/navigability_over_frequency_over_ruggedness_pop{pop_size}.pdf"
+    shell:
+        "plot_navigability_over_freq_over_ruggedness.py "
+        "-l {input.walk_lengths} "
+        "-f {input.phenotype_distribution} "
+        "-r {input.phenotype_ruggedness} "
+        "-p {input.peak_heights} "
+        "-o {output} "

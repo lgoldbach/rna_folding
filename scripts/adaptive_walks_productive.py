@@ -12,7 +12,7 @@ from rna_folding.adaptive_walks import productive_adaptive_walk, kimura_fixation
 
 if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input", help="Neutral component graph pickle "
+    parser.add_argument("-i", "--input", help="gp map "
                         "file", required=True)
     parser.add_argument("-l", "--sample_size_landscapes", help="How many random fitness  "
                         "landscapes to sample", type=int, required=False)
@@ -22,13 +22,19 @@ if __name__ ==  "__main__":
                         type=int, required=False)
     parser.add_argument("-m", "--max_steps", help="Maximum number of steps "
                         "per walk", type=int, required=False)
+    parser.add_argument("-r", "--seed", help="random seed", type=int,
+                        required=False)
+    parser.add_argument("-u", "--lethal_phenotype", help="Define a lethal phenotype whose fitness will be set to 0", type=str, required=False)
     parser.add_argument("-o", "--output", help="file for output data",
                         required=True)
+    parser.add_argument("-d", "--seldif", help="The maximum difference in fitness, i.e. the maximum selection coefficient", type=float, required=True)
     
     args = parser.parse_args()
 
-    seed = np.random.randint(0, 1000000)
-    rng = np.random.default_rng(seed=seed)
+    if args.seed:
+        rng = np.random.default_rng(seed=args.seed)
+    else:
+        rng = np.random.default_rng(seed=1996)
 
     # print(f"Start loading", datetime.datetime.now().hour, datetime.datetime.now().minute, flush=True)
     G = pickle.load(open(args.input, "rb"))
@@ -49,8 +55,12 @@ if __name__ ==  "__main__":
             # assign random fitness to every phenotype
             ph_to_fitness = {}
             for ph in phenotypes:
-                f = rng.uniform(0.9, 1)  # in [0, 1) interval
+                f = rng.uniform(0, args.seldif)  # in [0, 1) interval
                 ph_to_fitness[ph] = f
+            
+            if args.lethal_phenotype:
+                ph_to_fitness[args.lethal_phenotype] = 0
+
             ph_to_fitness[target_ph] = 1  # target phenotype gets 1
 
             # print(f"Start getting genotypes", datetime.datetime.now().hour, datetime.datetime.now().minute, flush=True)
@@ -60,11 +70,19 @@ if __name__ ==  "__main__":
             #     if G.nodes[candidate_gt]["phenotype"] != target_ph:
             #         start_gt.append(candidate_gt)
 
-            target_nodes = set([x for x,y in G.nodes(data=True) if y['phenotype']==target_ph])
             all_nodes = set(G.nodes)
-            non_target_nodes = list(all_nodes.difference(target_nodes))
-            start_gt = rng.choice(non_target_nodes, size=min(args.sample_size_walks, len(non_target_nodes)), replace=False)
-
+            # get list of target nodes. Do not start walks from there (would be redundant)
+            non_starting_nodes = [x for x,y in G.nodes(data=True) if y['phenotype']==target_ph]
+            target_node_s = len(non_starting_nodes)
+            if args.lethal_phenotype:
+                # get all lethal nodes
+                lethal_nodes = [x for x,y in G.nodes(data=True) if y['phenotype']==args.lethal_phenotype]
+                non_starting_nodes += lethal_nodes  # also disallow lethal nodes as starting nodes
+            # extract nodes that are not target (or lethal if applicable)
+            potential_starting_nodes = list(all_nodes.difference(set(non_starting_nodes)))
+            
+            
+            start_gt = rng.choice(potential_starting_nodes, size=min(args.sample_size_walks, len(potential_starting_nodes)), replace=False)
             # print(f"Start walks", datetime.datetime.now().hour, datetime.datetime.now().minute, flush=True)
             for g in start_gt:
                 # store adaptive walks by target phenotype
@@ -79,7 +97,6 @@ if __name__ ==  "__main__":
                 else:
                     adaptive_walk_lengths[target_ph].append(-1)  # walk didn't reach target
             
-
     with open(args.output, "w") as file:
         for target_ph in adaptive_walk_lengths:
             file.write(f"{target_ph}")

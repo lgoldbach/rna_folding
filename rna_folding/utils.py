@@ -1,7 +1,34 @@
 import numpy as np
+from typing import Iterable
 from itertools import product
 import networkx as nx
-from rna_folding.gp_map import GenotypePhenotypeGraph
+from rna_folding.parsing import load_phenotype_and_metric_from_file
+
+
+def is_compatible(genotype: str, phenotype: str, base_pairing_rule) -> bool:
+    """Check whether genotype and phenotype are compatible given a base pairing
+    rule
+
+    Args:
+        genotype (str): Genotype string
+        phenotype (str): Phenotype string
+        base_pairing_rule: A class with a method pairs() that 
+            takes two strings of single nucleotides and returns True or False
+            depending on whether a pairing between the two is allowed, e.g.
+            BasePairing from rna_folding.base_pairing
+
+    Returns:
+        bool:   True if the genotype can fold into the phenotype and false
+                otherwise
+
+    """
+    ph = np.array(list(phenotype))
+    forw = np.where(ph == "(")[0]
+    backw = np.where(ph == ")")[0][::-1]
+    for b1, b2 in zip(forw, backw):
+        if not base_pairing_rule.pairs(genotype[b1], genotype[b2]):
+            return False
+    return True
 
 
 def remove_nonadaptive_edges(gp_graph: nx.graph) -> nx.graph:
@@ -267,23 +294,6 @@ def dotbracket_to_genotype_random(dotbracket: str,
     return genotype
 
 
-def dict_to_gpmap(ph_to_gt: dict, file: str) -> None:
-    """Take a dict that maps phenotype to list of genotypes and save it
-    as a space-separated "c"sv file, where each line looks like this:
-    "{ph} {gt_id} {gt_id} {gt_id}"
-
-    Args:
-        ph_to_gt (dict): _description_
-        file (str): _description_
-    """
-    # Write to output file (
-    with open(file, "w") as file_out:
-        for p in ph_to_gt:
-            line = p + " " + " ".join(map(str, ph_to_gt[p])) + "\n"
-            file_out.write(line)
-    file_out.close()
-
-
 def ranked_ph_distribution(ph_distr_file, log=False) -> tuple:
     """Rank phenotypes by their count and return log10 frequency
 
@@ -303,6 +313,7 @@ def ranked_ph_distribution(ph_distr_file, log=False) -> tuple:
     # load data and get second column (fist only contains phenotype IDs)
     
     phenotypes, distr = load_phenotype_and_metric_from_file(ph_distr_file)
+
     distr = distr / np.sum(distr)
     if log:
         distr = np.log10(distr)
@@ -313,24 +324,21 @@ def ranked_ph_distribution(ph_distr_file, log=False) -> tuple:
     return phenotypes, distr
 
 
-def load_phenotype_and_metric_from_file(file: str, dtype=float):
-    """Take a file in the common phenotype (col1) metric (col2) data-type 
-    I am using and reat it as two array.
-    Example file:
-    ((...)) 0.8
-    (.....) 0.7
-    ...
+def sequence_to_integers(sequence, letters: Iterable):
+    """Turn an ATGC sequence into integer sequence.
+    e.g. [[T, T, A, G, C],  -->  [[2, 2, 1, 3, 4],
+          [A, G, C, T, T]]        [1, 3, 4, 2, 2]]
 
     Args:
-        file (str): Path to the file
+        sequence (str): ATGC based sequence
+        letters (Iterable): Iterable of letters (str)
 
-    Retruns:
-        phentypes, data
+    Returns:
+        np.array: Array where bases (str) are replaced by integers
+
     """
-    file_data = np.loadtxt(file, dtype=str)
-    if file_data.ndim == 1:  # in case there is only one phenotype
-        file_data = np.expand_dims(file_data, axis=0)
-    phenotypes = file_data[:,0]
-    distr = file_data[:,1].astype(dtype)
+    sequence_ = np.empty(sequence.shape, dtype=int)
+    for i, l in enumerate(letters, 1):
+        sequence_[sequence == l] = i
 
-    return phenotypes, distr
+    return sequence_
