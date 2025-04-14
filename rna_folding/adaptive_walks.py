@@ -264,3 +264,48 @@ def pairwise_transition_prob(fitnesses: np.array, func: Callable, loop=False) ->
         T[p[0], p[1]] = func(fitnesses[p[0]], p[1])
 
     return T
+
+def contains_downhill_steps(path, gp_map, ph_to_f):
+    """Check if the genotype path contains downward/fitness descreasing 
+    steps
+
+    Args:
+        path (list): list of genotypes
+        gp_map (GenotypePhenotypeGraph): GenotypePhenotypeGraph instance.
+        ph_to_f (dict): Dictionary that maps phenotypes to fitness.
+
+    Returns:
+        bool: True if at least one downhill step is found in path
+
+    """
+    downhill = False
+    f_prev = ph_to_f[gp_map.map(path[0])]
+    for gt in path[1:]:
+        f_new = ph_to_f[gp_map.map(gt)]
+        if f_prev > f_new:
+            downhill = True
+            return downhill
+        else:
+            f_prev = f_new
+    return downhill
+
+def load_fl_file_to_dict(path):
+    """Take the path to a fitness landscape file and turn it into a dict
+
+    Args:
+        path (str): Path to a fitness landscape file
+
+    Returns:
+        ph_to_f (dict): A dictionary that maps phenotype to fitness
+
+    """
+    ph_to_f = {}
+    with open(path, "r") as f:
+        for line_ in f:
+            line = line_.strip().split(" ")
+            ph_to_f[line[0]] = float(line[1])
+
+    return ph_to_f
+
+
+

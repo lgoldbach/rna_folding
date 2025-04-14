@@ -50,3 +50,20 @@ rule compute_navigability_per_ph_per_fl:
         "-w {input.walk_length_files} "  # assumes one per fitness landscape
         "-s {params.sample_size} "
         "-o {output} "
+
+rule compute_uphill_navigability_per_ph_per_fl:
+    input:
+        paths=["adaptive_path_files"],
+        gp_map_pickle="gp_map.pickle",
+        fitness_landscapes=["fl_landscape_files"]
+    output:
+        "navigability_per_ph_per_fl.txt"
+    params:
+        sample_size=1
+    shell:
+        "compute_uphill_navigability_per_ph_per_fl.py "
+        "-p {input.paths} "  # assumes one per fitness landscape
+        "-f {input.fitness_landscapes} "
+        "-g {input.gp_map_pickle} "
+        "-s {params.sample_size} "
+        "-o {output} "
