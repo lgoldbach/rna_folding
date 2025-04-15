@@ -16,6 +16,7 @@ if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--nc_graph", help="pickled networkx Graph of "
                         "neutral components", required=True)
+    parser.add_argument("-s", "--sample_size", help="sample size", type=int, required=True)
     parser.add_argument("-l", "--low_f", help="Lower fitness limit of an open"
                         "fitness interval, for all f: min_f < f < max_f", 
                         type=float, required=True)
@@ -47,7 +48,7 @@ if __name__ ==  "__main__":
         count += 1
         peak_count = []
         peaks_size[target_ph] = []
-        for i in range(10):
+        for i in range(args.sample_size):
             ph_to_f = {}
             # randomly assign fitness from the open interval (low_f, upp_f), i.e. for
             # all f: low_f < f < upp_f

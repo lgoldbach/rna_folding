@@ -1,0 +1,16 @@
+
+
+rule build_nc_graph:
+    output:
+        nc_graph="nc_graph.pickle",
+        nc_to_genotype="nc_to_genotype.txt"
+    input:
+        "gp_map.pickle"
+    params:
+        ignore=config["mapping_params"]["unfolded"],
+    shell:
+        "nc_graph.py "
+        "-f {input} "
+        "-i {params.ignore} "
+        "-g {output.nc_graph} "
+        "-m {output.nc_to_genotype} "

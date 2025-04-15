@@ -23,7 +23,6 @@ if __name__ ==  "__main__":
     
     ph_success_count = {}
     for i, (path, fl) in enumerate(zip(args.paths, args.fl)):  # i enumerates fitn. landsc.
-        ph_to_f = load_fl_file_to_dict(fl)  # load fitness landscape
         with open(path, "r") as file:
             for j, line_ in enumerate(file):
                 line = line_.strip().split()
@@ -31,13 +30,21 @@ if __name__ ==  "__main__":
                 # lines +1 line for the header
                 if j % (args.sample_size + 1) == 0:  # phenotype header
                     ph = line[0]
+                    
                     if not ph in ph_success_count:
                         ph_success_count[ph] = {}
                     ph_success_count[ph][i] = 0  # init entry for this fl for this ph
-          
+                    ph_to_f = load_fl_file_to_dict(fl)  # load fitness landscape
+                    ph_to_f[ph] = 1
+                    continue  # enter lines that contain paths
+
+                # we only reach this code after hitting ph header
+                path = line
+                if gpmap.map(path[-1]) != ph:  # not a successful path because it didnt reach target
+                    continue
                 else:
-                    # successful walk
-                    if not contains_downhill_steps(line, gpmap, ph_to_f):
+                    # has to contain only uphill or neutral steps
+                    if not contains_downhill_steps(path, gpmap, ph_to_f):
                         ph_success_count[ph][i] += 1  # count as success
 
     with open(args.output, "w") as f:

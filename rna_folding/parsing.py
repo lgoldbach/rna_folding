@@ -230,3 +230,65 @@ def genotype_file_to_numpy(filepath):
     A = np.loadtxt(filepath, dtype=str)
 
     return A
+
+
+def read_ruggedness_per_ph_file(filename, n):
+    """Read file that contains peak sizes for <n> fitness landscape
+    instances for each ph. Assumes following file structure:
+    <ph1>
+    <peak 1 size (int)> <peak 2 size (int)> <peak 3 size (int)> ...  # fl 1
+    <peak 1 size (int)> <peak 2 size (int)> <peak 3 size (int)> ...  # fl 2
+    <ph2>
+    ...
+
+    Args:
+        filename (str): File containing peak sizes
+        n (int): Number of fitness landscape instances per ph
+
+    Returns:
+        r (dict):   Dictionary that maps ph to the peak sizes of each of the
+                    fitness landscapes
+
+    """
+    r = {}
+    with open(filename, "r") as f:
+        lines = list(f)
+        for i in range(0, len(lines), n+1):
+            ph = lines[i].strip().split(" ")[0]  # read ph
+            r[ph] = []
+            for j in range(i+1, i+1+n):  # loop over next n lines (one for each fl)
+                peaks_sizes = lines[j].strip().split(" ")
+                r[ph].append([int(k) for k in peaks_sizes])  # append peak sizes as int
+    return r
+
+def read_adaptive_walks_w_ph_headers_to_dict(filepath, phenotypes):
+    """Read paths from a file that contains phenotyp header in the following 
+    format:
+    <ph1>
+    <gt1> <gt2> <gt3> ...  # path 1
+    <gt1> <gt2> <gt3> ...  # path 2
+    <ph2>
+    ...
+
+    Args:
+        filepath (str):     File path for path file
+        phenotypes (list):  List of phenotypes (str) which should contain all 
+                            the phenotypes potentially found as path headers
+
+    Returns:
+        ph_to_paths (dict): Dictionary that maps phenotypes to paths
+
+    """
+    ph_to_paths = {}
+    with open(filepath, "r") as file:
+        for line_ in file:
+            line = line_.strip().split()
+            # check if we hit a phenotype header
+            if line[0] in phenotypes:
+                ph = line[0]
+                ph_to_paths[ph] = []
+            else:
+                # all the lines following the header will contain paths
+                ph_to_paths[ph].append(line)
+    return ph_to_paths
+        

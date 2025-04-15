@@ -279,7 +279,8 @@ def contains_downhill_steps(path, gp_map, ph_to_f):
 
     """
     downhill = False
-    f_prev = ph_to_f[gp_map.map(path[0])]
+    ph = gp_map.map(path[0])
+    f_prev = ph_to_f[ph]
     for gt in path[1:]:
         f_new = ph_to_f[gp_map.map(gt)]
         if f_prev > f_new:
@@ -307,5 +308,30 @@ def load_fl_file_to_dict(path):
 
     return ph_to_f
 
+def genotype_path_to_fitness_path(paths: list, gp_map, ph_to_f, ignore_neutral=True):
+    """Map genotype path to fitness paht
 
+    Args:
+        paths (list): List of genotype paths
+        gp_map (GenotypePhenotypeGraph): GPGraph object
+        ph_to_f (dict): Map from phenotypes to fitness
+        ignore_neutral (bool, optional): _description_. Defaults to True.
 
+    Returns:
+        _type_: _description_
+    """
+    fit_paths = []
+    for path in paths:
+        ph = gp_map.map(path[0])
+        fitness = ph_to_f[ph]
+        fit_path = [fitness]
+        for i, gt in enumerate(path[1:]):
+            ph = gp_map.map(gt)
+            fitness = ph_to_f[ph]
+            if ignore_neutral and fitness != fit_path[-1]:  # only add non-neutral strpds
+                fit_path.append(fitness)
+            else:  # add all steps
+                fit_path.append(fitness)
+
+        fit_paths.append(fit_path)
+    return fit_paths

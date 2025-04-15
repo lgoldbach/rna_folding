@@ -1,6 +1,6 @@
 rule build_random_fitness_landscape:
     input:
-        "phenotypes.txt"
+        "phenotype_ranking.txt"
     output:
         "fl.txt"
     params:
@@ -66,4 +66,39 @@ rule compute_uphill_navigability_per_ph_per_fl:
         "-f {input.fitness_landscapes} "
         "-g {input.gp_map_pickle} "
         "-s {params.sample_size} "
+        "-o {output} "
+
+rule compute_ruggedness:
+    input:
+        nc_graph="nc_graph.pickle",
+    output:
+        "peak_sizes.txt"
+    params:
+        min_f=config["random_fitness_landscape_params"]["min_f"],
+        max_f=config["random_fitness_landscape_params"]["max_f"],
+        lethal_ph=config["unviable"],
+        sample_size=1
+    shell:
+        "compute_ruggedness.py "
+        "--nc_graph {input.nc_graph} "
+        "--low_f {params.min_f} "
+        "--upp_f {params.max_f} "
+        "--lethal_ph {params.lethal_ph} "
+        "--sample_size {params.sample_size} "
+        "-o {output} "
+
+rule categorize_paths:
+    input:
+        paths=["paths.txt"],
+        fls=["fitness_landscapes.txt"],
+        nc_graph_pickle="nc_graph.pickle",
+        gp_map_pickle="gp_map.pickle"
+    output:
+        "path_categories.pickle"
+    shell:
+        "categorize_evo_paths.py "
+        "-p {input.paths} "
+        "-f {input.fls} "
+        "-n {input.nc_graph_pickle} "
+        "-g {input.gp_map_pickle} "
         "-o {output} "

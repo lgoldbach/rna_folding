@@ -2,16 +2,27 @@
 
 rule plot_freq_over_peaks_vs_navigability:
     input:
-        walk_lengths=expand("gp_map_{gp_map_id}/productive_walk_lengths_{{pop_size}}_seed7339311_seldif1.csv", gp_map_id=config["gp_maps"].keys()),
-        phenotype_distribution=expand("gp_map_{gp_map_id}/phenotype_distribution.txt", gp_map_id=config["gp_maps"].keys()),
-        phenotype_ruggedness=expand("gp_map_{gp_map_id}/peak_sizes.txt", gp_map_id=config["gp_maps"].keys()),
-        peak_heights=expand("gp_map_{gp_map_id}/peak_height_avg.txt", gp_map_id=config["gp_maps"].keys()),
+        navigability=["gp_map/navig.txt"],  # list
+        phenotype_distribution=["gp_map/phenotype_distribution.txt"],
+        ruggedness=["gp_map/peak_sizes.txt"]
     output:
-        "analysis/navigability_over_frequency_over_ruggedness_pop{pop_size}.pdf"
+        "navigability_over_frequency_over_ruggedness_pop{pop_size}_seed{seed}.pdf"
+    params:
+        ruggedness_sample_size=1
     shell:
         "plot_navigability_over_freq_over_ruggedness.py "
-        "-l {input.walk_lengths} "
+        "-n {input.navigability} "
         "-f {input.phenotype_distribution} "
-        "-r {input.phenotype_ruggedness} "
-        "-p {input.peak_heights} "
+        "-r {input.ruggedness} "
+        "-k {params.ruggedness_sample_size} "
+        "-o {output} "
+
+rule plot_path_categories:
+    input:
+        ["path_categories.pickle"]
+    output:
+        "analysis/path_categories.pdf"
+    shell:
+        "plot_path_categories.py "
+        "-i {input} "
         "-o {output} "
