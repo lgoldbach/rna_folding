@@ -66,6 +66,23 @@ rule create_random_ranking:
         "grep -Fxv '{params.unviable}' {input} | shuf > {output}; "
         "echo '{params.unviable}' >> {output}"  # attach unviable to bottom of ranking
 
+
+rule pick_random_genotypes:
+    output:
+        "unfolded_genotypes.txt"
+    input:
+        "genotypes.txt"
+    params:
+        n_unfolded=config["mapping_params"]["n_unfolded"]
+    run:
+        import numpy as np
+        gt_list = np.arange(0, 4**12)
+        rand_g = np.random.choice(gt_list, size=14622554, replace=False)
+        with open(output[0], "w") as f:
+            for g in rand_g:
+                f.write(str(g) + "\n")
+
+                
 rule flatten_gp_map:
     input:
         gp_map="nussinov_gp_map.txt",
@@ -79,6 +96,29 @@ rule flatten_gp_map:
         "-i {input.gp_map} "
         "-r {input.ranking} "
         "-u {params.unviable} "
+        "-o {output} "
+
+rule flatten_gp_map_nc_cutoff:
+    input:
+        gp_map="nussinov_gp_map.txt",
+        genotypes="genotypes.txt",
+        ranking="phenotype_ranking.txt",
+        unfolded_genotypes="unfolded_genotypes.txt"
+    output:
+        "gp_map.txt"
+    params:
+        nc_size_cutoff=config["mapping_params"]["nc_size_cutoff"],
+        unfolded=config["mapping_params"]["unfolded"],
+        alphabet=config["alphabet"]
+    shell:
+        "flatten_gp_map_nc_cutoff.py "
+        "-i {input.gp_map} "
+        "-r {input.ranking} "
+        "-g {input.unfolded_genotypes} "
+        "-t {input.genotypes} "
+        "-c {params.nc_size_cutoff} "
+        "-u {params.unfolded} "
+        "-a {params.alphabet} "
         "-o {output} "
 
 rule build_gpmap_python_object:

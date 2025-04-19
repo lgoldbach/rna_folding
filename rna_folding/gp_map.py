@@ -193,11 +193,33 @@ class GenotypePhenotypeGraph(nx.Graph):
                                             neutral components for all 
                                             phenotypes will be returned. 
                                             Defaults to [].
+            return_boundaries (bool):       Returns the boundaries between 
+                                            neutral components if True. 
+                                            Default: False
            
         Returns:
-            list:   list of lists where the ith list contains all neutral 
-                    component sizes for the ith phenotype, e.g. [[10, 3], [1]] 
+            ncs (dict): Dict of dicts, where the top level dict contains 
+                        phenotypes as keys, inside which a dictionary 
+                        contains neutral component ids as keys, which maps to
+                        the genotype inside this neutral component:
 
+                        ncs[<ph (str)>][<nc id (int)>]: [<genotype1 (str)>, 
+                        <genotype2 (str)>, ...]
+
+                        e.g.:
+                        ncs["(((...)))"][1]: ["AAAA", AAAC", "AGUC"]
+                        ncs["(...)...."][3]: ["UUUA", UUAC", "GGGC"]
+                        ...  
+            boundaries (list):  A list of neutral component boundaries 
+                                (tuples), i.e. any two connected genotypes 
+                                where one is 
+                                in one neutral component and the other in 
+                                another neutral component. This can later be 
+                                used to reconstruct the neutral component 
+                                graph with exact edge weights.
+                                e.g.: 
+                                [("AAAA", "AAAU"), ("GGCC", "GGGC"), ...]
+                            
         """
         if not phenotypes:
             phenotypes = self.phenotype_set
@@ -208,7 +230,6 @@ class GenotypePhenotypeGraph(nx.Graph):
             boundaries = None
 
         self.neutral_components = {}
-
         ncs = {}
         nc_counter = 0
         for ph in phenotypes:
@@ -237,7 +258,6 @@ class GenotypePhenotypeGraph(nx.Graph):
                                                     track_boundaries=return_boundaries,
                                                     boundaries=boundaries)
                         
-        
         if return_boundaries:
             return ncs, boundaries
         else:

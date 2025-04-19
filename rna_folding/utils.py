@@ -174,7 +174,7 @@ def dotbracket_to_bp(db: str) -> set:
 
 
 def count_bp(seq):
-    """Count number of base-pairs in sequence
+    """Count number of base-pairs in phenotype
 
     Args:
         seq (str): dot-bracket notation string, e.g. "(..)(..)"

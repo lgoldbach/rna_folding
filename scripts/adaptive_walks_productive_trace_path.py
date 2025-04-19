@@ -93,6 +93,7 @@ if __name__ ==  "__main__":
                 adaptive_walk_lengths.append(-1)  # walk didn't reach target
     
             paths.append(path)  # save path
+        
 
         # Write adaptive walk path each paths of genotypes into a single line each 
         with open(args.paths, "a") as file:

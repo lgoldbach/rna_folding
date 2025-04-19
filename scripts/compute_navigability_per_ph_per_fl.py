@@ -18,10 +18,12 @@ if __name__ ==  "__main__":
     args = parser.parse_args()
 
     ph_success_count = {}
+    print(args.sample_size)
     for i, path in enumerate(args.walk_lengths):  # i enumerates fitn. landsc.
         with open(path, "r") as file:
             for j, line_ in enumerate(file):
                 line = line_.strip().split()
+                print(j, line, path)
                 # The data for one phenotype will contain args.sample_size many
                 # lines +1 line for the header
                 if j % (args.sample_size + 1) == 0:  # phenotype header

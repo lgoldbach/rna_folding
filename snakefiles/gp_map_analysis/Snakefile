@@ -14,3 +14,26 @@ rule build_nc_graph:
         "-i {params.ignore} "
         "-g {output.nc_graph} "
         "-m {output.nc_to_genotype} "
+
+rule compute_phenotype_distribution:
+    input:
+        gp_map=gp_map.txt"
+    output:
+        "phenotype_distribution.txt"
+    shell:
+        "compute_phenotype_distribution.py "
+        "-f {input} "
+        "-o {output} "
+
+rule nc_graph_to_nc_sizes_txt:
+    input:
+        "nc_graph.pickle"
+    output:
+        "neutral_component_sizes.txt"
+    run:
+        import pickle
+        # load nc graph and write nc sizes into a txt file
+        nc_graph = pickle.load(open(input[0], "rb"))
+        with open(output[0], "w") as f:
+            for node in nc_graph:
+                f.write(str(nc_graph.nodes[node]["size"]) + "\n")   
