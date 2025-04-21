@@ -1,0 +1,194 @@
+
+from snakemake.utils import min_version
+min_version("6.0")
+
+import os
+import sys
+
+# define config file and path to Snakefiles from which we import the rules
+configfile: "./config.yaml"
+snakefile_basedir = "/home/lgold/phd/research/projects/connectivity/rna_folding/snakefiles"
+
+# Define the modules (Snakefiles) we want to import rules from
+module gp_map_generation:
+    snakefile: f"{snakefile_basedir}/gp_map_generation/Snakefile"
+    config: config
+
+module gp_map_analysis:
+    snakefile: f"{snakefile_basedir}/gp_map_analysis/Snakefile"
+    config: config
+    
+module gp_map_analysis_plotting:
+    snakefile: f"{snakefile_basedir}/gp_map_analysis/plotting/Snakefile"
+    config: config
+
+module adaptive_walks:
+    snakefile: f"{snakefile_basedir}/adaptive_walks/Snakefile"
+    config: config
+
+module adaptive_walks_plotting:
+    snakefile: f"{snakefile_basedir}/adaptive_walks/plotting/Snakefile"
+    config: config
+
+rule all:
+    input:
+        expand("ranking{rank}/analysis/navigability_boxplot_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
+        expand("analysis/ranking{rank}/phenotype_bias.pdf", rank=config["rankings"]),
+        expand("analysis/ranking{rank}/neutral_component_sizes.pdf", rank=config["rankings"]),
+        
+
+        
+
+"""GP MAP GENERATION """
+
+use rule generate_genotype_space from gp_map_generation
+
+use rule pick_random_genotypes from gp_map_generation
+
+use rule flatten_gp_map_nc_cutoff from gp_map_generation with:
+    input:
+        gp_map="/home/lgold/phd/research/projects/connectivity/rna_folding/experiments/RNA12/04letters/data/nussinov_maps/gp_map{base_pairing,[0-9]+}_suboptimal4.txt",
+        genotypes="genotypes.txt",
+        ranking="phenotype_ranking{rank}.txt",
+        unfolded_genotypes="unfolded_genotypes.txt",
+    output:
+        "bp_graph{base_pairing}/ranking{rank}/gp_map.txt"
+    params:
+        nc_size_cutoff=config["mapping_params"]["nc_size_cutoff"],
+        unfolded=config["mapping_params"]["unfolded"],
+        alphabet=config["alphabet"]
+
+# get all phenotypes per base-pairing
+use rule extract_phenotype_list from gp_map_generation with:
+    input:
+        "bp_graph{bp}/ranking{rank}/gp_map.txt"
+    output:
+        "bp_graph{bp}/ranking{rank}/phenotypes.txt"
+
+# combine all phenotypes from all base-pairing into one unqiue list
+use rule extract_meta_list_of_phenotypes from gp_map_generation with:
+    input:
+        expand("bp_graph{bp}/ranking{rank}/phenotypes.txt", bp=config["base_pairing"], rank=config["rankings"])
+    
+use rule build_gpmap_python_object from gp_map_generation with:
+    input:
+        genotypes="genotypes.txt",
+        gp_map="bp_graph{bp}/ranking{rank}/gp_map.txt"
+    output:
+        gp_map="bp_graph{bp}/ranking{rank}/gp_map.pickle"
+
+
+
+""" GP MAP ANALYSIS """
+
+use rule compute_phenotype_distribution from gp_map_analysis with:
+    input:
+        gp_map="bp_graph{bp}/ranking{rank}/gp_map.txt"
+    output:
+        "bp_graph{bp}/ranking{rank}/phenotype_distribution.txt"
+
+use rule build_nc_graph from gp_map_analysis with:
+    input:
+        "bp_graph{bp}/ranking{rank}/gp_map.pickle"
+    output:
+        nc_graph="bp_graph{bp}/ranking{rank}/nc_graph.pickle",
+        nc_to_genotype="bp_graph{bp}/ranking{rank}/nc_to_gt.txt"
+
+use rule nc_graph_to_nc_sizes_txt from gp_map_analysis with:
+    input:
+        "bp_graph{bp}/ranking{rank}/nc_graph.pickle"
+    output:
+        "bp_graph{bp}/ranking{rank}/neutral_component_sizes.txt"
+
+
+""" GP MAP ANALYSIS - PLOTS """
+
+use rule multiplot_phenotype_bias from gp_map_analysis_plotting with:
+    input:
+        expand("bp_graph{bp}/ranking{{rank}}/phenotype_distribution.txt", bp=config["base_pairing"]),
+    output:
+        "analysis/ranking{rank}/phenotype_bias.pdf"
+    params:
+        ref=config["ref_bp_rule"]
+    
+use rule multiplot_neutral_comp_sizes from gp_map_analysis_plotting with:
+    input:
+        expand("bp_graph{bp}/ranking{{rank}}/neutral_component_sizes.txt", bp=config["base_pairing"])
+    output:
+        "analysis/ranking{rank}/neutral_component_sizes.pdf"
+    params:
+        ref=config["ref_bp_rule"]
+
+
+
+""" FITNESS LANDSCAPES """
+
+# Generate random fitness landscapes
+use rule build_random_fitness_landscape from adaptive_walks with:
+    input:
+        "phenotype_ranking{rank}.txt"
+    output:
+        "bp_graph{bp}/ranking{rank}/fitness_landscapes/fl_{fl_id}/fl.txt"
+
+use rule compute_ruggedness from adaptive_walks with:
+    input:
+        nc_graph="bp_graph{bp}/ranking{rank}/nc_graph.pickle"
+    output:
+        "bp_graph{bp}/ranking{rank}/peak_sizes.txt"
+    params:
+        min_f=config["random_fitness_landscape_params"]["min_f"],
+        max_f=config["random_fitness_landscape_params"]["max_f"],
+        lethal_ph=config["unviable"],
+        sample_size=config["ruggedness_sample_size"]
+
+
+
+""" ADAPTIVE WALKS """
+
+use rule run_adaptive_walks_productive_trace_paths from adaptive_walks with:
+    input:
+        fl="bp_graph{bp}/ranking{rank}/fitness_landscapes/fl_{fl_id}/fl.txt",
+        gp_map="bp_graph{bp}/ranking{rank}/gp_map.pickle"
+    output:
+        walk_lengths="bp_graph{bp}/ranking{rank}/fitness_landscapes/fl_{fl_id}/adaptive_walks/pop_size{pop_size}/walk_lengths_seed{seed}.csv",
+        paths="bp_graph{bp}/ranking{rank}/fitness_landscapes/fl_{fl_id}/adaptive_walks/pop_size{pop_size}/paths_seed{seed}.csv"
+
+use rule compute_navigability_per_ph_per_fl from adaptive_walks with:
+    input:
+        walk_length_files=expand("bp_graph{{bp}}/ranking{{rank}}/fitness_landscapes/fl_{fl_id}/adaptive_walks/pop_size{{pop_size}}/walk_lengths_seed{{seed}}.csv", fl_id=range(1, config["random_fitness_landscape_params"]["N"]+1))
+    params:
+        sample_size=config["adaptive_walks"]["sample_size_walks"]
+    output:
+        "bp_graph{bp}/ranking{rank}/navigability_per_ph_per_fl_pop{pop_size}_seed{seed}.csv"
+
+use rule categorize_paths from adaptive_walks with:
+    input:
+        paths=expand("bp_graph{{bp}}/ranking{{rank}}/fitness_landscapes/fl_{fl_id}/adaptive_walks/pop_size{{pop_size}}/paths_seed{{seed}}.csv", fl_id=range(1, config["random_fitness_landscape_params"]["N"]+1)),
+        fls=expand("bp_graph{{bp}}/ranking{{rank}}/fitness_landscapes/fl_{fl_id}/fl.txt", fl_id=range(1, config["random_fitness_landscape_params"]["N"]+1)),
+        gp_map_pickle="bp_graph{bp}/ranking{rank}/gp_map.pickle",
+        nc_graph_pickle="bp_graph{bp}/ranking{rank}/nc_graph.pickle"
+    output:
+        "bp_graph{bp}/ranking{rank}/path_categories_pop{pop_size}_seed{seed}.pickle"
+
+
+""" ADAPTIVE WALKS - PLOTS """
+
+use rule plot_navigability_over_frequency_werror_vs_vienna from adaptive_walks_plotting with:
+    input:
+        walks="bp_graph{ref_bp}/ranking{rank}/navigability_per_ph_per_fl_pop{pop_size}_seed{seed}.csv",
+        ref_walks="%s/productive_walk_lengths_{pop_size}_seed{seed}.csv" % config["ref_dir"],
+        ph_distr="bp_graph{ref_bp}/ranking{rank}/phenotype_distribution.txt",
+        ref_ph_distr="%s/phenotype_distribution.txt" % config["ref_dir"]
+    output:
+        "bp_graph{ref_bp}/ranking{rank}/analysis/vs_vienna_productive_walk_success_over_freq_werror_{pop_size}_seed{seed}.pdf"
+    params:
+        sample_size=config["adaptive_walks"]["sample_size_walks"],  # how many walks per phenotype per random fitness landscape instance
+        ref_bp_rule=config["ref_bp_rule"]
+
+use rule plot_boxplots_navigability from adaptive_walks_plotting with:
+    input:
+        expand("bp_graph{bp}/ranking{{rank}}/navigability_per_ph_per_fl_pop{{pop_size}}_seed{{seed}}.csv", bp=config["base_pairing"])
+    output:
+        "ranking{rank}/analysis/navigability_boxplot_pop{pop_size}_seed{seed}.pdf"
+
+        

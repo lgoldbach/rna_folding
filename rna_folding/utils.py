@@ -314,12 +314,17 @@ def ranked_ph_distribution(ph_distr_file, log=False) -> tuple:
     
     phenotypes, distr = load_phenotype_and_metric_from_file(ph_distr_file)
 
+    unf = max(distr)
+    s = sum(distr) - unf
+    print(s, s/4**12)
+
     distr = distr / np.sum(distr)
     if log:
         distr = np.log10(distr)
 
     order = np.argsort(distr)[::-1]
     distr = distr[order]
+
     phenotypes = phenotypes[order]
     return phenotypes, distr
 

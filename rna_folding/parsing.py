@@ -292,3 +292,33 @@ def read_adaptive_walks_w_ph_headers_to_dict(filepath, phenotypes):
                 ph_to_paths[ph].append(line)
     return ph_to_paths
         
+
+def read_navigability_per_ph_per_fl_file(file: str) -> dict:
+    """Take a text file with navigability values and translate it into a 
+    dict that maps each phenotype to a list of navigability values, one for
+    each fitness landscape.
+
+    Args:
+        file (str): File path to a navigability file of the following format:
+                    <ph1 (str)> <navig. fl 1 (float)> <navig. fl 2 (float)> ..
+                    <ph2 (str)> <navig. fl 1 (float)> <navig. fl 2 (float)> ..
+                    ...
+
+    Returns:
+        dict:       Maps every phenotype to a list of navigability values:
+                    {<ph1 (str)>: [<navig. fl 1 (float)>, <navig. fl 2 (float)>, ...],
+                    <ph1 (str)>: <navig. fl 1 (float)>, <navig. fl 2 (float)> ...],
+                    ...}
+
+                    e.g.:
+                    {"((...))": [0.8, 0.65, 0.2], "(...)..": [1.0, 0.2, 0.3]}
+
+    """
+    navig = {}
+    with open(file, "r") as file:
+        for line_ in file:
+            line = line_.strip().split(" ")
+            ph = line[0]
+            navig[ph] = [float(n)*100 for n in line[1:]]
+    
+    return navig

@@ -57,9 +57,9 @@ if __name__ ==  "__main__":
 
         # ax.set_ylim([-7, -1])
         if hacky_i != 2:
-            ax.set_xlim([-10, 1250])
+            ax.set_xlim([-10, 250])
         else:
-            ax.set_xlim([-10, 2900])
+            ax.set_xlim([-10, 1100])
         ax.grid(axis='y')
         ax.grid(axis='x')
 

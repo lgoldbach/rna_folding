@@ -1,0 +1,52 @@
+
+rule multiplot_phenotype_bias:
+    input:
+        ["phenotype_distribution.txt"]
+    output:
+        "phenotype_bias.pdf"
+    params:
+        ref=1  # example value
+    shell:
+        "plot_phenotype_bias_multiplot.py "
+        "-i {input} "
+        "-o {output} "
+        "-r {params.ref} "
+    
+rule multiplot_neutral_comp_sizes:
+    input:
+       ["neutral_component_sizes.txt"]
+    output:
+        "neutral_component_sizes.pdf"
+    params:
+        ref=1  # example value
+    shell:
+        "plot_neutral_comp_size_multiplot.py "
+        "-i {input} "
+        "-o {output} "
+        "-r {params.ref} "
+
+        
+rule plot_vienna_comparison_triple_plot:
+    input:
+        ph_distr="bp_graph{ref_bp}/ranking{rank}/phenotype_distribution.txt",
+        ref_ph_distr="%s/phenotype_distribution.txt" % config["ref_dir"],
+        nc="bp_graph{ref_bp}/ranking{rank}/neutral_component_sizes.txt",
+        ref_nc="%s/neutral_component_sizes.txt" % config["ref_dir"],
+        walks="bp_graph{ref_bp}/ranking{rank}/productive_walk_lengths_{pop_size}_seed{seed}_seldif{seldif}.csv",
+        ref_walks="%s/productive_walk_lengths_{pop_size}_seed{seed}.csv" % config["ref_dir"],
+    output:
+        "bp_graph{ref_bp}/ranking{rank}/analysis/vienna_comparison_triple_plot_pop{pop_size}_seed{seed}_seldif{seldif}.pdf"
+    params:
+        rank_cutoff=config["neutral_component_plotting_param"]["rank_cutoff"],
+        sample_size=config["adaptive_walks"]["sample_size_walks"],  # how many walks per phenotype per random fitness landscape instance
+    shell:
+        "plot_viennaRNA_comparison_triple_plot.py "
+        "-i {input.ph_distr} "
+        "-r {input.ref_ph_distr} "
+        "-n {input.nc} "
+        "-m {input.ref_nc} "
+        "-c {params.rank_cutoff} "
+        "--refwalks {input.ref_walks} "
+        "--walks {input.walks} "
+        "--sample_size {params.sample_size} "
+        "-o {output} "

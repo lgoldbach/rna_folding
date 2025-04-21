@@ -107,9 +107,9 @@ rule flatten_gp_map_nc_cutoff:
     output:
         "gp_map.txt"
     params:
-        nc_size_cutoff=config["mapping_params"]["nc_size_cutoff"],
-        unfolded=config["mapping_params"]["unfolded"],
-        alphabet=config["alphabet"]
+        nc_size_cutoff=1,
+        unfolded="...",
+        alphabet="AUGC"
     shell:
         "flatten_gp_map_nc_cutoff.py "
         "-i {input.gp_map} "

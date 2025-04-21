@@ -17,7 +17,7 @@ rule build_nc_graph:
 
 rule compute_phenotype_distribution:
     input:
-        gp_map=gp_map.txt"
+        gp_map="gp_map.txt"
     output:
         "phenotype_distribution.txt"
     shell:

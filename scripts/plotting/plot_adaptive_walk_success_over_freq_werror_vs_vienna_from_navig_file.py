@@ -5,10 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 
-from rna_folding.parsing import load_phenotype_and_metric_from_file
+from rna_folding.parsing import load_phenotype_and_metric_from_file, read_navigability_per_ph_per_fl_file
 
-def list_of_strings(arg):
-    return arg.split(',')
 
 if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
@@ -18,7 +16,7 @@ if __name__ ==  "__main__":
     parser.add_argument("--freq", help="phenotype frequencies of query", 
                         required=True, 
                         type=str)
-    parser.add_argument("--navig", help="Navigability file", 
+    parser.add_argument("--navig", help="Navigability file",
                         required=True, 
                         type=str)
     parser.add_argument("--refwalks", help="Walk success of query", 
@@ -86,7 +84,8 @@ if __name__ ==  "__main__":
         return d
     
     ref_walk_success = read_walk_file(args.refwalks)
-    walk_success = {}
+
+    walk_success = read_navigability_per_ph_per_fl_file(args.navig)
     with open(args.navig, "r") as file:
         for line_ in file:
             line = line_.strip().split(" ")

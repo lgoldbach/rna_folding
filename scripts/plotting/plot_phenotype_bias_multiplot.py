@@ -50,9 +50,9 @@ if __name__ ==  "__main__":
         ax.set_xlim([1, 37])
         ax.grid(axis='y')
         ax.grid(axis='x')
-
         phenotypes, distr = ranked_ph_distribution(ph_distr_file=file,
                                                     log=True)
+        
         distr = distr[1:]
         x = range(1, distr.shape[0]+1)
      

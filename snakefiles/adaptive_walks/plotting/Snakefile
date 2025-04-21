@@ -26,3 +26,34 @@ rule plot_path_categories:
         "plot_path_categories.py "
         "-i {input} "
         "-o {output} "
+
+rule plot_navigability_over_frequency_werror_vs_vienna:
+    input:
+        walks="navigability_per_ph_per_fl.csv",
+        ref_walks="ref_productive_walk_lengths.csv" ,
+        ph_distr="phenotype_distribution.txt",
+        ref_ph_distr="ref_phenotype_distribution.txt"
+    output:
+        "vs_vienna_productive_walk_success_over_freq_werror.pdf"
+    params:
+        sample_size=config["adaptive_walks"]["sample_size_walks"],  # how many walks per phenotype per random fitness landscape instance
+        ref_bp_rule=config["ref_bp_rule"]
+    shell:
+        "plot_adaptive_walk_success_over_freq_werror_vs_vienna_from_navig_file.py "
+        "--reffreq {input.ref_ph_distr} "
+        "--refwalks {input.ref_walks} "
+        "--freq {input.ph_distr} "
+        "--navig {input.walks} "
+        "--sample_size {params.sample_size} "
+        "--label_ref_bp {wildcards.ref_bp} "
+        "-o {output} "
+
+rule plot_boxplots_navigability:
+    input:
+        ["navigabilities.txt"]
+    output:
+        "navigability_boxplot.pdf"
+    shell:
+        "plot_navigability_boxplots.py "
+        "-n {input} "
+        "-o {output} "
