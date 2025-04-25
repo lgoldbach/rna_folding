@@ -33,6 +33,17 @@ mut_graph_s = {2: 1,
                10: 10,
                11: 12}
 
+max_bp = {2: 2,
+            3: 2,
+            4: 2,
+            5: 2,
+            6: 2,
+            7: 2,
+            8: 3,
+            9: 3,
+            10: 4,
+            11: 4}
+
 ph_n = 32
 # nc_n_est_2p = {}
 # for i in range(2, 12):
@@ -73,26 +84,28 @@ for i in range(2, 12):
 
 largest_nc_est = {}
 for i in range(2, 12):
-    stack = mut_graph_s[i] ** 4  # 4: number of pairs
+    stack = mut_graph_s[i] ** max_bp[i]  # 4: number of pairs
     loop = 4**4 # 4: alphabet size, 4: loop size
     nc_size = stack * loop
     largest_nc_est[i] = nc_size * 0.1
 
-largest_nc_est2 = {}
+
+
+nc_est = {}
 for i in range(2, 12):
-    stack = mut_graph_s[i] ** 2  # 4: number of pairs
-    loop = 4**8 # 8: loop size, 4: alphabet size
-    nc_size = stack * loop
-    largest_nc_est2[i] = nc_size * 0.1
+    nc_est[i] = []
+    frac = 0.1
 
-largest_nc_est3 = {}
-for i in range(2, 12):
-    stack = mut_graph_s[i] ** 3  # 4: number of pairs
-    loop = 4**6 # 6: loop size, 4: alphabet size
-    nc_size = stack * loop
-    largest_nc_est3[i] = nc_size * 0.1
-
-
+    nc_size = 1000000000
+    for j in range(nc_n_est[i]+100):
+        stack = mut_graph_s[i] ** max_bp[i]  # 4: number of pairs
+        loop = 4**(12 - (max_bp[i]*2)) # 6: loop size, 4: alphabet size
+        nc_size = stack * loop * frac
+        if nc_size < 50 or j > nc_n_est[i]:
+            print(i)
+            break
+        nc_est[i].append(nc_size)
+        frac = frac - (nc_est[i][-1] / 4**12)
 
 fig, axes = plt.subplots(nrows=2, ncols=10, figsize=(50, 10), sharey="row")
 
@@ -108,17 +121,16 @@ for ax, bp in zip(axes[0], nc_graph):
             count += nc_graph[bp].nodes[nc]["size"]
         count_all += sss
 
-    print(bp, count, count_all, count/count_all)
     y = list(reversed(sorted([nc_graph[bp].nodes[nc]["size"] for nc in nc_graph[bp].nodes if nc_graph[bp].nodes[nc]["size"] > cutoff])))
 
     ax.scatter(range(len(y)), np.log10(y))
     # ax.plot([0, nc_n_est_2p[bp]], np.log10([y[0], 0]), label="2")
     # ax.plot([0, nc_n_est_3p[bp]], [y[0], 0], label="3")
     # ax.plot([0, nc_n_est_4p[bp]], [y[0], 0], label="4")
-    ax.plot([0, nc_n_est[bp]], [np.log10(y[0]), np.log10(cutoff)], label="exact", color="green")
-    ax.plot([0, len(y)],[np.log10(largest_nc_est2[bp]), np.log10(largest_nc_est2[bp])], color="yellow")
-    ax.plot([0, len(y)],[np.log10(largest_nc_est3[bp]), np.log10(largest_nc_est3[bp])], color="orange")
-    ax.plot([0, len(y)],[np.log10(largest_nc_est[bp]), np.log10(largest_nc_est[bp])], color="red")
+    # ax.plot([0, nc_n_est[bp]], [np.log10(y[0]), np.log10(cutoff)], label="exact", color="green")
+    # ax.plot([0, len(y)],[np.log10(largest_nc_est[bp]), np.log10(largest_nc_est[bp])], color="red")
+    ax.scatter(range(len(nc_est[bp])), np.log10(nc_est[bp]), color="red", s = 3, marker="x")
+
     ax.set_title(f"bp rule {bp}", size=20)
 
 bins = range(0, 100000, 100)
@@ -137,4 +149,4 @@ for ax, bp in zip(axes[1], nc_graph):
     ax.set_yscale('log')
 plt.legend()
 
-plt.savefig("explore_nc.png", format="png")
+plt.savefig("explore_nc.pdf", format="pdf", dpi=30)

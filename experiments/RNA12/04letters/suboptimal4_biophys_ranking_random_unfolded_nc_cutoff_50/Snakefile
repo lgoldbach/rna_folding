@@ -38,6 +38,8 @@ rule all:
         expand("bp_graph{bp}/ranking{rank}/peak_sizes.txt", bp=config["base_pairing"], rank=config["rankings"])
         
 
+        
+
 """GP MAP GENERATION """
 
 use rule generate_genotype_space from gp_map_generation
