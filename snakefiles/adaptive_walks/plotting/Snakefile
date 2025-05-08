@@ -36,8 +36,8 @@ rule plot_navigability_over_frequency_werror_vs_vienna:
     output:
         "vs_vienna_productive_walk_success_over_freq_werror.pdf"
     params:
-        sample_size=config["adaptive_walks"]["sample_size_walks"],  # how many walks per phenotype per random fitness landscape instance
-        ref_bp_rule=config["ref_bp_rule"]
+        sample_size=100,  # how many walks per phenotype per random fitness landscape instance
+        ref_bp_rule="1"  # the base-pairing rule to which to compare to
     shell:
         "plot_adaptive_walk_success_over_freq_werror_vs_vienna_from_navig_file.py "
         "--reffreq {input.ref_ph_distr} "

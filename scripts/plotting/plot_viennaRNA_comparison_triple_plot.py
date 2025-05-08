@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 
-from rna_folding.parsing import load_phenotype_and_metric_from_file
+from rna_folding.parsing import load_phenotype_and_metric_from_file, read_navigability_per_ph_per_fl_file
 from rna_folding.utils import ranked_ph_distribution
 
 
@@ -144,28 +144,8 @@ if __name__ ==  "__main__":
     ref_d = dict(zip(ref_ph_sort, ref_freq_sort))  # make dict by ph
     query_d = dict(zip(ph, freq))  # make dict by ph
 
-    def read_walk_file(filename):
-        d = {}
-        with open(filename, "r") as f:
-            for line_ in f:
-                line = line_.strip().split(" ")
-                p = line[0]
-                d[p] = []  # a list for all navigabilities for a phenotypes
-                # loop over sets of walk lengths, each set coming from one
-                # random fitness landscape instance
-                for sample_start in range(0, len(line[1:]), args.sample_size):
-                    d[p].append(0)  # init a counter for this sample
-                    for walk_length in line[1:][sample_start:sample_start+args.sample_size]:
-                        if int(walk_length) != -1:  # if not -1 which stands for unsuccessful walk
-                            d[p][-1] += 1
-                    if d[p][-1] > 0:
-                        # compute fraction of successful walks (navig.)
-                        d[p][-1] /= args.sample_size
-                        d[p][-1] *= 100
-        return d
-    
-    walk_success = read_walk_file(args.walks)
-    ref_walk_success = read_walk_file(args.refwalks)
+    walk_success = read_navigability_per_ph_per_fl_file(args.walks)
+    ref_walk_success = read_navigability_per_ph_per_fl_file(args.refwalks)
 
     y_ref = []
     x_ref = []

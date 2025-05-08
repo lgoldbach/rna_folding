@@ -48,15 +48,16 @@ if __name__ ==  "__main__":
 
         ax.set_ylim([-7, -1])
         ax.set_xlim([1, 37])
-        ax.grid(axis='y')
-        ax.grid(axis='x')
+        ax.grid(axis='y', zorder=30)
+        ax.grid(axis='x', zorder=30)
+
         phenotypes, distr = ranked_ph_distribution(ph_distr_file=file,
                                                     log=True)
         
         distr = distr[1:]
         x = range(1, distr.shape[0]+1)
      
-        ax.plot(x, distr, label=f"Base-pairing {i+1}", color="black", linewidth=10, zorder=0)
+        ax.plot(x, distr, label=f"Base-pairing {i+1}", color="black", linewidth=10, zorder=10)
 
     ref_file = ph_dist_files[args.ref-1]
     phenotypes, ref_distr = ranked_ph_distribution(ph_distr_file=ref_file,
@@ -64,7 +65,7 @@ if __name__ ==  "__main__":
     ref_distr = ref_distr[1:]   # ignore unfolded
     ref_x = range(1, ref_distr.shape[0]+1)
     for i, ax in enumerate(axes):
-        ax.plot(ref_x, ref_distr, color="0.4", linewidth=10, label="Natural base-pairing", linestyle="dotted", zorder=1)
+        ax.plot(ref_x, ref_distr, color="0.4", linewidth=10, label="Natural base-pairing", linestyle="dotted", zorder=20)
 
         if i == 8:
             ax.legend(loc="upper right", prop={'size': 22}, frameon=False)

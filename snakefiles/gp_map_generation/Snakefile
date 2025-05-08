@@ -3,7 +3,7 @@ rule generate_genotype_space:
     output:
         "genotypes.txt"
     params:
-        alphabet=config["alphabet"],
+        alphabet="AUGC",
         seq_len=config["sequence_lengths"]
     shell:
         "build_genotype_space.py " 
@@ -17,11 +17,11 @@ rule nussinov_gp_map:
     output:
         "{bp}/nussinov_gp_map.txt"  # regex to constrain to numbers and prevent matching subdirectory gp_map.txt
     params:
-        graph_path=config["graph_path"],
-        min_loop_size=config["mapping_params"]["min_loop_size"],
-        suboptimal=config["mapping_params"]["suboptimal"],
-        structures_max=config["mapping_params"]["structures_max"],
-        alphabet=config["alphabet"],
+        graph_path="path/to/base_pairing_graph",
+        min_loop_size=3,
+        suboptimal=3,
+        structures_max=10000,
+        alphabet="AUGC"
     shell:
         "nussinov_gp_mapping.py "
         "-i {input} "
@@ -73,7 +73,7 @@ rule pick_random_genotypes:
     input:
         "genotypes.txt"
     params:
-        n_unfolded=config["mapping_params"]["n_unfolded"]
+        n_unfolded="........."
     run:
         import numpy as np
         gt_list = np.arange(0, 4**12)
@@ -128,7 +128,7 @@ rule build_gpmap_python_object:
     output:
         "gp_map.pickle"
     params:
-        alphabet=config["alphabet"],
+        alphabet="AUGC",
         ignore_phenotype=config["unviable"]  # ignore unviable phenotype
     shell:
         "build_gpmap_pickle.py "

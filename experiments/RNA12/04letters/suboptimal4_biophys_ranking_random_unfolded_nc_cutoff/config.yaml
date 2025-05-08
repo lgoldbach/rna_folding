@@ -39,20 +39,21 @@ ref_bp_rule: 7   # base-pairing rule to compare detailed statistics to
 rankings:
   - 1  # actually not random but the biophys ranking
   
-ref_dir: "viennaRNA"  # the directory containing reference data 
+ref_dir: "../viennaRNA"  # the directory containing reference data 
 
 neutral_component_plotting_param:
   rank_cutoff: 500  # how many ranks to show max.
   
 # how many fitness landscapes to sample for ruggedness estimation
-ruggedness_sample_size: 10 
+ruggedness_sample_size: 100 
 
 navigability_sample_size: 100
 
 random_fitness_landscape_params:
-  N: 10
-  min_f: 0
+  N: 1
   max_f: 1
+  min_f: 0
+
 
 adaptive_walks:
   population_sizes: 
@@ -61,6 +62,5 @@ adaptive_walks:
   max_steps: 1000
   sample_size_landscapes: 10
   sample_size_walks: 100
-  selection_diff: 1
 
 

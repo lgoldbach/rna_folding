@@ -7,7 +7,7 @@ rule build_nc_graph:
     input:
         "gp_map.pickle"
     params:
-        ignore=config["mapping_params"]["unfolded"],
+        ignore="1"
     shell:
         "nc_graph.py "
         "-f {input} "

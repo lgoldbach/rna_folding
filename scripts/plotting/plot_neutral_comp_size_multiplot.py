@@ -60,13 +60,14 @@ if __name__ ==  "__main__":
             ax.set_xlim([-10, 250])
         else:
             ax.set_xlim([-10, 1100])
-        ax.grid(axis='y')
-        ax.grid(axis='x')
+
+        ax.grid(axis='y', zorder=30)
+        ax.grid(axis='x', zorder=30)
 
         nc = read_nc_file(file)
     
         x = range(1, len(nc)+1)
-        ax.plot(x, np.log10(nc), label=f"Base-pairing {i+1}", color="black", linewidth=10, zorder=0)
+        ax.plot(x, np.log10(nc), label=f"Base-pairing {i+1}", color="black", linewidth=10, zorder=10)
 
     ref_file = nc_files[args.ref-1]
     
@@ -77,7 +78,7 @@ if __name__ ==  "__main__":
     ref_nc_coarse = [ref_nc[i] for i in range(0, len(ref_nc), step)]  
     ref_x = range(1, len(ref_nc)+1, step)
     for ax in axes:
-        ax.plot(ref_x, np.log10(ref_nc_coarse), color="0.4", linewidth=10, label="Natural base-pairing", zorder=1, linestyle="dotted")
+        ax.plot(ref_x, np.log10(ref_nc_coarse), color="0.4", linewidth=10, label="Natural base-pairing", zorder=20, linestyle="dotted")
         ax.legend(loc="upper right", prop={'size': 25}, frameon=False)
     
         ax.tick_params(axis='both', which='major', labelsize=20)

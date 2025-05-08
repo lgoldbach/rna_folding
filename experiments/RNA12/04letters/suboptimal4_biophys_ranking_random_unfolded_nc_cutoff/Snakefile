@@ -32,15 +32,21 @@ module adaptive_walks_plotting:
 
 rule all:
     input:
-        expand("ranking{rank}/analysis/navigability_boxplot_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
+        expand("analysis/ranking{rank}/navigability_boxplot_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
         expand("analysis/ranking{rank}/phenotype_bias.pdf", rank=config["rankings"]),
         expand("analysis/ranking{rank}/neutral_component_sizes.pdf", rank=config["rankings"]),
-        expand("bp_graph{bp}/ranking{rank}/peak_sizes.txt", bp=config["base_pairing"], rank=config["rankings"])
+        expand("bp_graph{bp}/ranking{rank}/peak_sizes.txt", bp=config["base_pairing"], rank=config["rankings"]),
+        expand("bp_graph{ref_bp}/ranking{rank}/analysis/vienna_comparison_triple_plot_pop{pop_size}_seed{seed}.pdf", ref_bp=config["ref_bp_rule"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"], rank=config["rankings"])
         
 
 """GP MAP GENERATION """
 
-use rule generate_genotype_space from gp_map_generation
+use rule generate_genotype_space from gp_map_generation with:
+    output:
+        "genotypes.txt"
+    params:
+        alphabet="AUGC",
+        seq_len=config["sequence_lengths"]
 
 use rule pick_random_genotypes from gp_map_generation
 
@@ -119,7 +125,6 @@ use rule multiplot_neutral_comp_sizes from gp_map_analysis_plotting with:
         ref=config["ref_bp_rule"]
 
 
-
 """ FITNESS LANDSCAPES """
 
 # Generate random fitness landscapes
@@ -188,6 +193,53 @@ use rule plot_boxplots_navigability from adaptive_walks_plotting with:
     input:
         expand("bp_graph{bp}/ranking{{rank}}/navigability_per_ph_per_fl_pop{{pop_size}}_seed{{seed}}.csv", bp=config["base_pairing"])
     output:
-        "ranking{rank}/analysis/navigability_boxplot_pop{pop_size}_seed{seed}.pdf"
+        "analysis/ranking{rank}/navigability_boxplot_pop{pop_size}_seed{seed}.pdf"
 
+rule plot_productive_walk_success_over_frequency_werror:
+    input:
+        navig="bp_graph{bp}/ranking{rank}/navigability_per_ph_per_fl_pop{pop_size}_seed{seed}.csv",
+        ref_navig="bp_graph%s/ranking{rank}/navigability_per_ph_per_fl_pop{pop_size}_seed{seed}.csv" % config["ref_bp_rule"],
+        ph_distr="bp_graph{bp_rule}/ranking{rank}/phenotype_distribution.txt",
+        ref_ph_distr="bp_graph%s/ranking{rank}/phenotype_distribution.txt" % config["ref_bp_rule"]
+    output:
+        "bp_graph{bp_rule}/ranking{rank}/analysis/navigability_over_freq_werror_{pop_size}_seed{seed}.pdf"
+    params:
+        sample_size=config["adaptive_walks"]["sample_size_walks"],  # how many walks per phenotype per random fitness landscape instance
+        ref_bp_rule=config["ref_bp_rule"]
+    shell:
+        "plot_adaptive_walk_success_over_freq_werror.py "
+        "--reffreq {input.ref_ph_distr} "
+        "--refnavig {input.ref_navig} "
+        "--freq {input.ph_distr} "
+        "--navig {input.navig} "
+        "--sample_size {params.sample_size} "
+        "--labels {params.ref_bp_rule} {wildcards.bp_rule} "
+        "-o {output} "
+
+""" VIENNARNA COMPARISON """
+
+rule plot_vienna_comparison_triple_plot:
+    input:
+        ph_distr="bp_graph{ref_bp}/ranking{rank}/phenotype_distribution.txt",
+        ref_ph_distr="%s/phenotype_distribution.txt" % config["ref_dir"],
+        nc="bp_graph{ref_bp}/ranking{rank}/neutral_component_sizes.txt",
+        ref_nc="%s/neutral_component_sizes.txt" % config["ref_dir"],
+        walks="bp_graph{ref_bp}/ranking{rank}/navigability_per_ph_per_fl_pop{pop_size}_seed{seed}.csv",
+        ref_walks="%s/navigability_per_ph_per_fl_pop{pop_size}_seed{seed}.csv" % config["ref_dir"],
+    output:
+        "bp_graph{ref_bp}/ranking{rank}/analysis/vienna_comparison_triple_plot_pop{pop_size}_seed{seed}.pdf"
+    params:
+        rank_cutoff=config["neutral_component_plotting_param"]["rank_cutoff"],
+        sample_size=config["adaptive_walks"]["sample_size_walks"],  # how many walks per phenotype per random fitness landscape instance
+    shell:
+        "plot_viennaRNA_comparison_triple_plot.py "
+        "-i {input.ph_distr} "
+        "-r {input.ref_ph_distr} "
+        "-n {input.nc} "
+        "-m {input.ref_nc} "
+        "-c {params.rank_cutoff} "
+        "--refwalks {input.ref_walks} "
+        "--walks {input.walks} "
+        "--sample_size {params.sample_size} "
+        "-o {output} "
         

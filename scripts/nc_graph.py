@@ -36,9 +36,10 @@ if __name__ ==  "__main__":
 
     if args.ignore:
         phenotypes = [ph for ph in gpm.phenotype_set if ph != args.ignore]
+        print(len(gpm.phenotype_set), args.ignore, type(args.ignore), type(gpm.phenotype_set[0]))
     else:
         phenotypes = None
-    print(phenotypes, flush=True)
+    print(len(phenotypes), flush=True)
     a = datetime.datetime.now()
     print("Starting neutral_components", a, flush=True)
     ncs, boundaries = gpm.get_neutral_components(phenotypes=phenotypes,
