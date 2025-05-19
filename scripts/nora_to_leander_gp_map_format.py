@@ -12,9 +12,8 @@ gp = pickle.load(open("gp_map_Nora.pkl", "rb"))
 alphabet = "10"
 
 print("Load done", flush=True)
-g_t = (0,0,0,0,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,1,0,1,1,1)
 
-gt_gen = combinatorically_complete_genotypes(25, alphabet)
+gt_gen = combinatorically_complete_genotypes(20, alphabet)
 
 phenotypes = []
 genotypes = []

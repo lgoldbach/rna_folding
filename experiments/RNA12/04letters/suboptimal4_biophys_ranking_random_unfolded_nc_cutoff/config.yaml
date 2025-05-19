@@ -50,7 +50,7 @@ ruggedness_sample_size: 100
 navigability_sample_size: 100
 
 random_fitness_landscape_params:
-  N: 1
+  N: 20
   max_f: 1
   min_f: 0
 
@@ -61,6 +61,6 @@ adaptive_walks:
     - 1000000
   max_steps: 1000
   sample_size_landscapes: 10
-  sample_size_walks: 100
+  sample_size_walks: 10000
 
 

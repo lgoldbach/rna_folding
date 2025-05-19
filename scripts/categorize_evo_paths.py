@@ -33,18 +33,21 @@ if __name__ ==  "__main__":
             "successful_nonmono": 0,
             "unsuccessful_nonmono": 0}
 
+    print("Loaded", flush=True)
     # read in path and fitness landscapes
     for path_file, fl_file in zip(args.paths, args.fls):
         ph_to_f_general = load_fl_file_to_dict(fl_file)
         phenotypes = list(ph_to_f_general.keys())
+        print(path_file, flush=True)
+        # Turn this into a generator that yields paths one by one.
         ph_to_paths = read_adaptive_walks_w_ph_headers_to_dict(path_file, phenotypes=phenotypes)
-        
+        print("Done", flush=True)
         for ph in ph_to_paths:
             # We have to set the fitness of the target phenotype to 1
             ph_to_f = ph_to_f_general.copy() 
             ph_to_f[ph] = 1
             f_paths = genotype_path_to_fitness_path(ph_to_paths[ph], gpmap, ph_to_f, ignore_neutral=True)
-
+            print("Done2", flush=True)
             for path in ph_to_paths[ph]:
                 if gpmap.map(path[-1]) == ph:  # reached target -> successful
                     if contains_downhill_steps(path, gpmap, ph_to_f):  # non-monotonic

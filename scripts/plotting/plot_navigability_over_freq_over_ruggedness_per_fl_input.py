@@ -5,6 +5,7 @@ import pickle
 import RNA
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats.stats import pearsonr
 
 from rna_folding.parsing import load_phenotype_and_metric_from_file, read_ruggedness_per_ph_file
 from rna_folding.parsing import read_navigability_per_ph_per_fl_file
@@ -16,6 +17,7 @@ if __name__ ==  "__main__":
     parser.add_argument("-r", "--ruggedness", help="Ruggedness", nargs="+", required=True)
     parser.add_argument("-f", "--ph_dist", help="phenotype distribution", nargs="+", required=True)
     parser.add_argument("-k", "--ruggedness_sample_size", help="Sample size for ruggedness", type=int, required=True)
+    parser.add_argument("-i", "--ignore", help="Phenotype to ignore", type=str, required=False)
     parser.add_argument("-o", "--output", help="Output file for plot (.pdf)",
                         required=True)
     
@@ -25,6 +27,8 @@ if __name__ ==  "__main__":
     
     for i, (ph_dist, navigability, ruggedness) in enumerate(zip(args.ph_dist, args.navigability, args.ruggedness)):
         phenotypes, counts = load_phenotype_and_metric_from_file(ph_dist)
+        if args.ignore:  # remove the ignored phenotype
+            phenotypes = [ph for ph in phenotypes if ph != args.ignore]
         navig = read_navigability_per_ph_per_fl_file(navigability)
 
         # local peak sizes
@@ -40,12 +44,24 @@ if __name__ ==  "__main__":
         y = []
         cs = []
         color = []
+
         for ph, c in zip(phenotypes, counts):
             x.append(c/(rugged_av[ph]+c))
-            y.append(np.mean(navig[ph]))  # mean navigability   
+            y.append(np.mean(navig[ph])/100)  # mean navigability   
 
         im = ax1.scatter(x, y, label=f"GP map {i+2}", s=10, alpha=.7, linewidths=0)
-                    
+        
+        ax1.plot([0,1], [0,1], linestyle="--", color="grey", zorder=20)
+        r, p = pearsonr(x, y)
+        p_str = "%.3g" % p
+        ax1.text(0.1, 0.8, f'r = {np.round(r, 2)}\np = {p_str}')  
+        
+        m, b = np.polyfit(x, y, deg=1)
+        print(m, b)
+        xs = np.linspace(min(x), max(x), 100)
+        ys = m * xs + b
+        ax1.plot(xs, ys)
+
         x_m = np.mean(x)
         x_std = np.std(x)
         y_m = np.mean(y)
