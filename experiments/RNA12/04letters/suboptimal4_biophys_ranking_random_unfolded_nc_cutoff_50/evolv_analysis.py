@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 from scipy.stats import gaussian_kde
+from scipy.stats.stats import pearsonr
+from scipy.stats import linregress
 
 from rna_folding.parsing import load_phenotype_and_metric_from_file
 from rna_folding.utils import count_bp
@@ -108,9 +110,20 @@ num_red_mut = {2: 2,
                 11: 0}
 
 def estimate_evol(freqs, phenos, n, bp):
+    # freqs includes the unfolded and self
+
+    avg_k = np.log(n)
+    nc_out = int(avg_k * n)
+    # s = int(nc_out * ((12-num_red_mut[bp])/12))
+    # s = int(n  * ((12-num_red_mut[bp])/12))
+    s = int(n)
+    # print(nc_out/n)
+
     ch = np.random.choice(phenos, p=freqs, replace=True, size=n)  # freqs
     uni = np.unique(ch)
-    evol = len(uni) # * ((12-num_red_mut[bp])/12)
+
+    evol = (len(uni) - 1) * ((12-num_red_mut[bp])/12)  # -1 for unfolded
+
     return evol
 
 nc_n_est = {}
@@ -152,10 +165,15 @@ navigs_mean = {2: 73,
 for i in range(2, 12):
     nc_g = nc_graph[i]
     nc_sizes = []
+    nc_phenos = []
     evolvab = []
     outdeg = []
+
+    phenotypes = np.unique([nc_g.nodes[node]["phenotype"] for node in nc_g])
+
     for node in nc_g.nodes:
         nc_sizes.append(nc_g.nodes[node]["size"])  # size
+        nc_phenos.append(nc_g.nodes[node]["phenotype"])  # size
         evolvab.append(len(np.unique([nc_g.nodes[neigh]["phenotype"] for neigh in nc_g.neighbors(node)]))) # unique neighbors
         outdeg.append(sum([nc_g.edges[e]["weight"] for e in nc_g.edges([node])]))  # edge weight sum
 
@@ -193,7 +211,10 @@ for i in range(2, 12):
     # xy = np.vstack([x,y])
     # z = gaussian_kde(xy)(xy)
     # cm = plt.cm.get_cmap('RdYlBu')
+    evo_frac = [ev/len(phenotypes) for ev in evolvab]
     sc = axes[1][i-2].scatter(np.log10(nc_sizes), evolvab)
+    axes[1][i-2].set_ylim(0, 1)
+    axes[1][i-2].set_xlim(1, 6)
     # plt.colorbar(sc)
     freqs = [c/4**12 for c in ph_count[i].values()]
     phenos = list(ph_count[i].keys())
@@ -201,11 +222,27 @@ for i in range(2, 12):
 
     rug_es = 0
     # for nc_size in nc_est[i]:
-    for nc_size in nc_sizes:
-        # freqs_node = [f for f in freqs if f != freq_ph]
-        evol_es.append(estimate_evol(freqs, phenos, n=int(nc_size), bp=i))
-        rug_es += nc_size/evol_es[-1]
+    for nc_size, nc_ph in zip(nc_sizes, nc_phenos):
+        # freq_ph = ph_count[i][nc_ph]/4**12
+        # freqs_w_node = []
+        # w = ((12-num_red_mut[i])/12)  # prob. of non-redundant mutation
+        # for f in freqs:
+        #     if f == freq_ph:
+        #         freqs_w_node.append(f * w)
+        #     else:
+        #         freqs_w_node.append(f)
 
+        # f_s = sum(freqs_w_node)
+        # freqs_w_node = [f/f_s for f in freqs_w_node]
+        # f_s = 1-sum(freqs_w_node)
+        # freqs_w_node.append(f_s)
+        # # print(freqs, freqs_w_node)
+        
+        # evol_es.append(estimate_evol(freqs, phenos, n=int(nc_size), bp=i))
+        evol_es.append(np.mean(evolvab))
+        if evol_es[-1] > 0:
+            rug_es += nc_size/evol_es[-1]
+        
     axes[0][3].scatter([rug_es], [navigs_mean[i]], label=str(i))
     axes[0][3].set_xlabel("Ruggedness")
     axes[0][3].set_ylabel("Navigability")
@@ -214,9 +251,37 @@ for i in range(2, 12):
     axes[3][i-2].set_aspect('equal', adjustable='box')
     axes[3][i-2].plot([3, 35], [3, 35], color="grey")
     axes[3][i-2].set_title(f"Bp rule {i}")
+    r, p = pearsonr(evolvab, evol_es)
+    p_str = "%.3g" % p
+    axes[3][i-2].text(5, 31, f'r = {np.round(r, 2)}\np = {p_str}')
+
+    axes[0][2].scatter(np.mean(evolvab), rug, label=str(i))
+    axes[0][5].scatter(np.mean(evolvab), num_red_mut[i]/12,label=str(i))
+    axes[0][6].scatter(np.median(evolvab), num_red_mut[i]/12, label=str(i))
+    axes[0][7].scatter(mut_graph_s[i], num_red_mut[i]/12, label=str(i))
+    ma = np.max(list(ph_count[i].values()))
+    mi = np.min(list(ph_count[i].values()))
+    ph_above_10000 = len([ph for ph in ph_count[i] if ph_count[i][ph] > 10000])
+    print(i, ph_above_10000)
+    ph_s = list(sorted(list(ph_count[i].values()), reverse=True))
+    print(ph_s[1], nc_sizes_sort[0], nc_sizes_sort[0]/ph_s[1])
+    m = np.log10(ph_s[-2])
+    m10 = np.log10(ph_s[-12])
+    lr = linregress(np.log10(ph_s), list(range(0, len(ph_s)))[::-1])
+    print(lr.slope)
+    axes[0][4].scatter(mut_graph_s[i], len(phenotypes), label=str(i)) 
+    axes[0][8].scatter(mut_graph_s[i], np.mean(evolvab), label=str(i))
+    axes[0][9].scatter(len(phenotypes), np.mean(evolvab), label=str(i))
+
+
 
 axes[0][0].legend()
 axes[0][3].legend()
+axes[0][5].legend()
+axes[0][6].legend()
+axes[0][7].legend()
+axes[0][8].legend()
+axes[0][9].legend()
 axes[2][0].legend()
 axes[2][1].legend()
 

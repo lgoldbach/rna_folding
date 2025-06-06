@@ -36,9 +36,11 @@ rule all:
         expand("analysis/ranking{rank}/phenotype_bias.pdf", rank=config["rankings"]),
         expand("analysis/ranking{rank}/neutral_component_sizes.pdf", rank=config["rankings"]),
         expand("bp_graph{bp}/ranking{rank}/peak_sizes.txt", bp=config["base_pairing"], rank=config["rankings"]),
-        expand("bp_graph{ref_bp}/ranking{rank}/analysis/vienna_comparison_triple_plot_pop{pop_size}_seed{seed}.pdf", ref_bp=config["ref_bp_rule"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"], rank=config["rankings"]),
+        # expand("bp_graph{ref_bp}/ranking{rank}/analysis/vienna_comparison_triple_plot_pop{pop_size}_seed{seed}.pdf", ref_bp=config["ref_bp_rule"], pop_size=config["adaptive_walks_vienna"]["population_sizes"], seed=config["random_seed"], rank=config["rankings"]),
         expand("bp_graph{bp}/ranking{rank}/analysis/navigability_over_freq_werror_{pop_size}_seed{seed}.pdf", bp=config["base_pairing"], rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
-        expand("analysis/ranking{rank}/nc_count_prediction_vs_truth.pdf", rank=config["rankings"])
+        expand("analysis/ranking{rank}/nc_count_prediction_vs_truth.pdf", rank=config["rankings"]),
+        expand("analysis/ranking{rank}/navigability_over_frequency_over_ruggedness_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
+        expand("analysis/ranking{rank}/ruggedness_evolvability_mut_grou_red_mut_plots_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"])
         
 
 """GP MAP GENERATION """
@@ -226,6 +228,42 @@ rule plot_productive_walk_success_over_frequency_werror:
         "--navig {input.navig} "
         "--sample_size {params.sample_size} "
         "--labels {params.ref_bp_rule} {wildcards.bp} "
+        "-o {output} "
+
+rule ruggedness_and_evolvability_analysis_plots:
+    input:
+        navigability=expand("bp_graph{bp}/ranking{{rank}}/navigability_per_ph_per_fl_pop{{pop_size}}_seed{{seed}}.csv", bp=config["base_pairing"]),
+        phenotype_distributions=expand("bp_graph{bp}/ranking{{rank}}/phenotype_distribution.txt", bp=config["base_pairing"]),
+        phenotype_ruggedness=expand("bp_graph{bp}/ranking{{rank}}/peak_sizes.txt", bp=config["base_pairing"]),
+        nc_graphs=expand("bp_graph{bp}/ranking{{rank}}/nc_graph.pickle", bp=config["base_pairing"])
+    output:
+        "analysis/ranking{rank}/ruggedness_evolvability_mut_grou_red_mut_plots_pop{pop_size}_seed{seed}.pdf"
+    params:
+        ruggedness_sample_size=config["ruggedness_sample_size"]
+    shell:
+        "plot_ruggedness_evolvability_mut_grou_red_mut.py "
+        "-p {input.phenotype_distributions} "
+        "-n {input.navigability} "
+        "-r {input.phenotype_ruggedness} "
+        "-c {input.nc_graphs} "
+        "-k {params.ruggedness_sample_size} "
+        "-o {output} "
+
+rule plot_freq_over_peaks_vs_navigability:
+    input:
+        navigability=expand("bp_graph{bp}/ranking{{rank}}/navigability_per_ph_per_fl_pop{{pop_size}}_seed{{seed}}.csv", bp=config["base_pairing"]),
+        phenotype_distribution=expand("bp_graph{bp}/ranking{{rank}}/phenotype_distribution.txt", bp=config["base_pairing"]),
+        phenotype_ruggedness=expand("bp_graph{bp}/ranking{{rank}}/peak_sizes.txt", bp=config["base_pairing"]),
+    output:
+        "analysis/ranking{rank}/navigability_over_frequency_over_ruggedness_pop{pop_size}_seed{seed}.pdf"
+    params:
+        ruggedness_sample_size=config["ruggedness_sample_size"]
+    shell:
+        "plot_navigability_over_freq_over_ruggedness.py "
+        "-n {input.navigability} "
+        "-f {input.phenotype_distribution} "
+        "-r {input.phenotype_ruggedness} "
+        "-k {params.ruggedness_sample_size} "
         "-o {output} "
 
 """ VIENNARNA COMPARISON """

@@ -1,0 +1,221 @@
+#!/usr/bin/env python
+
+import argparse
+import matplotlib.pyplot as plt
+import numpy as np
+import pickle
+import matplotlib.lines as mlines
+import matplotlib as mpl
+
+from rna_folding.parsing import load_phenotype_and_metric_from_file, read_ruggedness_per_ph_file
+from rna_folding.utils import count_bp
+
+
+if __name__ ==  "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--phenotype_distributions", help="Phenotype distribution files ", 
+                        required=True, nargs='+')
+    parser.add_argument("-n", "--navigability", help="Navigablity per ph per fl ", 
+                        required=True, nargs='+')
+    parser.add_argument("-r", "--ruggedness", help="Peak sizes files ", 
+                        required=True, nargs='+')
+    parser.add_argument("-c", "--nc_graphs", help="nc graph pickle files ", 
+                        required=True, nargs='+')
+    parser.add_argument("-k", "--rugg_sample_size", help="Ruggedness sample size ", 
+                        required=True, type=int)
+    parser.add_argument("-o", "--output", help="Output file name "
+                        "(should end in .pdf)", required=True)
+    
+    mut_graph_n = {2: 2,
+                3: 2,
+                4: 2,
+                5: 4,
+                6: 1,
+                7: 2,
+                8: 1,
+                9: 2,
+                10: 1,
+                11: 1}
+
+    mut_graph_s = {2: 1,
+                3: 2,
+                4: 3,
+                5: 1,
+                6: 6,
+                7: 3,
+                8: 8,
+                9: 4,
+                10: 10,
+                11: 12}
+
+    max_bp = {2: 2,
+                3: 2,
+                4: 2,
+                5: 2,
+                6: 2,
+                7: 2,
+                8: 3,
+                9: 3,
+                10: 4,
+                11: 4}
+
+    num_red_mut = {2: 2,
+                    3: 2,
+                    4: 6,
+                    5: 0,
+                    6: 0,
+                    7: 0,
+                    8: 0,
+                    9: 4,
+                    10: 2,
+                    11: 0}
+
+    args = parser.parse_args()
+    fig, axes = plt.subplots(nrows=2, ncols=10, figsize=(50, 10))
+
+    ### ruggedness vs ruggedness
+    # rug data laden
+    # local peak sizes
+    ph_bias_over_mut_handles = []
+    mut_groups = []
+    red_mut = []
+    evolvs = []
+    for i in range(2, 12):
+        phenotypes, ph_count = load_phenotype_and_metric_from_file(args.phenotype_distributions[i-2])
+        ph_to_count = dict(zip(phenotypes, ph_count))
+
+        peak_sizes = read_ruggedness_per_ph_file(args.ruggedness[i-2], n=args.rugg_sample_size)
+
+        rugged_av_per_ph = {}  # compute average local peak size = ruggedness
+        for ph in peak_sizes:
+            # sum peak sizes and take average over sums
+            peak_size_sums = [sum(ps) for ps in peak_sizes[ph]]
+            rugged_av_per_ph[ph] = np.mean(peak_size_sums)  # average size of local peaks
+    
+        # nc graph load
+        nc_graph = pickle.load(open(args.nc_graphs[i-2], "rb"))
+
+        nc_sizes = []
+        nc_phenos = []
+        evolvab = []
+        for node in nc_graph.nodes:
+            nc_sizes.append(nc_graph.nodes[node]["size"])  # size
+            nc_phenos.append(nc_graph.nodes[node]["phenotype"])  # size
+            evolvab.append(len(np.unique([nc_graph.nodes[neigh]["phenotype"] for neigh in nc_graph.neighbors(node)]))) # unique neighbors
+
+        nc_sizes_sort, evo_sort, nc_phenos_sort = zip(*[(nc, e, p) for nc, e, p in sorted(zip(nc_sizes, evolvab, nc_phenos), reverse=True)])
+
+        rug_ph = {}
+        for ph in rugged_av_per_ph:
+            rug_ph[ph] = 0
+            for node in nc_graph.nodes:
+                nc_size = nc_graph.nodes[node]["size"]  # size
+                evo = len(np.unique([nc_graph.nodes[neigh]["phenotype"] for neigh in nc_graph.neighbors(node)])) # unique neighbors
+                rug_ph[ph] += nc_size/(evo+1)
+
+        rugged_es = np.mean(list(rug_ph.values()))
+        rugged = np.mean([np.mean(rugged_av_per_ph[ph])+ph_to_count[ph] for ph in rugged_av_per_ph])
+
+        axes[0][0].scatter(rugged_es, rugged, label=f"{i-2}")
+        axes[0][0].set_xlabel("<Ruggedness> prediction from\n|NC| and evolvability", size=15)
+        axes[0][0].set_ylabel("<Ruggedness>", size=15)
+        axes[0][0].legend(title="GP map")
+
+        ### evolvability as func of neutral component size with horizontal line
+        # axes[1][i-2].scatter(nc_sizes_sort, evo_sort, color="black")
+        axes[1][i-2].axhline(y=len(np.unique(nc_phenos)), color="orange", label="No. Phenotypes", linewidth=3)
+        axes[1][i-2].set_ylim(0, 40)
+        axes[1][i-2].set_xlabel("|NC|", size=15)
+        axes[1][i-2].set_ylabel("Evolvability", size=15)
+        axes[1][i-2].legend()
+        axes[1][i-2].set_title(f"GP map {i}", size=15)
+
+        ### mut group vs number of phenotypes in the top X, X and X percent.
+        ph_counts_sort, ph_sort = zip(*sorted(zip(ph_count, phenotypes), reverse=True))
+        ph_counts_sort = ph_counts_sort[1:]
+        ph_sort = ph_sort[1:]
+
+        folded_sum = sum(ph_counts_sort)
+        top90_ph_count = 0
+        top75_ph_count = 0
+        top50_ph_count = 0
+
+        s = 0
+        for count in ph_counts_sort:
+            s += count
+            frac = s/folded_sum
+            if frac < .9:
+                top90_ph_count += 1
+            if frac < .75:
+                top75_ph_count += 1
+            if frac < .5:
+                top50_ph_count += 1
+
+        if i == 5:
+            shift = 0.1
+        elif i == 2:
+            shift = -0.1
+        elif i == 7:
+            shift = -0.1
+        elif i == 4:
+            shift = 0.1
+        else:
+            shift = 0
+        sc = axes[0][1].scatter([mut_graph_s[i]+shift], [top90_ph_count], marker="v")
+        col = sc.get_facecolors()[0].tolist()
+        axes[0][1].scatter([mut_graph_s[i]+shift], [top75_ph_count], color=col, marker="o")
+    
+        axes[0][1].scatter([mut_graph_s[i]+shift], [top50_ph_count], color=col, marker="s")
+        
+        vl = axes[0][1].vlines(x=mut_graph_s[i]+shift, ymin=top90_ph_count, ymax=top50_ph_count, color=col, label = f"{i}")
+        ph_bias_over_mut_handles.append(vl)
+
+        ### mut group vs evolvability
+        axes[0][2].scatter(mut_graph_s[i], np.mean(evo_sort), label=f"{i}")
+
+        ### evolv vs number of redundant mutations
+        axes[0][3].scatter(num_red_mut[i]/12, np.mean(evo_sort), label=f"{i}")
+
+        # collect data for plot
+        mut_groups.append(mut_graph_s[i])
+        red_mut.append(num_red_mut[i]/12)
+        evolvs.append(np.mean(evo_sort))
+
+    ### mut group vs redundant, evo colored and annotate
+    t = [e/37 for e in evolvs]
+    cm = plt.cm.get_cmap('plasma')
+    sc = axes[0][4].scatter(red_mut, mut_groups, c=evolvs, cmap=cm)
+    plt.colorbar(sc, label="Mean evolvability")
+
+    for i, e in enumerate(evolvs):
+        axes[0][4].annotate(f"{i+2}", (red_mut[i], mut_groups[i]+.2))
+
+
+    # plot stuff
+    top90mark = mlines.Line2D([], [], color="black", marker='v', linestyle='None',
+                        markersize=5, label='Top 90')
+    top75mark = mlines.Line2D([], [], color="black", marker='o', linestyle='None',
+                        markersize=5, label='Top 75')
+    top50mark = mlines.Line2D([], [], color="black", marker='s', linestyle='None',
+                        markersize=5, label='Top 50')
+    l1 = axes[0][1].legend(handles=[top90mark, top75mark, top50mark], frameon=False, bbox_to_anchor=(0.83, 1), loc="upper right")
+    axes[0][1].add_artist(l1)
+    l2 = axes[0][1].legend(handles=ph_bias_over_mut_handles, frameon=False, bbox_to_anchor=(1.01, 1), loc="upper right", title="G-P map")
+    axes[0][1].add_artist(l2)
+    axes[0][1].set_ylabel("No. phenotypes in the top X percenile", size=15)
+    axes[0][1].set_xlabel("Mutational group size", size=15)
+
+    axes[0][2].legend(title="GP map")
+    axes[0][2].set_ylabel("Mean evolvability of neutral components", size=15)
+    axes[0][2].set_xlabel("Mutational group size", size=15)
+
+    axes[0][3].legend(title="GP map")
+    axes[0][3].set_ylabel("Mean evolvability of neutral components", size=15)
+    axes[0][3].set_xlabel("Fraction of redundant mutations", size=15)
+
+    # plt.colorbar()
+    axes[0][4].set_ylabel("Mutational group size", size=15)
+    axes[0][4].set_xlabel("Fraction of redundant mutations", size=15)
+    
+    plt.tight_layout()
+    plt.savefig(args.output, format="pdf", dpi=30)

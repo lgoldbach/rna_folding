@@ -50,6 +50,17 @@ max_bp = {2: 2,
             10: 4,
             11: 4}
 
+# max_bp = {2: 4,
+#             3: 4,
+#             4: 4,
+#             5: 4,
+#             6: 4,
+#             7: 4,
+#             8: 4,
+#             9: 4,
+#             10: 4,
+#             11: 4}
+
 num_red_mut = {2: 2,
                 3: 2,
                 4: 6,
@@ -97,7 +108,7 @@ for i, l in enumerate(new_order):
     for nc_n_est in nc_n_est_all:
         nc_est = []
         frac = folded_gt/gt_total
-        nc_size = 1000000000
+        # nc_size = 1000000000
         for j in range(nc_n_est):
             stack = mut_graph_s[l] ** max_bp[l]  # 4: number of pairs
             loop = 4**(12 - (max_bp[l]*2)) # 6: loop size, 4: alphabet size
@@ -133,9 +144,16 @@ for i, l in enumerate(new_order):
         nc_est.append(nc_size)
         frac = frac - (nc_est[-1] / gt_total)
 
+    print(i)
+    for p in range(2, 5):
+        frac = folded_gt/gt_total
+        stack = mut_graph_s[l] ** p  # 4: number of pairs
+        loop = 4**(12 - (p*2)) # 6: loop size, 4: alphabet size
+        nc_size = stack * loop * frac
+        print(p, nc_size)
 
     largest_nc_truth = max(list(nx.get_node_attributes(nc_graph, name="size").values()))
-
+    print(largest_nc_truth)
     x2.append(np.log10(largest_nc_truth))
     y2.append(np.log10(nc_est[0]))
     ax1.scatter(np.log10(largest_nc_truth), np.log10(nc_est[0]), label=f"{i}", color=col)
