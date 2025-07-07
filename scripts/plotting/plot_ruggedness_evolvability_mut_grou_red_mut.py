@@ -80,11 +80,14 @@ if __name__ ==  "__main__":
     mut_groups = []
     red_mut = []
     evolvs = []
-    for i in range(2, 12):
-        phenotypes, ph_count = load_phenotype_and_metric_from_file(args.phenotype_distributions[i-2])
+    new_order = [2, 3, 5, 7, 6, 4, 9, 8, 10, 11]
+    new_order_idx = [i - 2 for i in new_order]
+    labels = ["1", "2", "3", "natural", "5", "6", "7", "8", "9", "10"]
+    for i, (idx, label) in enumerate(zip(new_order_idx, labels)):
+        phenotypes, ph_count = load_phenotype_and_metric_from_file(args.phenotype_distributions[idx])
         ph_to_count = dict(zip(phenotypes, ph_count))
 
-        peak_sizes = read_ruggedness_per_ph_file(args.ruggedness[i-2], n=args.rugg_sample_size)
+        peak_sizes = read_ruggedness_per_ph_file(args.ruggedness[idx], n=args.rugg_sample_size)
 
         rugged_av_per_ph = {}  # compute average local peak size = ruggedness
         for ph in peak_sizes:
@@ -93,7 +96,7 @@ if __name__ ==  "__main__":
             rugged_av_per_ph[ph] = np.mean(peak_size_sums)  # average size of local peaks
     
         # nc graph load
-        nc_graph = pickle.load(open(args.nc_graphs[i-2], "rb"))
+        nc_graph = pickle.load(open(args.nc_graphs[idx], "rb"))
 
         nc_sizes = []
         nc_phenos = []
@@ -116,19 +119,19 @@ if __name__ ==  "__main__":
         rugged_es = np.mean(list(rug_ph.values()))
         rugged = np.mean([np.mean(rugged_av_per_ph[ph])+ph_to_count[ph] for ph in rugged_av_per_ph])
 
-        axes[0][0].scatter(rugged_es, rugged, label=f"{i-2}")
-        axes[0][0].set_xlabel("<Ruggedness> prediction from\n|NC| and evolvability", size=15)
+        axes[0][0].scatter(rugged_es, rugged, label=label)
+        axes[0][0].set_xlabel("<Ruggedness> prediction from\nNeut. comp. size and evolvability", size=15)
         axes[0][0].set_ylabel("<Ruggedness>", size=15)
         axes[0][0].legend(title="GP map")
 
         ### evolvability as func of neutral component size with horizontal line
-        # axes[1][i-2].scatter(nc_sizes_sort, evo_sort, color="black")
-        axes[1][i-2].axhline(y=len(np.unique(nc_phenos)), color="orange", label="No. Phenotypes", linewidth=3)
-        axes[1][i-2].set_ylim(0, 40)
-        axes[1][i-2].set_xlabel("|NC|", size=15)
-        axes[1][i-2].set_ylabel("Evolvability", size=15)
-        axes[1][i-2].legend()
-        axes[1][i-2].set_title(f"GP map {i}", size=15)
+        axes[1][i].scatter(nc_sizes_sort, evo_sort, color="black")
+        axes[1][i].axhline(y=len(np.unique(nc_phenos)), color="orange", label="No. Phenotypes", linewidth=3)
+        axes[1][i].set_ylim(0, 40)
+        axes[1][i].set_xlabel("Neutral component size", size=15)
+        axes[1][i].set_ylabel("Evolvability", size=15)
+        axes[1][i].legend()
+        axes[1][i].set_title(f"Alphabet: " + label, size=15)
 
         ### mut group vs number of phenotypes in the top X, X and X percent.
         ph_counts_sort, ph_sort = zip(*sorted(zip(ph_count, phenotypes), reverse=True))
@@ -161,34 +164,41 @@ if __name__ ==  "__main__":
             shift = 0.1
         else:
             shift = 0
-        sc = axes[0][1].scatter([mut_graph_s[i]+shift], [top90_ph_count], marker="v")
+        i_ = new_order[i]
+        sc = axes[0][1].scatter([mut_graph_s[i_]+shift], [top90_ph_count], marker="v")
         col = sc.get_facecolors()[0].tolist()
-        axes[0][1].scatter([mut_graph_s[i]+shift], [top75_ph_count], color=col, marker="o")
+        axes[0][1].scatter([mut_graph_s[i_]+shift], [top75_ph_count], color=col, marker="o")
     
-        axes[0][1].scatter([mut_graph_s[i]+shift], [top50_ph_count], color=col, marker="s")
+        axes[0][1].scatter([mut_graph_s[i_]+shift], [top50_ph_count], color=col, marker="s")
         
-        vl = axes[0][1].vlines(x=mut_graph_s[i]+shift, ymin=top90_ph_count, ymax=top50_ph_count, color=col, label = f"{i}")
+        if label=="natural":
+            vl = axes[0][1].vlines(x=mut_graph_s[i_]+shift, ymin=top90_ph_count, ymax=top50_ph_count, color=col, label = "nat.")
+        else:
+            vl = axes[0][1].vlines(x=mut_graph_s[i_]+shift, ymin=top90_ph_count, ymax=top50_ph_count, color=col, label = label)
         ph_bias_over_mut_handles.append(vl)
 
         ### mut group vs evolvability
-        axes[0][2].scatter(mut_graph_s[i], np.mean(evo_sort), label=f"{i}")
+        axes[0][2].scatter(mut_graph_s[i_], np.mean(evo_sort), label=label)
 
         ### evolv vs number of redundant mutations
-        axes[0][3].scatter(num_red_mut[i]/12, np.mean(evo_sort), label=f"{i}")
+        axes[0][3].scatter(num_red_mut[i_]/12, np.mean(evo_sort), label=label)
 
         # collect data for plot
-        mut_groups.append(mut_graph_s[i])
-        red_mut.append(num_red_mut[i]/12)
+        mut_groups.append(mut_graph_s[i_])
+        red_mut.append(num_red_mut[i_]/12)
         evolvs.append(np.mean(evo_sort))
 
     ### mut group vs redundant, evo colored and annotate
     t = [e/37 for e in evolvs]
     cm = plt.cm.get_cmap('plasma')
-    sc = axes[0][4].scatter(red_mut, mut_groups, c=evolvs, cmap=cm)
+    axes[0][4].scatter(red_mut, mut_groups, c=evolvs, cmap=cm)
+    sc = axes[0][5].scatter(red_mut, mut_groups, c=evolvs, cmap=cm)
     plt.colorbar(sc, label="Mean evolvability")
 
-    for i, e in enumerate(evolvs):
-        axes[0][4].annotate(f"{i+2}", (red_mut[i], mut_groups[i]+.2))
+    for i, idx in enumerate(new_order):
+        print(i, idx)
+        l = labels[i]
+        axes[0][4].annotate(l, (red_mut[i], mut_groups[i]+.2))
 
 
     # plot stuff
@@ -200,16 +210,16 @@ if __name__ ==  "__main__":
                         markersize=5, label='Top 50')
     l1 = axes[0][1].legend(handles=[top90mark, top75mark, top50mark], frameon=False, bbox_to_anchor=(0.83, 1), loc="upper right")
     axes[0][1].add_artist(l1)
-    l2 = axes[0][1].legend(handles=ph_bias_over_mut_handles, frameon=False, bbox_to_anchor=(1.01, 1), loc="upper right", title="G-P map")
+    l2 = axes[0][1].legend(handles=ph_bias_over_mut_handles, frameon=False, bbox_to_anchor=(1.02, 1), loc="upper right", title="Alphabet")
     axes[0][1].add_artist(l2)
     axes[0][1].set_ylabel("No. phenotypes in the top X percenile", size=15)
     axes[0][1].set_xlabel("Mutational group size", size=15)
 
-    axes[0][2].legend(title="GP map")
+    axes[0][2].legend(title="Alphabet")
     axes[0][2].set_ylabel("Mean evolvability of neutral components", size=15)
     axes[0][2].set_xlabel("Mutational group size", size=15)
 
-    axes[0][3].legend(title="GP map")
+    axes[0][3].legend(title="Alphabet")
     axes[0][3].set_ylabel("Mean evolvability of neutral components", size=15)
     axes[0][3].set_xlabel("Fraction of redundant mutations", size=15)
 

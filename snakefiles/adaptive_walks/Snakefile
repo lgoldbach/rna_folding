@@ -15,6 +15,78 @@ rule build_random_fitness_landscape:
         "--lethal_ph {params.lethal_ph} "
         "-o {output} "
 
+rule run_adaptive_walks_productive_trace_paths_update_T_sample_ph:
+    input:
+        fl="fl.txt",
+        gp_map="gp_map.pickle",
+        phenotype_sample="phenotypes_sample.txt"
+    output:
+        walk_lengths="walk_lengths_seed{seed}.csv",
+        paths="paths_seed{seed}.csv"
+    params:        
+        max_steps=None,  # int
+        sample_size_walks=None,  # int
+        avoid_phenotype=None,  # immutable
+    shell:
+        "adaptive_walks_productive_trace_path_update_T_sample_ph.py "
+        "-i {input.gp_map} "
+        "-f {input.fl} "
+        "--phenotype_sample {input.phenotype_sample} "
+        "-l {output.walk_lengths} "
+        "-p {output.paths} "
+        "-n {wildcards.pop_size} "
+        "-m {params.max_steps} "
+        "-a {params.avoid_phenotype} "
+        "-s {params.sample_size_walks} "
+        "-r {wildcards.seed} "
+
+rule run_adaptive_walks_productive_trace_paths_no_new_ph_target:
+    input:
+        fl="fl.txt",
+        gp_map="gp_map.pickle",
+    output:
+        walk_lengths="walk_lengths_seed{seed}.csv",
+        paths="paths_seed{seed}.csv"
+    params:        
+        max_steps=None,  # int
+        sample_size_walks=None,  # int
+        avoid_phenotype=None,  # immutable
+    shell:
+        "adaptive_walks_productive_trace_path_no_new_ph_target.py "
+        "-i {input.gp_map} "
+        "-f {input.fl} "
+        "-l {output.walk_lengths} "
+        "-p {output.paths} "
+        "-n {wildcards.pop_size} "
+        "-m {params.max_steps} "
+        "-a {params.avoid_phenotype} "
+        "-s {params.sample_size_walks} "
+        "-r {wildcards.seed} "
+
+rule run_adaptive_walks_productive_trace_paths_update_T:
+    input:
+        fl="fl.txt",
+        gp_map="gp_map.pickle"
+    output:
+        walk_lengths="walk_lengths_seed{seed}.csv",
+        paths="paths_seed{seed}.csv"
+    params:        
+        max_steps=None,  # int
+        sample_size_walks=None,  # int
+        avoid_phenotype=None,  # immutable
+        target_phenotype_sample_size=None  # int
+    shell:
+        "adaptive_walks_productive_trace_path_update_T.py "
+        "-i {input.gp_map} "
+        "-f {input.fl} "
+        "-l {output.walk_lengths} "
+        "-p {output.paths} "
+        "-n {wildcards.pop_size} "
+        "-m {params.max_steps} "
+        "-a {params.avoid_phenotype} "
+        "-s {params.sample_size_walks} "
+        "-r {wildcards.seed} "
+
 rule run_adaptive_walks_productive_trace_paths:
     input:
         fl="fl.txt",
@@ -23,9 +95,9 @@ rule run_adaptive_walks_productive_trace_paths:
         walk_lengths="walk_lengths_seed{seed}.csv",
         paths="paths_seed{seed}.csv"
     params:        
-        max_steps=config["adaptive_walks"]["max_steps"],
-        sample_size_walks=config["adaptive_walks"]["sample_size_walks"],
-        avoid_phenotype=config["unviable"]
+        max_steps=None,  # int
+        sample_size_walks=None,  # int
+        avoid_phenotype=None  # immutable
     shell:
         "adaptive_walks_productive_trace_path.py "
         "-i {input.gp_map} "
@@ -68,7 +140,7 @@ rule compute_uphill_navigability_per_ph_per_fl:
         "-s {params.sample_size} "
         "-o {output} "
 
-rule compute_ruggedness:
+rule compute_ruggedness_whole_map:
     input:
         nc_graph="nc_graph.pickle",
     output:
@@ -79,8 +151,48 @@ rule compute_ruggedness:
         lethal_ph=config["unviable"],
         sample_size=1
     shell:
-        "compute_ruggedness.py "
+        "compute_ruggedness_whole_map.py "
         "--nc_graph {input.nc_graph} "
+        "--low_f {params.min_f} "
+        "--upp_f {params.max_f} "
+        "--lethal_ph {params.lethal_ph} "
+        "--sample_size {params.sample_size} "
+        "-o {output} "
+
+rule compute_ruggedness_per_ph:
+    input:
+        nc_graph="nc_graph.pickle",
+    output:
+        "peak_sizes.txt"
+    params:
+        min_f=config["random_fitness_landscape_params"]["min_f"],
+        max_f=config["random_fitness_landscape_params"]["max_f"],
+        lethal_ph=config["unviable"],
+        sample_size=1
+    shell:
+        "compute_ruggedness_per_ph.py "
+        "--nc_graph {input.nc_graph} "
+        "--low_f {params.min_f} "
+        "--upp_f {params.max_f} "
+        "--lethal_ph {params.lethal_ph} "
+        "--sample_size {params.sample_size} "
+        "-o {output} "
+
+rule compute_ruggedness_per_ph_sampled:
+    input:
+        nc_graph="nc_graph.pickle",
+        phenotype_sample="phenotypes_sample.txt"
+    output:
+        "peak_sizes.txt"
+    params:
+        min_f=config["random_fitness_landscape_params"]["min_f"],
+        max_f=config["random_fitness_landscape_params"]["max_f"],
+        lethal_ph=config["unviable"],
+        sample_size=1
+    shell:
+        "compute_ruggedness_per_ph_sampled.py "
+        "--nc_graph {input.nc_graph} "
+        "--phenotype_sample {input.phenotype_sample} "
         "--low_f {params.min_f} "
         "--upp_f {params.max_f} "
         "--lethal_ph {params.lethal_ph} "

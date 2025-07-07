@@ -37,7 +37,10 @@ unviable: "............"
 ref_bp_rule: 7   # base-pairing rule to compare detailed statistics to
 
 rankings:
-  - 1  # actually not random but the biophys ranking
+  - 1  # not random but the biophys ranking
+  # - 2  # random ranking 
+  # - 3  # random ranking
+  # - 4  # random ranking
   
 ref_dir: "../viennaRNA"  # the directory containing reference data 
 
@@ -60,7 +63,7 @@ adaptive_walks:
     # - 1000
     - 1000000
   max_steps: 1000
-  sample_size_walks: 10000
+  sample_size_walks: 1000
 
 adaptive_walks_vienna:
   population_sizes: 

@@ -1,6 +1,8 @@
 import numpy as np
 from rna_folding.gp_map import GenotypePhenotypeGraph
 from typing import Callable
+import copy
+from rna_folding.utils import remove_nonadaptive_edges
 
 
 def kimura_fixation_from_fitness(f1: float, f2: float, N: int):
@@ -136,7 +138,7 @@ def productive_adaptive_walk_w_T(gpmap: GenotypePhenotypeGraph,
         neighbors = gpmap._neighbors(path[-1])
         for neigh in neighbors:
             probs.append(T[(gpmap.map(path[-1]), gpmap.map(neigh))])
-            
+        
         if sum(probs) == 0:  # no way to go
             break
         normed_probs = np.array(probs) / sum(probs)
@@ -233,6 +235,35 @@ def pairwise_transition_prob_dict(f_map: dict, func: Callable) -> dict:
     for p in pair_idx:
         T[(p[0], p[1])] = func(f_map[p[0]], f_map[p[1]])
     return T
+
+def update_T(T: dict, ph, phenotypes, func: Callable, f_map: dict):
+    """Update the entries for a single phenotype in an existing transition 
+    matrix
+
+    Args:
+        T (dict):               Transition matrix 
+        ph (immutable):         Phenotype dictionary key.   
+        phenotypes (iterable):  List of all phenotype for which to compute new
+                                transition probability to or from ph     
+        func (Callable):        A transition probability function, e.g. 
+                                fixation probability function. The function has
+                                to take in two values, fitness 1 and fitness 2.   
+        f_map (dict):           dictionary mapping genotype or phenotype to 
+                                fitness
+
+    Returns:
+        dict: Transiton matrix T with changed entries for ph
+
+    """
+    pair_idx_for = ((ph, j) for j in phenotypes)
+    pair_idx_back = ((i, ph) for i in phenotypes)
+    for p in pair_idx_for:
+        T[(p[0], p[1])] = func(f_map[p[0]], f_map[p[1]])
+    for p in pair_idx_back:
+        T[(p[0], p[1])] = func(f_map[p[0]], f_map[p[1]])
+    return T
+
+
 
 def pairwise_transition_prob(fitnesses: np.array, func: Callable, loop=False) -> np.array:
     """Generate a quick look up array with pairwise transition probabilities
@@ -335,3 +366,26 @@ def genotype_path_to_fitness_path(paths: list, gp_map, ph_to_f, ignore_neutral=T
 
         fit_paths.append(fit_path)
     return fit_paths
+
+def nc_graph_to_directed_graph(nc_graph, ph_to_f):
+    """Take an nc graph and turn it into a directed graph where two nodes
+    are connected if they are neighboring NCs and the targed NC has higher
+    fitness than the source.
+
+    Args:
+        nc_graph:   A networkx graph that has all neutral components and their
+                    neighborhood relationships and a "phenotype" attribute for
+                    each NC
+
+        ph_to_f:    A phenotype to fitness mapping
+    
+    Return:
+        nx.Graph
+
+    """
+    G = nc_graph.to_directed(as_view=False)
+    for node in G.nodes:
+        G.nodes[node]["fitness"] = ph_to_f[G.nodes[node]["phenotype"]]
+
+    G = remove_nonadaptive_edges(G)
+    return G

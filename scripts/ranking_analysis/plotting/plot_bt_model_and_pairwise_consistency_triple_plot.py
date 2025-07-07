@@ -136,16 +136,17 @@ if __name__ ==  "__main__":
 
     phenotypes_, scores = load_phenotype_and_metric_from_file(args.bt_scores)
 
-    if args.ignore:
-        # remove the score for the ignored phenotype
-        scores = [sc for i, sc in enumerate(scores) if i != ignore_idx]
+    phenotypes_ = phenotypes_[1:]
+    scores = scores[1:]
 
-    scores = list(scores)
-    if args.ignore:
-        for i, (p, s) in enumerate(zip(phenotypes, scores)):
-            if p == args.ignore:
-                p = phenotypes.pop(i)
-                scores.pop(i)
+    # scores = list(scores)
+    # if args.ignore:
+    #     for i, (p, s) in enumerate(zip(phenotypes, scores)):
+    #         print(p, s)
+    #         if p == args.ignore:
+    #             p = phenotypes.pop(i)
+    #             scores.pop(i)
+    #             print("I")
 
     ma =  max(scores)
     scores = [s/ma for s in scores]

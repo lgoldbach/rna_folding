@@ -84,7 +84,7 @@ y2 = []
 # predict 
 new_order = [2, 3, 5, 7, 6, 4, 9, 8, 10, 11]
 new_order_idx = [i - 2 for i in new_order]
-for i, l in enumerate(new_order):
+for i, l in enumerate(new_order, start=1):
     nc_graph_f = args.nc_graphs[l-2]
     nc_graph = pickle.load(open(nc_graph_f, "rb"))
     ph_all = list(nx.get_node_attributes(nc_graph, name="phenotype").values())
@@ -121,7 +121,11 @@ for i, l in enumerate(new_order):
         nc_ests.append(nc_est)
     nc_n_std = np.std([len(nc_est) for nc_est in nc_ests])
     nc_n_mean = np.mean([len(nc_est) for nc_est in nc_ests])
-    sc = ax2.scatter(nc_n_truth, nc_n_mean, label=f"{i}")
+    if i == 4:
+        label = "Natural"
+    else:
+        label = f"{i}"
+    sc = ax2.scatter(nc_n_truth, nc_n_mean, label=label)
     col = sc.get_facecolors()[0].tolist()  # get color
     # ax.scatter(nc_n_truth, nc_n_est_all[1], color=col)
     # ax.scatter(nc_n_truth, nc_n_est_all[2], color=col)
@@ -156,7 +160,7 @@ for i, l in enumerate(new_order):
     print(largest_nc_truth)
     x2.append(np.log10(largest_nc_truth))
     y2.append(np.log10(nc_est[0]))
-    ax1.scatter(np.log10(largest_nc_truth), np.log10(nc_est[0]), label=f"{i}", color=col)
+    ax1.scatter(np.log10(largest_nc_truth), np.log10(nc_est[0]), label=label, color=col)
     ax1.set_aspect("equal")
     ax1.set_xlim(3, 6)
     ax1.set_ylim(3, 6)
@@ -165,16 +169,16 @@ for i, l in enumerate(new_order):
 r, p = pearsonr(x, y)
 p_str = "%.3g" % p
 ax2.text(30, 950, f'r = {np.round(r, 2)}\np = {p_str}')
-ax2.set_xlabel("Number of neutral components")
-ax2.set_ylabel("Predicted number of neutral components")
+ax2.set_xlabel("Number of neutral components (log10)")
+ax2.set_ylabel("Predicted number of neutral components (log10)")
 # ax2.legend(loc="lower right", prop={'size': 8}, frameon=False, title="Base-pairing")
 
 r, p = pearsonr(x2, y2)
 p_str = "%.3g" % p
 ax1.text(3.08, 5.7, f'r = {np.round(r, 2)}\np = {p_str}')
-ax1.set_xlabel("Size of largest neutral component")
-ax1.set_ylabel("Predicted size of largest neutral component")
-ax1.legend(loc="lower right", prop={'size': 8}, frameon=False, title="Base-pairing")
+ax1.set_xlabel("Size of largest neutral component (log10)")
+ax1.set_ylabel("Predicted size of largest neutral component (log10)")
+ax1.legend(loc="lower right", prop={'size': 8}, frameon=False, title="RNA alphabet")
 
 plt.tight_layout()
 plt.savefig(args.output, format="pdf", dpi=30)

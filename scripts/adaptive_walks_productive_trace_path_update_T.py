@@ -7,7 +7,7 @@ import numpy as np
 import datetime
 import time
 
-from rna_folding.adaptive_walks import kimura_fixation_from_fitness, pairwise_transition_prob_dict, kimura_fixation, productive_adaptive_walk_w_T
+from rna_folding.adaptive_walks import kimura_fixation_from_fitness, pairwise_transition_prob_dict, kimura_fixation, productive_adaptive_walk_w_T, update_T
 
 
 if __name__ ==  "__main__":
@@ -50,24 +50,24 @@ if __name__ ==  "__main__":
                 fitness = float(data[1])
                 ph_to_fitness_original[phenotype] = fitness
     
+    fix_prob = lambda x, y: kimura_fixation_from_fitness(x, y, N=args.population_size)
+    T_original = pairwise_transition_prob_dict(f_map=ph_to_fitness_original, func=fix_prob)
+
     # every phenotype is the target at least once
+    target_phenotypes_sample = np.random.choice(phenotypes, size=args.target_ph_sample)
     for target_ph in phenotypes:
-        print(target_ph, flush=True)
         # read in fitness landscape
         ph_to_fitness = ph_to_fitness_original.copy()
         ph_to_fitness[target_ph] = 1  # set fitness of target to 1
 
-        print("A", flush=True)
         # fixartion probability
-        fix_prob = lambda x, y: kimura_fixation_from_fitness(x, y, N=args.population_size)
-        print("B", flush=True)
 
         a = datetime.datetime.now()
         # precompute transition probabilities between any pairs of phenotypes
-        T = pairwise_transition_prob_dict(f_map=ph_to_fitness, func=fix_prob)
+        T = T_original.copy()
+        T = update_T(T, target_ph, phenotypes, fix_prob, ph_to_fitness)
         b = datetime.datetime.now()
         c = b-a
-        print(c.seconds/60, c.seconds, flush=True)
 
         all_nodes = set(G.genotypes)
         # get list of target nodes. Do not start walks from there (would be redundant)
@@ -83,7 +83,6 @@ if __name__ ==  "__main__":
         
         start_gt = rng.choice(potential_starting_nodes, size=min(args.sample_size_walks, len(potential_starting_nodes)), replace=False)
 
-        print(start_gt, flush=True)
         adaptive_walk_lengths = []  # store adaptive walk lenghts for each phenotype
         paths = []  # store whole paths of genotypes 
 

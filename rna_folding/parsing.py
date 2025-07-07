@@ -233,7 +233,8 @@ def genotype_file_to_numpy(filepath):
 
 
 def read_ruggedness_per_ph_file(filename, n):
-    """Read file that contains peak sizes for <n> fitness landscape
+    """Read file that contains peak sizes for <n> fitness landscape for each
+    phenotype
     instances for each ph. Assumes following file structure:
     <ph1>
     <peak 1 size (int)> <peak 2 size (int)> <peak 3 size (int)> ...  # fl 1
@@ -260,6 +261,28 @@ def read_ruggedness_per_ph_file(filename, n):
                 peaks_sizes = lines[j].strip().split(" ")
                 r[ph].append([int(k) for k in peaks_sizes])  # append peak sizes as int
     return r
+
+def read_ruggedness_file(filename):
+    """Read file that contains peak sizes for <n> fitness landscape
+    instances for each ph. Assumes following file structure:
+    <peak 1 size (int)> <peak 2 size (int)> <peak 3 size (int)> ...  # fl 1
+    <peak 1 size (int)> <peak 2 size (int)> <peak 3 size (int)> ...  # fl 2
+    ...
+
+    Args:
+        filename (str): File containing peak sizes
+
+    Returns:
+        r (dict):   Dictionary that maps ph to the peak sizes of each of the
+                    fitness landscapes
+
+    """
+    peak_sizes = []
+    with open(filename, "r") as f:
+        for line in f:
+            peaks_sizes_line = line.strip().split(" ")
+            peak_sizes.append([int(k) for k in peaks_sizes_line])  # append peak sizes as int
+    return peak_sizes
 
 def read_adaptive_walks_w_ph_headers_to_dict(filepath, phenotypes):
     """Read paths from a file that contains phenotyp header in the following 
@@ -319,6 +342,6 @@ def read_navigability_per_ph_per_fl_file(file: str) -> dict:
         for line_ in file:
             line = line_.strip().split(" ")
             ph = line[0]
-            navig[ph] = [float(n)*100 for n in line[1:]]
+            navig[ph] = [float(n) for n in line[1:]]
     
     return navig

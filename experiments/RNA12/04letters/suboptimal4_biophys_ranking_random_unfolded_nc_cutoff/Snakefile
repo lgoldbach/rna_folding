@@ -32,15 +32,16 @@ module adaptive_walks_plotting:
 
 rule all:
     input:
-        expand("analysis/ranking{rank}/navigability_boxplot_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
-        expand("analysis/ranking{rank}/phenotype_bias.pdf", rank=config["rankings"]),
-        expand("analysis/ranking{rank}/neutral_component_sizes.pdf", rank=config["rankings"]),
-        expand("bp_graph{bp}/ranking{rank}/peak_sizes.txt", bp=config["base_pairing"], rank=config["rankings"]),
+        # expand("analysis/ranking{rank}/navigability_boxplot_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
+        # expand("analysis/ranking{rank}/phenotype_bias.pdf", rank=config["rankings"]),
+        # expand("analysis/ranking{rank}/neutral_component_sizes.pdf", rank=config["rankings"]),
+        # expand("bp_graph{bp}/ranking{rank}/greedy_walk_lengths_seed{seed}.csv", rank=config["rankings"], seed=config["random_seed"], bp=config["base_pairing"])
+        # expand("bp_graph{bp}/ranking{rank}/peak_sizes.txt", bp=config["base_pairing"], rank=config["rankings"]),
         # expand("bp_graph{ref_bp}/ranking{rank}/analysis/vienna_comparison_triple_plot_pop{pop_size}_seed{seed}.pdf", ref_bp=config["ref_bp_rule"], pop_size=config["adaptive_walks_vienna"]["population_sizes"], seed=config["random_seed"], rank=config["rankings"]),
-        expand("bp_graph{bp}/ranking{rank}/analysis/navigability_over_freq_werror_{pop_size}_seed{seed}.pdf", bp=config["base_pairing"], rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
-        expand("analysis/ranking{rank}/nc_count_prediction_vs_truth.pdf", rank=config["rankings"]),
+        # expand("bp_graph{bp}/ranking{rank}/analysis/navigability_over_freq_werror_{pop_size}_seed{seed}.pdf", bp=config["base_pairing"], rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
+        # expand("analysis/ranking{rank}/nc_count_prediction_vs_truth.pdf", rank=config["rankings"]),
         expand("analysis/ranking{rank}/navigability_over_frequency_over_ruggedness_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
-        expand("analysis/ranking{rank}/ruggedness_evolvability_mut_grou_red_mut_plots_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"])
+        # expand("analysis/ranking{rank}/ruggedness_evolvability_mut_grou_red_mut_plots_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"])
         
 
 """GP MAP GENERATION """
@@ -49,7 +50,7 @@ use rule generate_genotype_space from gp_map_generation with:
     output:
         "genotypes.txt"
     params:
-        alphabet="AUGC",
+        alphabet=config["alphabet"],
         seq_len=config["sequence_lengths"]
 
 use rule pick_random_genotypes from gp_map_generation
@@ -85,6 +86,9 @@ use rule build_gpmap_python_object from gp_map_generation with:
         gp_map="bp_graph{bp}/ranking{rank}/gp_map.txt"
     output:
         gp_map="bp_graph{bp}/ranking{rank}/gp_map.pickle"
+    params:
+        alphabet=config["alphabet"],
+        ignore_phenotype=config["unviable"]
 
 
 
@@ -145,6 +149,7 @@ rule plot_neutral_components_prediction_vs_ground_truth:
 use rule build_random_fitness_landscape from adaptive_walks with:
     input:
         "phenotype_ranking{rank}.txt"
+    priority: -10
     output:
         "bp_graph{bp}/ranking{rank}/fitness_landscapes/fl_{fl_id}/fl.txt"
 
@@ -158,8 +163,6 @@ use rule compute_ruggedness from adaptive_walks with:
         max_f=config["random_fitness_landscape_params"]["max_f"],
         lethal_ph=config["unviable"],
         sample_size=config["ruggedness_sample_size"]
-
-
 
 """ ADAPTIVE WALKS """
 
@@ -188,6 +191,23 @@ use rule categorize_paths from adaptive_walks with:
     output:
         "bp_graph{bp}/ranking{rank}/path_categories_pop{pop_size}_seed{seed}.pickle"
 
+
+rule run_adaptive_walks_greedy:
+    input:
+        "bp_graph{bp}/ranking{rank}/gp_map.pickle"
+    output:
+        "bp_graph{bp}/ranking{rank}/greedy_walk_lengths_seed{seed}.csv",
+    params:
+        max_steps=config["adaptive_walks"]["max_steps"],
+        sample_size_walks=config["adaptive_walks"]["sample_size_walks"],
+        sample_size_landscapes=config["random_fitness_landscape_params"]["N"],
+    shell:
+        "adaptive_walks_greedy_no_neutral.py "
+        "-i {input} "
+        "-o {output} "
+        "-m {params.max_steps} "
+        "-l {params.sample_size_landscapes} "
+        "-s {params.sample_size_walks} "
 
 """ ADAPTIVE WALKS - PLOTS """
 

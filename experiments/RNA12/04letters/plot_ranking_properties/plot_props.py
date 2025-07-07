@@ -12,7 +12,7 @@ with open("phenotype_props.csv", "r") as f:
     bul = []
     bp = []
     unp = []
-    labels = ["Dangling ends", "Bulges", "Unpaired sites", "Dangling ends + Bulges + Unpaired sites"]
+    labels = ["Dangling ends", "Bulges", "Unpaired sites", "Bulges + Unpaired sites"]
     for line_ in f:
         line = line_.strip().split(" ")
         ph.append(line[0])

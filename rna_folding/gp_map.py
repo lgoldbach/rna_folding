@@ -285,7 +285,6 @@ class GenotypePhenotypeGraph(nx.Graph):
                                 this method is
         """
         visited[genotype] = True
-    
         for neighbor in self._neighbors(genotype):
             neigh_ph = self._map[neighbor]
              # we only care about the unvisited neighbors

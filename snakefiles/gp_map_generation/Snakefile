@@ -4,7 +4,7 @@ rule generate_genotype_space:
         "genotypes.txt"
     params:
         alphabet="AUGC",
-        seq_len=config["sequence_lengths"]
+        seq_len=1
     shell:
         "build_genotype_space.py " 
         "-a {params.alphabet} "
@@ -21,7 +21,7 @@ rule nussinov_gp_map:
         min_loop_size=3,
         suboptimal=3,
         structures_max=10000,
-        alphabet="AUGC"
+        alphabet=None
     shell:
         "nussinov_gp_mapping.py "
         "-i {input} "
@@ -128,7 +128,7 @@ rule build_gpmap_python_object:
     output:
         "gp_map.pickle"
     params:
-        alphabet="AUGC",
+        alphabet=config["alphabet"],
         ignore_phenotype=config["unviable"]  # ignore unviable phenotype
     shell:
         "build_gpmap_pickle.py "

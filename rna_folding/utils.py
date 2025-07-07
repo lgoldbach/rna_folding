@@ -44,9 +44,13 @@ def remove_nonadaptive_edges(gp_graph: nx.graph) -> nx.graph:
                                 edges
 
     """
+    edges_to_remove = []
     for (u, v) in gp_graph.edges:
         if gp_graph.nodes[u]["fitness"] > gp_graph.nodes[v]["fitness"]:
-            gp_graph.remove_edge(u, v)
+            edges_to_remove.append((u, v))
+            
+    for edge in edges_to_remove:
+        gp_graph.remove_edge(edge[0], edge[1])
 
     return gp_graph
 

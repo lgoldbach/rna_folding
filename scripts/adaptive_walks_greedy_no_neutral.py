@@ -12,8 +12,8 @@ from rna_folding.adaptive_walks import greedy_adaptive_walk_no_neutral, kimura_f
 
 if __name__ ==  "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input", help="Neutral component graph pickle "
-                        "file", required=True)
+    parser.add_argument("-i", "--input", help="G-p map "
+                        "file (pickle)", required=True)
     parser.add_argument("-l", "--sample_size_landscapes", help="How many random fitness  "
                         "landscapes to sample", type=int, required=False)
     parser.add_argument("-s", "--sample_size_walks", help="How many random walks to sample ",

@@ -102,7 +102,7 @@ if __name__ ==  "__main__":
             y_err_2d[1].append(p_high)
             
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(5, 5))
 
     # ax.scatter(np.log10(x_ref), y_ref, label="Ref", marker="x")
     # ax.scatter(np.log10(x_query), y_query, label="Query", marker="x")
@@ -112,8 +112,8 @@ if __name__ ==  "__main__":
     
     ref_l = new_order.index(args.labels[0])+1
     query_l = new_order.index(args.labels[1])+1
-    ax.errorbar(np.log10(x_ref), y_ref, yerr=y_err_2d_ref, label=f"Base-pairing {ref_l}", linestyle='', marker='s', elinewidth=0.2, color="black", alpha=0.8, markeredgewidth=0)
-    ax.errorbar(np.log10(x_query), y_query, yerr=y_err_2d, label=f"Base-pairing {query_l}", linestyle='', marker='s', elinewidth=0.2, color="orange", alpha=0.8, markeredgewidth=0)
+    ax.errorbar(np.log10(x_ref), y_ref, yerr=y_err_2d_ref, label=f"Natural alphabet", linestyle='', marker='s', elinewidth=0.2, color="black", alpha=0.8, markeredgewidth=0)
+    ax.errorbar(np.log10(x_query), y_query, yerr=y_err_2d, label=f"Alphabet {query_l}", linestyle='', marker='s', elinewidth=0.2, color="orange", alpha=0.8, markeredgewidth=0)
   
     order = 1
     def log_fit(x, y):
@@ -170,15 +170,15 @@ if __name__ ==  "__main__":
     ax.legend()
 
     ax.set_xlabel("Phenotype frequency (log10)")
-    ax.set_ylabel("Navigability (%)")
+    ax.set_ylabel("Phenotype accessibility")
 
     plt.tight_layout()
 
-    plt.yticks([0, 20, 40, 60, 80, 100])
+    plt.yticks([0, .2, .4, .6, .8, 1])
 
     ax.grid(axis="y", zorder=-1)
 
-    ax.set_ylim(-3, 103)
+    ax.set_ylim(-.03, 1.03)
     ax.legend(loc="lower right", frameon=False, fancybox=False)
 
     plt.savefig(args.output, format="pdf", dpi=30)

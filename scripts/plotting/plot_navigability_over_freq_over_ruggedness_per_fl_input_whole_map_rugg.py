@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats.stats import pearsonr
 
-from rna_folding.parsing import load_phenotype_and_metric_from_file, read_ruggedness_per_ph_file
+from rna_folding.parsing import load_phenotype_and_metric_from_file, read_ruggedness_file
 from rna_folding.parsing import read_navigability_per_ph_per_fl_file
 
 
@@ -32,22 +32,21 @@ if __name__ ==  "__main__":
         navig = read_navigability_per_ph_per_fl_file(navigability)
 
         # local peak sizes
-        peak_sizes = read_ruggedness_per_ph_file(ruggedness, n=args.ruggedness_sample_size)
+        peak_sizes = read_ruggedness_file(ruggedness)
 
-        rugged_av = {}  # compute average local peak size = ruggedness
-        for ph in peak_sizes:
-            # sum peak sizes and take average over sums
-            peak_size_sums = [sum(ps) for ps in peak_sizes[ph]]
-            rugged_av[ph] = np.mean(peak_size_sums)  # average size of local peaks
+        # compute average local peak size = ruggedness
+        # sum peak sizes and take average over sums
+        peak_size_sums = [sum(sizes) for sizes in peak_sizes]
+        rugged_av = np.mean(peak_size_sums)  # average size of local peaks
         
         x = []
         y = []
         cs = []
         color = []
 
-        for ph, c in zip(phenotypes, counts):
-            x.append(c/(rugged_av[ph]+c))
-            y.append(np.mean(navig[ph])/100)  # mean navigability   
+        for ph, c in zip(navig, counts):
+            x.append(c/(rugged_av))
+            y.append(np.mean(navig[ph]))  # mean navigability
 
         im = ax1.scatter(x, y, label=f"GP map {i+2}", s=10, alpha=.7, linewidths=0)
         
@@ -57,7 +56,6 @@ if __name__ ==  "__main__":
         ax1.text(0.1, 0.8, f'r = {np.round(r, 2)}\np = {p_str}')  
         
         m, b = np.polyfit(x, y, deg=1)
-        print(m, b)
         xs = np.linspace(min(x), max(x), 100)
         ys = m * xs + b
         ax1.plot(xs, ys)

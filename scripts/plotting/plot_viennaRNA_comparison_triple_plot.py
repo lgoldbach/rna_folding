@@ -75,7 +75,6 @@ if __name__ ==  "__main__":
             nc_sizes = nc_sizes_sort[:args.rank_cutoff]
         except IndexError:
             pass
-    print(len(nc_sizes))
 
     x = range(nc_sizes.shape[0])
     ax2.plot(x[1:], np.log10(nc_sizes)[1:], marker="", label=f"ViennaRNA", color="black", linewidth=7, markersize=5)
@@ -99,8 +98,6 @@ if __name__ ==  "__main__":
 
     step = 20
     nc_sizes = nc_sizes[1:]
-
-    print(len(nc_sizes[nc_sizes>1]))
 
     step_nc_sizes = [nc_sizes[i] for i in range(0, len(nc_sizes), step)]  
     
@@ -190,16 +187,16 @@ if __name__ ==  "__main__":
     ref_l = "ViennaRNA"
     query_l = "Global ranking"
     
-    ax3.errorbar(np.log10(x_ref), y_ref, yerr=y_err_2d_ref, label=ref_l, linestyle='', marker='s', elinewidth=0.2, color="black", alpha=1, markeredgewidth=0, markersize=7)
-    ax3.errorbar(np.log10(x_query), y_query, yerr=y_err_2d, label=query_l, linestyle='', marker='o', elinewidth=0.2, color="0.6", alpha=0.8, markeredgewidth=0, markersize=7)
+    ax3.errorbar(np.log10(x_ref), np.array(y_ref)/100, yerr=np.array(y_err_2d_ref)/100, label=ref_l, linestyle='', marker='s', elinewidth=0.2, color="black", alpha=1, markeredgewidth=0, markersize=7)
+    ax3.errorbar(np.log10(x_query), np.array(y_query)/100, yerr=np.array(y_err_2d)/100, label=query_l, linestyle='', marker='o', elinewidth=0.2, color="0.6", alpha=0.8, markeredgewidth=0, markersize=7)
   
 
     ax3.set_xlabel("Phenotype frequency (log10)", fontsize=15)
-    ax3.set_ylabel("Navigability (%)", fontsize=15)
+    ax3.set_ylabel("Phenotype accessibility", fontsize=15)
 
     plt.tight_layout()
 
-    plt.yticks([0, 20, 40, 60, 80, 100])
+    plt.yticks([0, .2, .4, .6, .8, 1])
     ax3.tick_params(axis='both', which='major', labelsize=12)
     ax3.tick_params(axis='both', which='minor', labelsize=8)
 

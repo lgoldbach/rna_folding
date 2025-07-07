@@ -68,7 +68,7 @@ if __name__ ==  "__main__":
                 showfliers=False,
                 zorder=3,
                 palette=palette,
-                whis=[0, 95])    
+                whis=[5, 95])    
     
     # ax = sns.violinplot(x=x,
     #                y=nav,
@@ -106,15 +106,16 @@ if __name__ ==  "__main__":
 
 
 
-    ax.set_ylabel("Phenotype navigability\naveraged over fitness lanscapes (%)", fontsize=15)
-    ax.set_xlabel("Base-pairing rule", fontsize=15)
+    ax.set_ylabel("Phenotype accessibility", fontsize=15)
+    ax.set_xlabel("RNA alphabet", fontsize=15)
 
     ax.tick_params(axis='both', which='major', labelsize=13)
     ax.tick_params(axis='both', which='minor', labelsize=8)
 
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set_xticks(list(range(0, 10)))
-    ax.set_xticklabels(list(range(1, 11)))
+    p =[1, 2, 3, "natural", 5, 6, 7, 8, 9, 10]
+    ax.set_xticklabels(p) #(list(range(1, 11)))
 
     ax.grid(axis="y", zorder=-1)
 
@@ -123,7 +124,7 @@ if __name__ ==  "__main__":
 
     # ax.legend(loc="lower center", frameon=False, fancybox=False)
 
-    ax.set_ylim(0, 100)
+    ax.set_ylim(0, 1)
 
     plt.tight_layout()
     plt.savefig(args.output, format="pdf", dpi=30)

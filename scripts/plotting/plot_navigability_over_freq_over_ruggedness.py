@@ -26,7 +26,16 @@ if __name__ ==  "__main__":
     rug_x_m_all = []
     y_m_all = []
     x_m_all = []
-    for i, (ph_dist, navigability, ruggedness) in enumerate(zip(args.ph_dist, args.navigability, args.ruggedness)):
+    new_order = [2, 3, 5, 7, 6, 4, 9, 8, 10, 11]
+    new_order_idx = [i - 2 for i in new_order]
+    labels = ["1", "2", "3", "natural", "5", "6", "7", "8", "9", "10"]
+    all_gt = 4**12
+    for idx, label in zip(new_order_idx, labels):
+        print(idx)
+        ph_dist = args.ph_dist[idx]
+        navigability = args.navigability[idx]
+        ruggedness = args.ruggedness[idx]
+
         phenotypes, counts = load_phenotype_and_metric_from_file(ph_dist)
 
         # read navigability file that has one ph and multiple navigability
@@ -54,6 +63,7 @@ if __name__ ==  "__main__":
         color = []
         for ph, c in zip(phenotypes, counts):
             if c > 0 and ph != "............":
+                print(rugged_av[ph], c, rugged_av[ph]+c)
                 x.append(c/(rugged_av[ph]+c))
                 rug_x.append(rugged_av[ph]+c)
                 y.append(np.mean(ph_to_navig[ph]))  # mean navigability   
@@ -78,9 +88,9 @@ if __name__ ==  "__main__":
         yq1 = [y_m-np.percentile(y, q=25)]
         yq2 = [np.percentile(y, q=75)-y_m]
 
-        ax2.errorbar(rug_x_m, y_m, xerr=(rxq1, rxq2), yerr=(yq1, yq2), elinewidth=1, marker="s", markersize=5, label=f"{i+2}")
+        ax2.errorbar(rug_x_m, y_m, xerr=(rxq1, rxq2), yerr=(yq1, yq2), elinewidth=1, marker="s", markersize=5, label=label)
     
-        ax1.errorbar(x_m, y_m, xerr=(xq1, xq2), yerr=(yq1, yq2), elinewidth=1.5, marker="s", markersize=5, label=f"{i+2}")
+        ax1.errorbar(x_m, y_m, xerr=(xq1, xq2), yerr=(yq1, yq2), elinewidth=1.5, marker="s", markersize=5, label=label)
 
         rug_x_m_all.append(rug_x_m)
         x_m_all.append(x_m)
@@ -107,7 +117,7 @@ if __name__ ==  "__main__":
     ax3.set_xlim(0, 1)
     ax3.set_ylim(0, 1)    
     
-    ax1.legend(fontsize=10, title="g-p map", loc="lower right", frameon=False)
-    ax2.legend(fontsize=8, title="g-p map", loc="lower left", frameon=False)
+    ax1.legend(fontsize=9, title="g-p map", loc="lower right", frameon=False)
+    ax2.legend(fontsize=9, title="g-p map", loc="lower left", frameon=False)
     plt.tight_layout()
     plt.savefig(args.output, format="pdf", dpi=30)

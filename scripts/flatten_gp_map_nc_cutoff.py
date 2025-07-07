@@ -69,6 +69,7 @@ if __name__ ==  "__main__":
         flat_gp_map_str[seq] = ph  # assign phenotype instead of rank now
     
     # Turn into gp graph object (required to get neutral components)
+    print(args.alphabet, flush=True)
     gp_map = GenotypePhenotypeGraph.read_from_dict(flat_gp_map_str, alphabet=args.alphabet)
 
     folded_phenotypes = [ph for ph in phenotypes if ph != args.unfolded]

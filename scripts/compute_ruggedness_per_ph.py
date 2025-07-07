@@ -67,7 +67,7 @@ if __name__ ==  "__main__":
             ph_to_f[target_ph] = args.upp_f
             
             peaks_nc, peaks_f = get_peaks(nc_graph, ph_to_f)
-            peak_count.append(len(peaks_nc))
+            peak_count.append(len(peaks_nc)-1)  # -1 to substract global
             peaks_size[target_ph].append([str(nc_graph.nodes[peak]["size"]) for peak in peaks_nc if nc_graph.nodes[peak]["phenotype"] != target_ph])
             
     
