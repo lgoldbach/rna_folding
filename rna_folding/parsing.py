@@ -1,5 +1,47 @@
 import argparse
 import numpy as np
+from typing import Type
+
+
+
+def many_to_one_map_from_file_to_dict(file: str, source_type: Type = str, target_type: Type = str, delimiter: str = " ") -> dict:
+    """Read in a file that is a many-to-one (source-to-target) mapping of the 
+    and turn it into dictionary mapping every source to their target. Order of 
+    targets and sources does not matter. Every source can only appear once in
+    the file, otherwise it would be a many-to-many map.
+
+    Args:
+        file (str):         Path to a file that contains many-to-one mapping.
+                            Example:
+                            <target1> <source A> <source B> ...
+                            <target2> <source D> <source K> ...
+                            <target3> <source C> ...
+                            ...
+                            
+        source_type (Type): Desired type of the sources, i.e. dict keys.
+                            Default: str. 
+        target_type (Type): Desired the type of the target, i.e. dict values.
+                            Default: str.
+        delimiter (str):    Delimiter used in the file. Default: " ".
+
+    Returns:
+        dict:               Dictionary that maps every source of type 
+                            source_type to its target of type target_type.
+                            Example:
+                            {<source X (int)>: target 1 (str), 
+                            <source X (int)>: target 1 (str), }
+                        
+    """
+    D = {}
+    with open(file, "r") as f:
+        for line_ in f:
+            line = line_.strip().split(delimiter)
+            target = int(line[0])
+            for source in line[1:]:
+                D[source] = target
+
+    return D
+
 
 def gpmap_pgdict(gpmap_file: str, genotype_file: str = None) -> dict:
     """Takes a file that stores genotype-phenotype mapping and a list of 

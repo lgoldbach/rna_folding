@@ -214,3 +214,18 @@ rule categorize_paths:
         "-n {input.nc_graph_pickle} "
         "-g {input.gp_map_pickle} "
         "-o {output} "
+
+rule adaptive_walks_to_nc_walks:
+    """A rule that takes a file of adaptive walks and maps them to 
+    neutral components steps
+    """
+    input:
+        paths="file/to/paths.txt"  # text file with one path per line
+        nc_to_gt="file/to/nc_to_gt.txt"  # a text file that maps neutral components to their genotypes
+    output:
+        "file/to/nc_paths.txt"
+    shell:
+        "adaptive_walks_to_nc_paths.py "
+        "--paths {input.paths} "
+        "--nc_to_gt {input.nc_to_gt} "
+        "--output {output} "

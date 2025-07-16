@@ -1,6 +1,6 @@
 import numpy as np
 from rna_folding.gp_map import GenotypePhenotypeGraph
-from typing import Callable
+from typing import Callable, Type
 import copy
 from rna_folding.utils import remove_nonadaptive_edges
 
@@ -389,3 +389,64 @@ def nc_graph_to_directed_graph(nc_graph, ph_to_f):
 
     G = remove_nonadaptive_edges(G)
     return G
+
+def read_genotype_paths_from_file(file: str,
+                                  delimiter: str = " ",
+                                  gt_type: str = Type,
+                                  map_to: dict = None) -> list:
+    """Read a file that contains paths of genotypes, one path per line, and
+    turn it into a list of paths
+
+    Args:
+        file (str): Input file with one path per line.
+        delimiter (str, optional): Delimiter between consecutive genotypes.
+        gt_type (Type): Convert all genotype to a type
+        map_to (Callable): Map every genotype to a value, e.g. its phenotype or
+                        fitness and then add that value to the path instead
+                        of the genotype
+
+    Returns:
+        list: List of paths. Example: [[<gt1>, <gt2>], [<gt10>, <gt4>]]. If map is not None:
+              [[map[<gt1>], map[<gt2>]], [map[<gt10>], map[<gt4>]]] 
+        
+    """
+    paths = []
+    with open(file, "r") as f:
+        # this if-else makes the code a bit bloated but creates less comp.
+        # overheat because I do not need to check for map for every path or
+        # genotype
+        if map_to:
+            for line in f:
+                path_ = line.strip().split(delimiter)  # path to stripped list
+                path  = []
+                for gt in path_:
+                    val = map_to[gt_type(gt)]  # convert to correct type and map
+                    path.append(val)  # turn to string for easier writing to file
+                paths.append(path)
+        else:
+            for line in f:
+                path_ = line.strip().split(delimiter)
+                path = []
+                for gt in path_:
+                    path.append(gt_type(gt))
+                paths.append(path)
+
+    return paths
+
+def write_paths_to_file(paths: list, file: str, delimiter: str = " ") -> None:
+    """Write a list of paths (list) to a file, one path per line
+
+    Args:
+        paths (list): List of paths, each of which is a list.
+        file (str): Output file path.
+        delimiter (str, optional): Delitier to use for writing paths to file.
+        Defaults to " ".
+
+    Returns:
+        None
+
+    """
+    with open(file, "w") as f:
+        for path in paths:
+            # one path per line. Map every element to str first.
+            f.write(delimiter.join(map(str, path)) + "\n")
