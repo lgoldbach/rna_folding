@@ -7,7 +7,7 @@ rule build_nc_graph:
     input:
         "gp_map.pickle"
     params:
-        ignore="1"
+        ignore="phenotype_to_ignore"
     shell:
         "nc_graph.py "
         "-f {input} "

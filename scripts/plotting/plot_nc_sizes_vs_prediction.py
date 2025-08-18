@@ -125,16 +125,16 @@ for i, l in enumerate(new_order, start=1):
         label = "Natural"
     else:
         label = f"{i}"
-    sc = ax2.scatter(nc_n_truth, nc_n_mean, label=label)
-    col = sc.get_facecolors()[0].tolist()  # get color
+    # sc = ax2.scatter(nc_n_truth, nc_n_mean, label=label)
+    # col = sc.get_facecolors()[0].tolist()  # get color
     # ax.scatter(nc_n_truth, nc_n_est_all[1], color=col)
     # ax.scatter(nc_n_truth, nc_n_est_all[2], color=col)
     x.append(nc_n_truth)
     y.append(nc_n_mean)
-    ax2.set_aspect("equal")
-    ax2.set_xlim(0, 1050)
-    ax2.set_ylim(0, 1050)
-    ax2.plot([0, 1050], [0, 1050], zorder=-5, linestyle="--", color="black", linewidth=0.5)
+    # ax2.set_aspect("equal")
+    # ax2.set_xlim(0, 1050)
+    # ax2.set_ylim(0, 1050)
+    # ax2.plot([0, 1050], [0, 1050], zorder=-5, linestyle="--", color="black", linewidth=0.5)
 
     ### Estimate neutral component sizes
     nc_est = []
@@ -160,11 +160,13 @@ for i, l in enumerate(new_order, start=1):
     print(largest_nc_truth)
     x2.append(np.log10(largest_nc_truth))
     y2.append(np.log10(nc_est[0]))
-    ax1.scatter(np.log10(largest_nc_truth), np.log10(nc_est[0]), label=label, color=col)
-    ax1.set_aspect("equal")
-    ax1.set_xlim(3, 6)
-    ax1.set_ylim(3, 6)
-    ax1.plot([3, 6], [3, 6], zorder=-5, linestyle="--", color="black", linewidth=0.5)
+    # ax1.scatter(np.log10(largest_nc_truth), np.log10(nc_est[0]), label=label, color=col)
+    # ax1.set_aspect("equal")
+    # ax1.set_xlim(3, 6)
+    # ax1.set_ylim(3, 6)
+    # ax1.plot([3, 6], [3, 6], zorder=-5, linestyle="--", color="black", linewidth=0.5)
+    if i != 3:
+        ax1.scatter(np.log10(largest_nc_truth), nc_n_truth, label=label)
 
 r, p = pearsonr(x, y)
 p_str = "%.3g" % p

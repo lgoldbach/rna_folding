@@ -69,6 +69,17 @@ if __name__ ==  "__main__":
                     9: 4,
                     10: 2,
                     11: 0}
+    
+    navig = {1: 71,
+            2: 77,
+            3: 83,
+            4: 81,
+            5: 86,
+            6: 53,
+            7: 56,
+            8: 73,
+            9: 62,
+            10: 67}
 
     args = parser.parse_args()
     fig, axes = plt.subplots(nrows=2, ncols=10, figsize=(50, 10))
@@ -80,6 +91,7 @@ if __name__ ==  "__main__":
     mut_groups = []
     red_mut = []
     evolvs = []
+    navig_vals = []
     new_order = [2, 3, 5, 7, 6, 4, 9, 8, 10, 11]
     new_order_idx = [i - 2 for i in new_order]
     labels = ["1", "2", "3", "natural", "5", "6", "7", "8", "9", "10"]
@@ -125,13 +137,18 @@ if __name__ ==  "__main__":
         axes[0][0].legend(title="GP map")
 
         ### evolvability as func of neutral component size with horizontal line
-        axes[1][i].scatter(nc_sizes_sort, evo_sort, color="black")
+        axes[1][i].scatter(np.log10(nc_sizes_sort), evo_sort, color="black")
         axes[1][i].axhline(y=len(np.unique(nc_phenos)), color="orange", label="No. Phenotypes", linewidth=3)
+        axes[1][i].axhline(y=np.mean(evo_sort), color="green", label="Mean. NC evo.", linewidth=3)
         axes[1][i].set_ylim(0, 40)
+        axes[1][i].set_xlim(1.5, 6)
         axes[1][i].set_xlabel("Neutral component size", size=15)
         axes[1][i].set_ylabel("Evolvability", size=15)
         axes[1][i].legend()
         axes[1][i].set_title(f"Alphabet: " + label, size=15)
+        axes[1][i].scatter(np.mean(np.log10(nc_sizes_sort)), np.mean(evo_sort), color="orange", s=25, marker="s")
+        y = np.mean([e/nc_s for e, nc_s in zip(evo_sort, nc_sizes_sort)])
+        axes[0][7].scatter(i, y)
 
         ### mut group vs number of phenotypes in the top X, X and X percent.
         ph_counts_sort, ph_sort = zip(*sorted(zip(ph_count, phenotypes), reverse=True))
@@ -188,10 +205,15 @@ if __name__ ==  "__main__":
         red_mut.append(num_red_mut[i_]/12)
         evolvs.append(np.mean(evo_sort))
 
+        navig_vals.append(navig[i+1])
+
     ### mut group vs redundant, evo colored and annotate
     t = [e/37 for e in evolvs]
     cm = plt.cm.get_cmap('plasma')
-    axes[0][4].scatter(red_mut, mut_groups, c=evolvs, cmap=cm)
+    axes[0][4].scatter(red_mut, mut_groups, c=navig_vals, cmap=cm)
+    # axes[0][4].scatter(red_mut, mut_groups, c=evolvs, cmap=cm)
+
+    # sc = axes[0][5].scatter(red_mut, mut_groups, c=navig_vals, cmap=cm)  # for nav
     sc = axes[0][5].scatter(red_mut, mut_groups, c=evolvs, cmap=cm)
     plt.colorbar(sc, label="Mean evolvability")
 
@@ -227,5 +249,7 @@ if __name__ ==  "__main__":
     axes[0][4].set_ylabel("Mutational group size", size=15)
     axes[0][4].set_xlabel("Fraction of redundant mutations", size=15)
     
+    axes[0][6].scatter(navig_vals, evolvs)
+
     plt.tight_layout()
     plt.savefig(args.output, format="pdf", dpi=30)

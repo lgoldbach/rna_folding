@@ -220,7 +220,7 @@ rule adaptive_walks_to_nc_walks:
     neutral components steps
     """
     input:
-        paths="file/to/paths.txt"  # text file with one path per line
+        paths="file/to/paths.txt",  # text file with one path per line
         nc_to_gt="file/to/nc_to_gt.txt"  # a text file that maps neutral components to their genotypes
     output:
         "file/to/nc_paths.txt"

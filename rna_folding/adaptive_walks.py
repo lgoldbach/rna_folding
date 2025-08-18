@@ -392,7 +392,7 @@ def nc_graph_to_directed_graph(nc_graph, ph_to_f):
 
 def read_genotype_paths_from_file(file: str,
                                   delimiter: str = " ",
-                                  gt_type: str = Type,
+                                  gt_type: Type = str,
                                   map_to: dict = None) -> list:
     """Read a file that contains paths of genotypes, one path per line, and
     turn it into a list of paths

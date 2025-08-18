@@ -69,7 +69,7 @@ def pairwise_consensus_matrix(phenotypes, pg_map, ref_gp_map):
     return A
 
 
-def infer_bradley_terry_scores(pairwise_rankings, max_iter=10**3, conv_crit=10**-3):
+def infer_bradley_terry_scores(pairwise_rankings, max_iter=10**3, conv_crit=10**-7):
     p = np.ones(pairwise_rankings.shape[0])  # initialize probabilities to 1
 
     for n in range(max_iter):

@@ -28,8 +28,7 @@ if __name__ ==  "__main__":
 
     paths = read_genotype_paths_from_file(file=args.paths,
                                   delimiter=" ",
-                                  gt_type="str",
-                                  map=gt_to_nc)
+                                  gt_type=str,
+                                  map_to=gt_to_nc)
     
     write_paths_to_file(paths, args.output, delimiter=" ")
-    

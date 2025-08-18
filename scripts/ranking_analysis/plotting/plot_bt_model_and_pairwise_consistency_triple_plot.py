@@ -165,8 +165,8 @@ if __name__ ==  "__main__":
     ax3.tick_params(axis='both', which='major', labelsize=12)
 
 
-    ax3.set_xlabel("Phenotype ranking", fontsize=18)
-    ax3.set_ylabel("Bradley-Terry score (a.u.)", fontsize=18)
+    ax3.set_xlabel("Rank", fontsize=18)
+    ax3.set_ylabel("mfe-score (a.u.)", fontsize=18)
 
     plt.tight_layout(rect=[0.1, 0.1, 0.9, 0.9])
     plt.savefig(args.output, format="pdf", dpi=30)

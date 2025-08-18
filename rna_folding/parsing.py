@@ -4,7 +4,7 @@ from typing import Type
 
 
 
-def many_to_one_map_from_file_to_dict(file: str, source_type: Type = str, target_type: Type = str, delimiter: str = " ") -> dict:
+def many_to_one_map_from_file_to_dict(file: str, source_type: Type = str, target_type: Type = str, delimiter: str = " ", skip_first: bool = False) -> dict:
     """Read in a file that is a many-to-one (source-to-target) mapping of the 
     and turn it into dictionary mapping every source to their target. Order of 
     targets and sources does not matter. Every source can only appear once in
@@ -37,7 +37,11 @@ def many_to_one_map_from_file_to_dict(file: str, source_type: Type = str, target
         for line_ in f:
             line = line_.strip().split(delimiter)
             target = int(line[0])
-            for source in line[1:]:
+            if skip_first:
+                start_idx = 2
+            else:
+                start_idx = 1
+            for source in line[start_idx:]:
                 D[source] = target
 
     return D

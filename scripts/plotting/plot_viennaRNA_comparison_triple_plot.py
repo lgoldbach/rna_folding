@@ -187,8 +187,8 @@ if __name__ ==  "__main__":
     ref_l = "ViennaRNA"
     query_l = "Global ranking"
     
-    ax3.errorbar(np.log10(x_ref), np.array(y_ref)/100, yerr=np.array(y_err_2d_ref)/100, label=ref_l, linestyle='', marker='s', elinewidth=0.2, color="black", alpha=1, markeredgewidth=0, markersize=7)
-    ax3.errorbar(np.log10(x_query), np.array(y_query)/100, yerr=np.array(y_err_2d)/100, label=query_l, linestyle='', marker='o', elinewidth=0.2, color="0.6", alpha=0.8, markeredgewidth=0, markersize=7)
+    ax3.errorbar(np.log10(x_ref), np.array(y_ref), yerr=np.array(y_err_2d_ref), label=ref_l, linestyle='', marker='s', elinewidth=0.2, color="black", alpha=1, markeredgewidth=0, markersize=7)
+    ax3.errorbar(np.log10(x_query), np.array(y_query), yerr=np.array(y_err_2d), label=query_l, linestyle='', marker='o', elinewidth=0.2, color="0.6", alpha=0.8, markeredgewidth=0, markersize=7)
   
 
     ax3.set_xlabel("Phenotype frequency (log10)", fontsize=15)
