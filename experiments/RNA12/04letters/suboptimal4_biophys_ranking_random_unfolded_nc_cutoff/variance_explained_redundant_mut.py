@@ -13,7 +13,7 @@ from rna_folding.parsing import many_to_one_map_from_file_to_dict
 # compare overall fraction and without redundant mut
 # show that without redundant mut, they are similar in evolvability
 
-fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(ncols=2, nrows=2, figsize=(10, 5))
+fig, (ax1, ax2) = plt.subplots(ncols=2, nrows=1, figsize=(10, 5))
 bp_ids = [2, 3, 5, 7, 6, 4, 9, 8, 10, 11]
 # bp_ids = [4]
 
@@ -46,10 +46,7 @@ def get_neighbors(gp_map, genotype):
                     neighbors.append(neigh)
         return neighbors
 
-nc_evolv_all_bp_rules = []
-nc_evolv_allowed_bp_rules = []
 for i, bpid in enumerate(bp_ids, start=1):
-    print("BP: ", i)
     gp_map_path = f"bp_graph{bpid}/ranking1/gp_map.pickle"
     
     gp_map = pickle.load(open(gp_map_path, "rb"))
@@ -59,6 +56,7 @@ for i, bpid in enumerate(bp_ids, start=1):
     #                                              source_type=str,
     #                                              target_type=int,
     #                                              delimiter=" ", skip_first=True)
+
     
     nc_to_gt = {}
     with open(nc_to_gt_path, "r") as f:
@@ -68,62 +66,45 @@ for i, bpid in enumerate(bp_ids, start=1):
             gts = line[2:]
             nc_to_gt[nc] = gts
     
+    # compute nc evo factor per nc which is the factor by which we downsize the nc according to the fract
     nc_evolvs_all = []
     nc_evolvs_allowed = []
     nc_evolv_all = {nc: {} for nc in list(nc_to_gt.keys())}
     nc_evolv_allowed = {nc: {} for nc in list(nc_to_gt.keys())}
     for nc, gts in nc_to_gt.items():
-        if len(gts) < 100:
+        if len(gts) < 50:
             continue
-        nc_evolvs_sample_all = []
-        nc_evolvs_sample_allowed = []
-        for k in range(5):
-            evolv_all_per_samp = {}
-            evolv_allowed_per_samp  = {}
-            neigh_count_all = 0
-            neigh_count_allowed = 0
-            gt_sample = np.random.choice(gts, size=50, replace=False)
-            nc_ph = gp_map.map(gts[0])  # get phenotype of the nc
-            for gt in gt_sample:
-                neighbors_all = get_neighbors(gp_map, gt)
-                neighbors_allowed = create_all_neighbors_allowed_mut(gt, allowed_mut = allowed_mut[i])
-                for n in neighbors_all:
-                    neigh_count_all += 1
-                    try:
-                        p = gp_map.map(n)
-                    except KeyError:  # unfolded neighbor, does not matter
-                        continue
-                    if p not in evolv_all_per_samp:  # add phenotype if it is not in there yet
-                        evolv_all_per_samp[p] = 1
-                for n in neighbors_allowed:
-                    neigh_count_allowed += 1
-                    try:
-                        p = gp_map.map(n)
-                    except KeyError:  # unfolded neighbor, does not matter
-                        continue
-                    if p not in evolv_allowed_per_samp:  # add phenotype if it is not in there yet
-                        evolv_allowed_per_samp[p] = 1
+        neigh_count_all = 0
+        neigh_count_allowed = 0
+    gt_sample = np.random.choice(gts, size=50, replace=False)
+    nc_ph = gp_map.map(gts[0])  # get phenotype of the nc
+    for gt in gt_sample:
+        neighbors_all = get_neighbors(gp_map, gt)
+        neighbors_allowed = create_all_neighbors_allowed_mut(gt, allowed_mut = allowed_mut[i])
+        for n in neighbors_all:
+            neigh_count_all += 1
+            try:
+                p = gp_map.map(n)
+            except KeyError:  # unfolded neighbor, does not matter
+                continue
+            if p not in nc_evolv_all[nc]:  # add phenotype if it is not in there yet
+                nc_evolv_all[nc][p] = 1
+        for n in neighbors_allowed:
+            neigh_count_allowed += 1
+            try:
+                p = gp_map.map(n)
+            except KeyError:  # unfolded neighbor, does not matter
+                continue
+            if p not in nc_evolv_allowed[nc]:  # add phenotype if it is not in there yet
+                nc_evolv_allowed[nc][p] = 1
+            
 
-            nc_evolvs_sample_all.append(len(evolv_all_per_samp.keys())/neigh_count_all)  # count unqiue phenotypes per sample
-            nc_evolvs_sample_allowed.append(len(evolv_allowed_per_samp.keys())/neigh_count_allowed)  # count unqiue phenotypes per sample
+        nc_evolvs_all.append(len(nc_evolv_all[nc].keys())/neigh_count_all)  # count unqiue phenotypes
+        nc_evolvs_allowed.append(len(nc_evolv_allowed[nc].keys())/neigh_count_allowed)  # count unqiue phenotypes
 
-        nc_evolvs_all.append(np.mean(nc_evolvs_sample_all))  # take mean over samples per nc
-        nc_evolvs_allowed.append(np.mean(nc_evolvs_sample_allowed))
-    
-    nc_evolv_all_bp_rules.append(nc_evolvs_all)
-    nc_evolv_allowed_bp_rules.append(nc_evolvs_allowed)
+    ax1.scatter(i, np.mean(nc_evolvs_all))
+    ax2.scatter(i, np.mean(nc_evolvs_allowed))
 
-ax1.boxplot(nc_evolv_all_bp_rules)
-ax2.boxplot(nc_evolv_allowed_bp_rules)
-
-ax3.errorbar(np.arange(len(nc_evolv_all_bp_rules)), [np.mean(e) for e in nc_evolv_all_bp_rules], yerr=[np.std(e) for e in nc_evolv_all_bp_rules], ls='none', marker="o")
-ax4.errorbar(np.arange(len(nc_evolv_allowed_bp_rules))+0.15, [np.mean(e) for e in nc_evolv_allowed_bp_rules], yerr=[np.std(e) for e in nc_evolv_allowed_bp_rules], ls='none', marker="o")
-ax4.errorbar(np.arange(len(nc_evolv_all_bp_rules))-0.15, [np.mean(e) for e in nc_evolv_all_bp_rules], yerr=[np.std(e) for e in nc_evolv_all_bp_rules], ls='none', marker="o")
-
-plt.savefig("boxplot_mut_impact.pdf", format="pdf")
-        
-for i in range(10):
-    print("AAASDASDAS" * 1)
 
     
     # def create_all_neighbors(gt, alphabet, sites):
@@ -170,6 +151,11 @@ for i in range(10):
     # fract_of_new_nc_avg_avg = np.mean(list(fraction_of_new_nc_avg.values()))
     # ax1.scatter(i, fract_of_new_nc_avg_avg)
     # ax2.scatter(i, np.mean(fraction_of_new_per_gt_all))
+
+plt.savefig("mut_impact.pdf", format="pdf")
+        
+for i in range(10):
+    print("AAASDASDAS" * 1)
 
 
 
@@ -225,6 +211,7 @@ for i in range(10):
 # fig, ax = plt.subplots()
 # ax.scatter(np.arange(1, 11), evolvs)
 
+# plt.savefig("mut_impact.pdf", format="pdf")
         
 
 

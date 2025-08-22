@@ -137,16 +137,35 @@ if __name__ ==  "__main__":
         axes[0][0].legend(title="GP map")
 
         ### evolvability as func of neutral component size with horizontal line
-        axes[1][i].scatter(np.log10(nc_sizes_sort), evo_sort, color="black")
-        axes[1][i].axhline(y=len(np.unique(nc_phenos)), color="orange", label="No. Phenotypes", linewidth=3)
-        axes[1][i].axhline(y=np.mean(evo_sort), color="green", label="Mean. NC evo.", linewidth=3)
-        axes[1][i].set_ylim(0, 40)
-        axes[1][i].set_xlim(1.5, 6)
-        axes[1][i].set_xlabel("Neutral component size", size=15)
-        axes[1][i].set_ylabel("Evolvability", size=15)
-        axes[1][i].legend()
+        # axes[1][1].scatter(np.log10(nc_sizes_sort), np.log10(evo_sort), label=label)
+        p, res, l, o, k = np.polyfit(np.log10(nc_sizes_sort), np.log10(evo_sort), 1, full=True)
+        poly1d_fn = np.poly1d(p) 
+        # axes[1][1].plot(np.log10(nc_sizes_sort), poly1d_fn(np.log10(nc_sizes_sort)), label=label)
+        
+        rug_terms = [siz/ev for siz, ev in zip(nc_sizes_sort, evo_sort)]
+        axes[1][1].scatter(np.log10(nc_sizes_sort), np.log10(rug_terms), label=label, s=1)
+
+        rug_truth = sum([siz/ev for siz, ev in zip(nc_sizes_sort, evo_sort)])
+        rug1 = sum([siz/20 for siz, ev in zip(nc_sizes_sort, evo_sort)])
+        axes[1][2].scatter(rug_truth, rug1, label=label)
+        rug2 = sum([siz/max(evo_sort) for siz, ev in zip(nc_sizes_sort, evo_sort)])
+        axes[1][3].scatter(rug_truth, rug2, label=label)
+        non_red_frac = 1-(num_red_mut[new_order[i]]/12)
+        print(i+1, non_red_frac)
+        rug3 = sum([(siz*non_red_frac) for siz, ev in zip(nc_sizes_sort, evo_sort)])
+        axes[1][4].scatter(rug_truth, rug3, label=label)
+        
+        # axes[1][1].scatter(np.log10(nc_sizes_sort), [siz/ev for siz, ev in zip(nc_sizes_sort, evo_sort)], label=label)
+        # axes[1][i].axhline(y=len(np.unique(nc_phenos)), color="orange", label="No. Phenotypes", linewidth=3)
+        # axes[1][i].axhline(y=np.mean(evo_sort), color="green", label="Mean. NC evo.", linewidth=3)
+        # axes[1][i].set_ylim(0, 4)
+        # axes[1][i].set_xlim(1.5, 6)
+        # axes[1][i].set_xlabel("Neutral component size", size=15)
+        # axes[1][i].set_ylabel("Evolvability", size=15)
+        # axes[1][i].legend()
         axes[1][i].set_title(f"Alphabet: " + label, size=15)
-        axes[1][i].scatter(np.mean(np.log10(nc_sizes_sort)), np.mean(evo_sort), color="orange", s=25, marker="s")
+        # axes[1][1].scatter(np.mean(np.log10(nc_sizes_sort)), np.mean(np.log10(evo_sort)), s=25, marker="s", label=label)
+        # axes[1][i].scatter(np.mean(np.log10(nc_sizes_sort)), np.mean(evo_sort), color="orange", s=25, marker="s", label=label)
         y = np.mean([e/nc_s for e, nc_s in zip(evo_sort, nc_sizes_sort)])
         axes[0][7].scatter(i, y)
 
@@ -250,6 +269,11 @@ if __name__ ==  "__main__":
     axes[0][4].set_xlabel("Fraction of redundant mutations", size=15)
     
     axes[0][6].scatter(navig_vals, evolvs)
+
+    axes[1][1].legend()
+    axes[1][2].legend()
+    axes[1][3].legend()
+    axes[1][4].legend()
 
     plt.tight_layout()
     plt.savefig(args.output, format="pdf", dpi=30)

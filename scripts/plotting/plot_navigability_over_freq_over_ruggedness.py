@@ -61,9 +61,9 @@ if __name__ ==  "__main__":
         y = []
         cs = []
         color = []
+
         for ph, c in zip(phenotypes, counts):
             if c > 0 and ph != "............":
-                print(rugged_av[ph], c, rugged_av[ph]+c)
                 x.append(c/(rugged_av[ph]+c))
                 rug_x.append(rugged_av[ph]+c)
                 y.append(np.mean(ph_to_navig[ph]))  # mean navigability   
