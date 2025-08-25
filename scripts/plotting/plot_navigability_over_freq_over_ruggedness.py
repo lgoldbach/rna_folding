@@ -62,10 +62,16 @@ if __name__ ==  "__main__":
         cs = []
         color = []
 
+        folded_counts = 0
+        for ph, c in zip(phenotypes, counts):
+            if c > 0 and ph != "............":
+                folded_counts += c
+
         for ph, c in zip(phenotypes, counts):
             if c > 0 and ph != "............":
                 x.append(c/(rugged_av[ph]+c))
-                rug_x.append(rugged_av[ph]+c)
+                rug_x.append((rugged_av[ph]+c)/folded_counts)
+                # rug_x.append(rugged_av[ph]+c)
                 y.append(np.mean(ph_to_navig[ph]))  # mean navigability   
 
         im = ax1.scatter(x, y, s=15, alpha=.5, linewidths=0)

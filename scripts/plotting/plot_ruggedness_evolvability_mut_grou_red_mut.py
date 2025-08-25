@@ -6,6 +6,7 @@ import numpy as np
 import pickle
 import matplotlib.lines as mlines
 import matplotlib as mpl
+from scipy.stats.stats import pearsonr
 
 from rna_folding.parsing import load_phenotype_and_metric_from_file, read_ruggedness_per_ph_file
 from rna_folding.utils import count_bp
@@ -92,12 +93,16 @@ if __name__ ==  "__main__":
     red_mut = []
     evolvs = []
     navig_vals = []
+    rugged_es_all = []
+    rugged_all = []
     new_order = [2, 3, 5, 7, 6, 4, 9, 8, 10, 11]
     new_order_idx = [i - 2 for i in new_order]
     labels = ["1", "2", "3", "natural", "5", "6", "7", "8", "9", "10"]
     for i, (idx, label) in enumerate(zip(new_order_idx, labels)):
         phenotypes, ph_count = load_phenotype_and_metric_from_file(args.phenotype_distributions[idx])
         ph_to_count = dict(zip(phenotypes, ph_count))
+
+        sum_of_folded = sum([c for p, c in zip(phenotypes, ph_count) if p != "............"])
 
         peak_sizes = read_ruggedness_per_ph_file(args.ruggedness[idx], n=args.rugg_sample_size)
 
@@ -135,6 +140,9 @@ if __name__ ==  "__main__":
         axes[0][0].set_xlabel("<Ruggedness> prediction from\nNeut. comp. size and evolvability", size=15)
         axes[0][0].set_ylabel("<Ruggedness>", size=15)
         axes[0][0].legend(title="GP map")
+        
+        rugged_es_all.append(rugged_es)
+        rugged_all.append(rugged)
 
         ### evolvability as func of neutral component size with horizontal line
         # axes[1][1].scatter(np.log10(nc_sizes_sort), np.log10(evo_sort), label=label)
@@ -146,14 +154,23 @@ if __name__ ==  "__main__":
         axes[1][1].scatter(np.log10(nc_sizes_sort), np.log10(rug_terms), label=label, s=1)
 
         rug_truth = sum([siz/ev for siz, ev in zip(nc_sizes_sort, evo_sort)])
-        rug1 = sum([siz/20 for siz, ev in zip(nc_sizes_sort, evo_sort)])
-        axes[1][2].scatter(rug_truth, rug1, label=label)
-        rug2 = sum([siz/max(evo_sort) for siz, ev in zip(nc_sizes_sort, evo_sort)])
-        axes[1][3].scatter(rug_truth, rug2, label=label)
+        rug1 = sum([siz for siz, ev in zip(nc_sizes_sort, evo_sort)])
+        rug1 = sum(nc_sizes_sort)
+        # axes[1][2].scatter(rug_truth/sum_of_folded, rug1, label=label)
+        axes[1][2].scatter(i+1, rug_truth/sum_of_folded, label=label)
+        print(rug_truth/sum_of_folded)
+        # rug2 = sum([siz/max(evo_sort) for siz, ev in zip(nc_sizes_sort, evo_sort)])
+        rug2 = sum([siz/(ev/max(evo_sort)) for siz, ev in zip(nc_sizes_sort, evo_sort)])
+
+        # axes[1][3].scatter(rug_truth, rug2, label=label)
+        axes[1][3].scatter(i+1, rug2/sum_of_folded, label=label)
+
         non_red_frac = 1-(num_red_mut[new_order[i]]/12)
         print(i+1, non_red_frac)
-        rug3 = sum([(siz*non_red_frac) for siz, ev in zip(nc_sizes_sort, evo_sort)])
-        axes[1][4].scatter(rug_truth, rug3, label=label)
+        # rug3 = sum([(siz*non_red_frac)/ev for siz, ev in zip(nc_sizes_sort, evo_sort)])
+        rug3 = sum([siz/(ev/np.mean(evo_sort)) for siz, ev in zip(nc_sizes_sort, evo_sort)])
+        # axes[1][4].scatter(rug_truth, rug3, label=label)
+        axes[1][4].scatter(i+1, rug3/sum_of_folded, label=label)
         
         # axes[1][1].scatter(np.log10(nc_sizes_sort), [siz/ev for siz, ev in zip(nc_sizes_sort, evo_sort)], label=label)
         # axes[1][i].axhline(y=len(np.unique(nc_phenos)), color="orange", label="No. Phenotypes", linewidth=3)
@@ -274,6 +291,10 @@ if __name__ ==  "__main__":
     axes[1][2].legend()
     axes[1][3].legend()
     axes[1][4].legend()
+
+    r, p = pearsonr(rugged_es_all, rugged_all)
+    p_str = "%.3g" % p
+    print(r, p)
 
     plt.tight_layout()
     plt.savefig(args.output, format="pdf", dpi=30)

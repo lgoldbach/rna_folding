@@ -18,7 +18,7 @@ for c, (i, e) in enumerate(zip([2, 3, 5, 7, 6, 4, 9, 8, 10, 11], edge_numbers), 
 
     counts = np.array(sorted(counts)[:-1])[::-1]
     counts = [count for count in counts if count > 0]
-
+    print(sum(counts)/4**12)
     # print(counts)
     log_counts = np.log10(counts)
     # print(log_counts)

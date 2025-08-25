@@ -106,6 +106,12 @@ for i, bpid in enumerate(bp_ids, start=1):
     ax2.scatter(i, np.mean(nc_evolvs_allowed))
 
 
+plt.savefig("variance_explained.pdf", format="pdf")
+        
+for i in range(10):
+    print("AAASDASDAS" * 1)
+
+
     
     # def create_all_neighbors(gt, alphabet, sites):
     #     neighbors = []
@@ -152,10 +158,6 @@ for i, bpid in enumerate(bp_ids, start=1):
     # ax1.scatter(i, fract_of_new_nc_avg_avg)
     # ax2.scatter(i, np.mean(fraction_of_new_per_gt_all))
 
-plt.savefig("mut_impact.pdf", format="pdf")
-        
-for i in range(10):
-    print("AAASDASDAS" * 1)
 
 
 
