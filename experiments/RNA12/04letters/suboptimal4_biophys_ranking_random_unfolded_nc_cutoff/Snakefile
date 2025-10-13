@@ -32,16 +32,16 @@ module adaptive_walks_plotting:
 
 rule all:
     input:
-        # expand("analysis/ranking{rank}/navigability_boxplot_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
+        expand("analysis/ranking{rank}/navigability_boxplot_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
         # expand("analysis/ranking{rank}/phenotype_bias.pdf", rank=config["rankings"]),
-        # expand("analysis/ranking{rank}/neutral_component_sizes.pdf", rank=config["rankings"]),
+        # expand("analysis/ranking{rank}/neutral_component_sizes_three_groups.pdf", rank=config["rankings"]),
         # expand("bp_graph{bp}/ranking{rank}/greedy_walk_lengths_seed{seed}.csv", rank=config["rankings"], seed=config["random_seed"], bp=config["base_pairing"])
         # expand("bp_graph{bp}/ranking{rank}/gp_map.pickle", bp=config["base_pairing"], rank=config["rankings"]),
-        expand("bp_graph{ref_bp}/ranking{rank}/analysis/vienna_comparison_triple_plot_pop{pop_size}_seed{seed}.pdf", ref_bp=config["ref_bp_rule"], pop_size=config["adaptive_walks_vienna"]["population_sizes"], seed=config["random_seed"], rank=config["rankings"]),
-        # expand("bp_graph{bp}/ranking{rank}/analysis/navigability_over_freq_werror_{pop_size}_seed{seed}.pdf", bp=config["base_pairing"], rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
-        expand("analysis/ranking{rank}/nc_count_prediction_vs_truth.pdf", rank=config["rankings"]),
-        expand("analysis/ranking{rank}/navigability_over_frequency_over_ruggedness_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
-        expand("analysis/ranking{rank}/ruggedness_evolvability_mut_grou_red_mut_plots_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"])
+        # expand("bp_graph{ref_bp}/ranking{rank}/analysis/vienna_comparison_triple_plot_pop{pop_size}_seed{seed}.pdf", ref_bp=config["ref_bp_rule"], pop_size=config["adaptive_walks_vienna"]["population_sizes"], seed=config["random_seed"], rank=config["rankings"]),
+        # expand("bp_graph{bp}/ranking{rank}/analysis/navigability_over_freq_{pop_size}_seed{seed}.pdf", bp=config["base_pairing"], rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
+        # expand("analysis/ranking{rank}/nc_count_prediction_vs_truth.pdf", rank=config["rankings"]),
+        # expand("analysis/ranking{rank}/navigability_over_frequency_over_ruggedness_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
+        # expand("analysis/ranking{rank}/ruggedness_evolvability_mut_grou_red_mut_plots_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"])
         
 
 """GP MAP GENERATION """
@@ -131,6 +131,19 @@ use rule multiplot_neutral_comp_sizes from gp_map_analysis_plotting with:
         "analysis/ranking{rank}/neutral_component_sizes.pdf"
     params:
         ref=config["ref_bp_rule"]
+
+rule neutral_comp_size_three_categ_plot:
+    input:
+        expand("bp_graph{bp}/ranking{{rank}}/neutral_component_sizes.txt", bp=config["base_pairing"])
+    output:
+        "analysis/ranking{rank}/neutral_component_sizes_three_groups.pdf"
+    params:
+        ref = 4  # ref bp rule (this is in new bp rule numbering)
+    shell:
+        "plot_neutral_comp_size_three_groups.py "
+        "-i {input} "
+        "-o {output} "
+        "-r {params.ref} "
 
 rule plot_neutral_components_prediction_vs_ground_truth:
     input:
@@ -229,19 +242,41 @@ use rule plot_boxplots_navigability from adaptive_walks_plotting with:
     output:
         "analysis/ranking{rank}/navigability_boxplot_pop{pop_size}_seed{seed}.pdf"
 
-rule plot_productive_walk_success_over_frequency_werror:
+# rule plot_productive_walk_success_over_frequency_werror:
+#     input:
+#         navig="bp_graph{bp}/ranking{rank}/navigability_per_ph_per_fl_pop{pop_size}_seed{seed}.csv",
+#         ref_navig="bp_graph%s/ranking{rank}/navigability_per_ph_per_fl_pop{pop_size}_seed{seed}.csv" % config["ref_bp_rule"],
+#         ph_distr="bp_graph{bp}/ranking{rank}/phenotype_distribution.txt",
+#         ref_ph_distr="bp_graph%s/ranking{rank}/phenotype_distribution.txt" % config["ref_bp_rule"]
+#     output:
+#         "bp_graph{bp}/ranking{rank}/analysis/navigability_over_freq_werror_{pop_size}_seed{seed}.pdf"
+#     params:
+#         sample_size=config["adaptive_walks"]["sample_size_walks"],  # how many walks per phenotype per random fitness landscape instance
+#         ref_bp_rule=config["ref_bp_rule"]
+#     shell:
+#         "plot_adaptive_walk_success_over_freq_werror.py "
+#         "--reffreq {input.ref_ph_distr} "
+#         "--refnavig {input.ref_navig} "
+#         "--freq {input.ph_distr} "
+#         "--navig {input.navig} "
+#         "--sample_size {params.sample_size} "
+#         "--labels {params.ref_bp_rule} {wildcards.bp} "
+#         "-o {output} "
+
+
+rule plot_productive_walk_success_over_frequency:
     input:
         navig="bp_graph{bp}/ranking{rank}/navigability_per_ph_per_fl_pop{pop_size}_seed{seed}.csv",
         ref_navig="bp_graph%s/ranking{rank}/navigability_per_ph_per_fl_pop{pop_size}_seed{seed}.csv" % config["ref_bp_rule"],
         ph_distr="bp_graph{bp}/ranking{rank}/phenotype_distribution.txt",
         ref_ph_distr="bp_graph%s/ranking{rank}/phenotype_distribution.txt" % config["ref_bp_rule"]
     output:
-        "bp_graph{bp}/ranking{rank}/analysis/navigability_over_freq_werror_{pop_size}_seed{seed}.pdf"
+        "bp_graph{bp}/ranking{rank}/analysis/navigability_over_freq_{pop_size}_seed{seed}.pdf"
     params:
         sample_size=config["adaptive_walks"]["sample_size_walks"],  # how many walks per phenotype per random fitness landscape instance
         ref_bp_rule=config["ref_bp_rule"]
     shell:
-        "plot_adaptive_walk_success_over_freq_werror.py "
+        "plot_adaptive_walk_success_over_freq_paper.py "
         "--reffreq {input.ref_ph_distr} "
         "--refnavig {input.ref_navig} "
         "--freq {input.ph_distr} "
@@ -249,6 +284,7 @@ rule plot_productive_walk_success_over_frequency_werror:
         "--sample_size {params.sample_size} "
         "--labels {params.ref_bp_rule} {wildcards.bp} "
         "-o {output} "
+
 
 rule ruggedness_and_evolvability_analysis_plots:
     input:

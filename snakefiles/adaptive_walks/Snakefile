@@ -123,6 +123,20 @@ rule compute_navigability_per_ph_per_fl:
         "-s {params.sample_size} "
         "-o {output} "
 
+rule compute_navigability_per_fl_and_ruggedness:
+    input:
+        walk_length_files="walk_length_files",
+        fitness_landscapes="fitness_landscape_files",
+        nc_graph="nc_graph"
+    output:
+        "navigability_per_fl.txt"
+    shell:
+        "compute_navigability_per_fl_and_ruggedness.py "
+        "-w {input.walk_length_files} "  # assumes one per fitness landscape
+        "-f {input.fitness_landscapes} "
+        "-n {input.nc_graph} "
+        "-o {output} "
+
 rule compute_uphill_navigability_per_ph_per_fl:
     input:
         paths=["adaptive_path_files"],

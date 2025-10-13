@@ -45,7 +45,7 @@ if __name__ ==  "__main__":
 
         ax = axes[hacky_i]
         if hacky_i in [3]:
-            ax.set_ylabel("Neutral component size (log10)", fontsize=40)
+            ax.set_ylabel("Neutral component size (log10)", fontsize=60)
         else:
             for tick in ax.yaxis.get_major_ticks():
                 tick.tick1line.set_visible(False)
@@ -53,21 +53,22 @@ if __name__ ==  "__main__":
                 # tick.label1.set_visible(False)
                 # tick.label2.set_visible(False)     
         if hacky_i == 7:
-            ax.set_xlabel("Neutral components", fontsize=40)
+            ax.set_xlabel("Rank", fontsize=60)
 
         # ax.set_ylim([-7, -1])
         if hacky_i != 2:
-            ax.set_xlim([-10, 250])
+            ax.set_xlim([-5, 1000])
         else:
-            ax.set_xlim([-10, 1100])
+            ax.set_xlim([-20, 3000])
 
-        ax.grid(axis='y', zorder=30)
-        ax.grid(axis='x', zorder=30)
+        # ax.grid(axis='y', zorder=30)
+        # ax.grid(axis='x', zorder=30)
 
         nc = read_nc_file(file)
     
         x = range(1, len(nc)+1)
-        ax.plot(x, np.log10(nc), label=f"Base-pairing {i+1}", color="black", linewidth=10, zorder=10)
+        ax.plot(x, np.log10(nc), label=f"g-p map {i+1}", color=f"C{i}", zorder=10)
+        ax.scatter(x[0], np.log10(nc[0]), color=f"C{i}", zorder=15)
 
     ref_file = nc_files[args.ref-1]
     
@@ -77,12 +78,14 @@ if __name__ ==  "__main__":
 
     ref_nc_coarse = [ref_nc[i] for i in range(0, len(ref_nc), step)]  
     ref_x = range(1, len(ref_nc)+1, step)
+    x = range(1, len(ref_nc)+1)
     for ax in axes:
-        ax.plot(ref_x, np.log10(ref_nc_coarse), color="0.4", linewidth=10, label="Natural base-pairing", zorder=20, linestyle="dotted")
+        ax.plot(x, np.log10(ref_nc), color="C3", label="canon. g-p map", zorder=-20)
+        ax.scatter(x[0], np.log10(ref_nc[0]), color=f"C3", zorder=-15)
         ax.legend(loc="upper right", prop={'size': 25}, frameon=False)
     
-        ax.tick_params(axis='both', which='major', labelsize=20)
-        ax.tick_params(axis='both', which='minor', labelsize=8)
+        ax.tick_params(axis='both', which='major', labelsize=30)
+        ax.tick_params(axis='both', which='minor', labelsize=30)
 
     plt.tight_layout()
     plt.savefig(args.output, format="pdf", dpi=30)

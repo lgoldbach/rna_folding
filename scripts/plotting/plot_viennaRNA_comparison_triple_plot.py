@@ -35,7 +35,11 @@ if __name__ ==  "__main__":
     args = parser.parse_args()
 
     fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(15, 5))
-
+    ax1.set_box_aspect(1)
+    ax2.set_box_aspect(1)
+    ax3.set_box_aspect(1)
+    labelsize=18
+    axislabel_size=18
     ### phenotype bias part
     phenotypes, distr = ranked_ph_distribution(ph_distr_file=args.ref,
                                                 log=True)
@@ -43,22 +47,24 @@ if __name__ ==  "__main__":
     distr = distr[1:]  # remove unfolded phenotype frequency
     x = range(1, distr.shape[0]+1)
     
-    sc = ax1.plot(x, distr, marker="", label=f"ViennaRNA", color="black", linewidth=7)
+    # sc = ax1.plot(x, distr, marker="", label=f"ViennaRNA", color="black", linewidth=7)
+    sc = ax1.scatter(x, distr, color="0.2", zorder=10,  label=f"ViennaRNA g-p map", marker="s", s=30) # , edgecolor="black", linewidth=0.5)
 
     phenotypes, distr = ranked_ph_distribution(ph_distr_file=args.phenotype_dist,
                                                 log=True)
     distr = distr[1:]  # remove unfolded phenotype frequency
     x = range(1, distr.shape[0]+ 1)
     
-    sc = ax1.plot(x, distr, marker="", label=f"Global ranking", color="0.4", linewidth=7, linestyle="dotted", zorder=10)
+    # sc = ax1.plot(x, distr, marker="", label=f"Global ranking", color="0.4", linewidth=7, linestyle="dotted", zorder=10)
+    sc = ax1.scatter(x, distr, color="orange", zorder=10, label=f"mfe-score g-p map", s=35) # edgecolor="black", linewidth=0.5)
 
-    ax1.tick_params(axis='both', which='major', labelsize=12)
-    ax1.tick_params(axis='both', which='minor', labelsize=8)
+    ax1.tick_params(axis='both', which='major', labelsize=labelsize)
+    ax1.tick_params(axis='both', which='minor', labelsize=labelsize)
 
-    ax1.set_xlabel("Phenotypes", fontsize=15)
-    ax1.set_ylabel("Phenotype frequency (log10)", fontsize=15)
-    ax1.grid()
-    ax1.legend(loc="lower left", prop={'size': 15}, frameon=False)
+    ax1.set_xlabel("Phenotypes", fontsize=axislabel_size)
+    ax1.set_ylabel("Phenotype frequency (log10)", fontsize=axislabel_size)
+    # ax1.grid()
+    ax1.legend(loc="lower left", prop={'size': 18}, frameon=False)
 
     ### neutral component part
     nc_sizes = []
@@ -77,7 +83,8 @@ if __name__ ==  "__main__":
             pass
 
     x = range(nc_sizes.shape[0])
-    ax2.plot(x[1:], np.log10(nc_sizes)[1:], marker="", label=f"ViennaRNA", color="black", linewidth=7, markersize=5)
+    # ax2.plot(x[1:], np.log10(nc_sizes)[1:], marker="", label=f"ViennaRNA", color="black", linewidth=7, markersize=5)
+    sc = ax2.scatter(x[1:], np.log10(nc_sizes)[1:], color="0.2", zorder=10,  label=f"ViennaRNA g-p map", marker="s", s=30)
 
     nc_sizes = []
     with open(args.nc, "r") as file:
@@ -102,21 +109,25 @@ if __name__ ==  "__main__":
     step_nc_sizes = [nc_sizes[i] for i in range(0, len(nc_sizes), step)]  
     
     step_x = range(0, len(nc_sizes), step)
-    ax2.plot(step_x, np.log10(step_nc_sizes), marker="", label=f"Global ranking", color="0.4", linewidth=7, zorder=10, linestyle="dotted")
+    # ax2.plot(step_x, np.log10(step_nc_sizes), marker="", label=f"Global ranking", color="0.4", linewidth=7, zorder=10, linestyle="dotted")
+    sc = ax2.scatter(np.arange(start=1, stop=len(nc_sizes)+1), np.log10(nc_sizes), color="orange", zorder=10, label=f"mfe-score g-p map", s=35)
+    ax2.tick_params(axis='both', which='major', labelsize=labelsize)
+    ax2.tick_params(axis='both', which='minor', labelsize=labelsize)
 
-    ax2.tick_params(axis='both', which='major', labelsize=12)
-    ax2.tick_params(axis='both', which='minor', labelsize=8)
+    ax2.set_xlabel("Neutral components", fontsize=axislabel_size)
+    ax2.set_ylabel("Neutral component size (log10)", fontsize=axislabel_size)
+    # ax2.grid()
+    ax2.legend(loc="lower left", prop={'size': 18}, frameon=False)
 
-    ax2.set_xlabel("Neutral components", fontsize=15)
-    ax2.grid()
-    ax2.legend(loc="upper right", prop={'size': 15}, frameon=False)
-
-
-    ax2.set_ylabel("Neutral component size (log10)", fontsize=15)
     
     ### navigability over frequency part
     ref_ph, ref_freq = load_phenotype_and_metric_from_file(args.ref, dtype=int)
     ph, freq = load_phenotype_and_metric_from_file(args.phenotype_dist, dtype=int)
+
+    sum_f = np.sum(ref_freq)
+    ref_freq = [fre/sum_f for fre in ref_freq]
+    sum_f = np.sum(freq)
+    freq = [fre/sum_f for fre in freq]
 
     unf_idx = np.where(ph=="............")
     ph = np.delete(ph, unf_idx)
@@ -125,12 +136,6 @@ if __name__ ==  "__main__":
     unf_idx = np.where(ref_ph=="............")
     ref_ph = np.delete(ref_ph, unf_idx)
     ref_freq = np.delete(ref_freq, unf_idx)
-
-
-    sum_f = np.sum(ref_freq)
-    ref_freq = [fre/sum_f for fre in ref_freq]
-    sum_f = np.sum(freq)
-    freq = [fre/sum_f for fre in freq]
 
     ref_freq_sort, ref_ph_sort = zip(*sorted(zip(ref_freq, ref_ph)))  # sort both lists by frequency
     freq_sort, ph_sort = zip(*sorted(zip(freq, ph)))  # sort both lists by frequency
@@ -187,23 +192,25 @@ if __name__ ==  "__main__":
     ref_l = "ViennaRNA"
     query_l = "Global ranking"
     
-    ax3.errorbar(np.log10(x_ref), np.array(y_ref), yerr=np.array(y_err_2d_ref), label=ref_l, linestyle='', marker='s', elinewidth=0.2, color="black", alpha=1, markeredgewidth=0, markersize=7)
-    ax3.errorbar(np.log10(x_query), np.array(y_query), yerr=np.array(y_err_2d), label=query_l, linestyle='', marker='o', elinewidth=0.2, color="0.6", alpha=0.8, markeredgewidth=0, markersize=7)
+    # ax3.errorbar(np.log10(x_ref), np.array(y_ref), yerr=np.array(y_err_2d_ref), label=ref_l, linestyle='', marker='s', elinewidth=0.2, color="0.2", alpha=1, markeredgewidth=0, markersize=7)
+    # ax3.errorbar(np.log10(x_query), np.array(y_query), yerr=np.array(y_err_2d), label=query_l, linestyle='', marker='o', elinewidth=0.2, color="orange", alpha=0.8, markeredgewidth=0, markersize=7)
+    ax3.errorbar(np.log10(x_ref), np.array(y_ref), yerr=0, label=ref_l, linestyle='', marker='s', elinewidth=0.2, color="0.2", alpha=1, markeredgewidth=0, markersize=7)
+    ax3.errorbar(np.log10(x_query), np.array(y_query), yerr=0, label=query_l, linestyle='', marker='o', elinewidth=0.2, color="orange", alpha=0.8, markeredgewidth=0, markersize=7)
   
 
-    ax3.set_xlabel("Phenotype frequency (log10)", fontsize=15)
-    ax3.set_ylabel("Phenotype accessibility", fontsize=15)
+    ax3.set_xlabel("Phenotype frequency (log10)", fontsize=axislabel_size)
+    ax3.set_ylabel("Fraction of successful\nadaptive walks", fontsize=axislabel_size)
 
-    plt.tight_layout()
 
     plt.yticks([0, .2, .4, .6, .8, 1])
-    ax3.tick_params(axis='both', which='major', labelsize=12)
-    ax3.tick_params(axis='both', which='minor', labelsize=8)
+    ax3.tick_params(axis='both', which='major', labelsize=labelsize)
+    ax3.tick_params(axis='both', which='minor', labelsize=labelsize)
 
-    ax3.grid(zorder=-1)
+    # plt.axis('scaled')
+    # ax3.grid(zorder=-1)
     # ax3.grid(axis="y", zorder=-1)
 
     # ax3.set_ylim(-3, 103)
-    ax3.legend(loc="upper left", frameon=False, fancybox=False, prop={'size': 15})
-        
+    ax3.legend(loc="upper left", frameon=False, fancybox=False, prop={'size': 18})
+    plt.tight_layout()        
     plt.savefig(args.output, format="pdf", dpi=30)

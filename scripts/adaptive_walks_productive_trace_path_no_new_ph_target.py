@@ -40,16 +40,19 @@ if __name__ ==  "__main__":
 
     phenotypes = G.phenotype_set
     
-    # load fl. There is no target phenotype yet. All phenotype have fitness
+    # load fl. There will be no new target phenotype selected. All phenotype have fitness
     # in the interval [0, 1)
     ph_to_fitness = {}
+    max_fit = 0
     with open(args.fl, "r") as f:
         for line in f:
             data = line.strip().split(" ")
             phenotype = data[0]
             fitness = float(data[1])
             ph_to_fitness[phenotype] = fitness
-    
+            if fitness > max_fit:
+                max_fit = fitness
+                print("X", max_fit, phenotype, flush=True)
     fix_prob = lambda x, y: kimura_fixation_from_fitness(x, y, N=args.population_size)
     T = pairwise_transition_prob_dict(f_map=ph_to_fitness, func=fix_prob)
 
@@ -65,7 +68,7 @@ if __name__ ==  "__main__":
     
     start_gt = rng.choice(potential_starting_nodes, size=min(args.sample_size_walks, len(potential_starting_nodes)), replace=False)
 
-    adaptive_walk_lengths = []  # store adaptive walk lenghts for each phenotype
+    adaptive_walk_lengths = []  # store adaptive walk lenghts
     paths = []  # store whole paths of genotypes 
 
     for g in start_gt:
@@ -74,9 +77,10 @@ if __name__ ==  "__main__":
                                 fitness_function=ph_to_fitness, 
                                 T=T,
                                 max_steps=args.max_steps,
-                                rng=rng)
+                                rng=rng, max_fit=max_fit)
         
-        if ph_to_fitness[G.map(path[-1])] == 1:  # walk reached target
+        print(ph_to_fitness[G.map(path[-1])], G.map(path[-1]), flush=True)
+        if ph_to_fitness[G.map(path[-1])] == max_fit:  # walk reached target
             adaptive_walk_lengths.append(len(path))
         else:
             adaptive_walk_lengths.append(-1)  # walk didn't reach target

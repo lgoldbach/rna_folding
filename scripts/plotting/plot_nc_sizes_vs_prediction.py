@@ -75,6 +75,9 @@ num_red_mut = {2: 2,
 
 fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
 
+ax1.set_box_aspect(1)
+ax2.set_box_aspect(1)
+
 x = []
 y = []
 
@@ -122,19 +125,18 @@ for i, l in enumerate(new_order, start=1):
     nc_n_std = np.std([len(nc_est) for nc_est in nc_ests])
     nc_n_mean = np.mean([len(nc_est) for nc_est in nc_ests])
     if i == 4:
-        label = "Natural"
+        label = "canon."
     else:
         label = f"{i}"
-    # sc = ax2.scatter(nc_n_truth, nc_n_mean, label=label)
-    # col = sc.get_facecolors()[0].tolist()  # get color
+    sc = ax2.scatter(nc_n_truth, nc_n_mean, label=label)
+    col = sc.get_facecolors()[0].tolist()  # get color
     # ax.scatter(nc_n_truth, nc_n_est_all[1], color=col)
     # ax.scatter(nc_n_truth, nc_n_est_all[2], color=col)
     x.append(nc_n_truth)
     y.append(nc_n_mean)
-    # ax2.set_aspect("equal")
-    # ax2.set_xlim(0, 1050)
-    # ax2.set_ylim(0, 1050)
-    # ax2.plot([0, 1050], [0, 1050], zorder=-5, linestyle="--", color="black", linewidth=0.5)
+    ax2.set_xlim(0, 1050)
+    ax2.set_ylim(0, 1050)
+    ax2.plot([0, 1050], [0, 1050], zorder=-5, linestyle="--", color="black", linewidth=0.5)
 
     ### Estimate neutral component sizes
     nc_est = []
@@ -160,27 +162,32 @@ for i, l in enumerate(new_order, start=1):
     print(largest_nc_truth)
     x2.append(np.log10(largest_nc_truth))
     y2.append(np.log10(nc_est[0]))
-    # ax1.scatter(np.log10(largest_nc_truth), np.log10(nc_est[0]), label=label, color=col)
-    # ax1.set_aspect("equal")
-    # ax1.set_xlim(3, 6)
-    # ax1.set_ylim(3, 6)
-    # ax1.plot([3, 6], [3, 6], zorder=-5, linestyle="--", color="black", linewidth=0.5)
-    if i != 3:
-        ax1.scatter(np.log10(largest_nc_truth), nc_n_truth, label=label)
+    ax1.scatter(np.log10(largest_nc_truth), np.log10(nc_est[0]), label=label, color=col)
+    ax1.set_xlim(3, 6)
+    ax1.set_ylim(3, 6)
+    ax1.plot([3, 6], [3, 6], zorder=-5, linestyle="--", color="black", linewidth=0.5)
+    # if i != 3:
+    #     ax1.scatter(np.log10(largest_nc_truth), nc_n_truth, label=label)
 
+fontsize = 14
 r, p = pearsonr(x, y)
 p_str = "%.3g" % p
 ax2.text(30, 950, f'r = {np.round(r, 2)}\np = {p_str}')
-ax2.set_xlabel("Number of neutral components (log10)")
-ax2.set_ylabel("Predicted number of neutral components (log10)")
+ax2.set_xlabel("No. neutral components", fontsize=fontsize)
+ax2.set_ylabel("Predicted no. neutral components", fontsize=fontsize)
 # ax2.legend(loc="lower right", prop={'size': 8}, frameon=False, title="Base-pairing")
+
+ax1.tick_params(axis='both', which='major', labelsize=fontsize)
+ax1.tick_params(axis='both', which='minor', labelsize=fontsize)
+ax2.tick_params(axis='both', which='major', labelsize=fontsize)
+ax2.tick_params(axis='both', which='minor', labelsize=fontsize)
 
 r, p = pearsonr(x2, y2)
 p_str = "%.3g" % p
 ax1.text(3.08, 5.7, f'r = {np.round(r, 2)}\np = {p_str}')
-ax1.set_xlabel("Size of largest neutral component (log10)")
-ax1.set_ylabel("Predicted size of largest neutral component (log10)")
-ax1.legend(loc="lower right", prop={'size': 8}, frameon=False, title="RNA alphabet")
+ax1.set_xlabel("Size of largest\nneutral component (log10)", fontsize=fontsize)
+ax1.set_ylabel("Predicted size of\nlargest neutral component (log10)", fontsize=fontsize)
+ax1.legend(loc="lower right", prop={'size': 10}, frameon=False, title="g-p map", title_fontsize=fontsize)
 
 plt.tight_layout()
 plt.savefig(args.output, format="pdf", dpi=30)

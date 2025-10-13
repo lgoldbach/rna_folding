@@ -100,21 +100,22 @@ if __name__ ==  "__main__":
 
         # ax1.vlines(i, q1, q3, color="black", linewidth=1, zorder=5)
         if i == 1:  # only add label once for legend
-            ax.scatter(i, mean, color="black", marker="s", s=4, zorder=10, label="mean") 
+            ax.plot([i-.1, i+0.1], [mean, mean], color="red", zorder=10, linewidth=3, label="Mean: g-p map navigability") 
         else:
-            ax.scatter(i, mean, color="black", marker="s", s=4, zorder=10) 
+            ax.plot([i-.1, i+0.1], [mean, mean], color="red", zorder=10, linewidth=3)
+        print(i+1, mean)
 
 
 
-    ax.set_ylabel("Phenotype accessibility", fontsize=15)
-    ax.set_xlabel("RNA alphabet", fontsize=15)
+    ax.set_ylabel("Fraction of successful adaptive walks\nper target phenotype", fontsize=15)
+    ax.set_xlabel("g-p map", fontsize=15)
 
-    ax.tick_params(axis='both', which='major', labelsize=13)
-    ax.tick_params(axis='both', which='minor', labelsize=8)
+    ax.tick_params(axis='both', which='major', labelsize=15)
+    ax.tick_params(axis='both', which='minor', labelsize=15)
 
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set_xticks(list(range(0, 10)))
-    p =[1, 2, 3, "natural", 5, 6, 7, 8, 9, 10]
+    p =[1, 2, 3, "canon.", 5, 6, 7, 8, 9, 10]
     ax.set_xticklabels(p) #(list(range(1, 11)))
 
     ax.grid(axis="y", zorder=-1)
@@ -122,7 +123,7 @@ if __name__ ==  "__main__":
     # l = ax2.legend(title="Selection pressure", prop={'size': 12})
     # plt.setp(l.get_title(),fontsize=12)
 
-    # ax.legend(loc="lower center", frameon=False, fancybox=False)
+    ax.legend(loc="lower left", frameon=False, fancybox=False, prop={'size': 15})
 
     ax.set_ylim(0, 1)
 

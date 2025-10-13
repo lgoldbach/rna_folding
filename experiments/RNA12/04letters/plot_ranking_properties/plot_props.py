@@ -12,7 +12,7 @@ with open("phenotype_props.csv", "r") as f:
     bul = []
     bp = []
     unp = []
-    labels = ["Dangling ends", "Bulges", "Unpaired sites", "Bulges + Unpaired sites"]
+    labels = ["Dangling ends", "Bulges + Interior loops", "Unpaired sites", "Bulges + Interior Loops\n+ Unpaired sites"]
     for line_ in f:
         line = line_.strip().split(" ")
         ph.append(line[0])
@@ -27,16 +27,24 @@ with open("phenotype_props.csv", "r") as f:
 
     summ = [bul[i]+(unp[i]/2) for i in range(len(de))]
     for i, (x, ax, l) in enumerate(zip([de, bul, unp, summ], axes, labels)):
+
+        score_max = max(score)
+        score = [s/score_max for s in score]
         y = score
         xy = np.vstack([x, y])
         z = gaussian_kde(xy)(xy)
         cax = ax.scatter(x, score, c="black", s=20, marker="x")
+
         # fig.colorbar(cax)
         if i == 0:
-            ax.set_ylabel("Bradley-Terry score (a.u.)", size=15)
-        ax.set_xlabel(l, size=15)
+            ax.set_ylabel("mfe-score (a.u.)", size=20)
+        ax.set_xlabel(l, size=20)
         r, p = pearsonr(x, score)
         p_str = "%.3g" % p
-        ax.text(.7, .9, f'r = {np.round(r, 2)}\np = {p_str}', transform=ax.transAxes, horizontalalignment='left', size=10)
-    
+        ax.set_box_aspect(1)
+        ax.text(.6, .85, f'r = {np.round(r, 2)}\np = {p_str}', transform=ax.transAxes, horizontalalignment='left', size=15)
+        ax.tick_params(axis='both', which='major', labelsize=20)
+        ax.tick_params(axis='both', which='minor', labelsize=20)
+
+    plt.tight_layout(pad=1.3)
     plt.savefig("ranking_props.pdf", format="pdf", dpi=30)

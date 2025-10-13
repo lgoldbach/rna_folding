@@ -30,7 +30,6 @@ def find_mut_group(init_pair, possible_pairs, pair_neighbors):
 graph_path = "../../../../data/graphs/"
 
 
-
 def compute_mut_groups(rule_id, bases):
     print("BP: ", rule_id, " bases: ", bases)
     BP = BasePairing(bases=bases, id=rule_id, graph_path=graph_path)

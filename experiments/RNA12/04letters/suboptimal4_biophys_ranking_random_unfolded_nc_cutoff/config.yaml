@@ -60,15 +60,15 @@ random_fitness_landscape_params:
 adaptive_walks:
   population_sizes: 
     # - 10
-    # - 1000
-    - 1000000
+    - 1000
+    # - 1000000
   max_steps: 1000
   sample_size_walks: 1000
 
 adaptive_walks_vienna:
   population_sizes: 
     - 1000000
-    - 1000
+    # - 1000
 
 
 

@@ -18,7 +18,7 @@ rule multiplot_neutral_comp_sizes:
     output:
         "neutral_component_sizes.pdf"
     params:
-        ref=1  # example value
+        ref=None  # example value
     shell:
         "plot_neutral_comp_size_multiplot.py "
         "-i {input} "

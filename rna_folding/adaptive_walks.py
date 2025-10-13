@@ -127,9 +127,10 @@ def productive_adaptive_walk_w_T(gpmap: GenotypePhenotypeGraph,
                   fitness_function,
                   T,
                   max_steps,
-                  rng) -> list:
+                  rng,
+                  max_fit=1) -> list:
     path = [starting_genotype]
-    if fitness_function[gpmap.map(path[-1])] == 1:
+    if fitness_function[gpmap.map(path[-1])] == max_fit:
         return path
     
     while len(path) < max_steps:
@@ -144,7 +145,7 @@ def productive_adaptive_walk_w_T(gpmap: GenotypePhenotypeGraph,
         normed_probs = np.array(probs) / sum(probs)
         candidate = rng.choice(neighbors, p=normed_probs)
         path.append(candidate)
-        if fitness_function[gpmap.map(candidate)] == 1:  # found target phenotype
+        if fitness_function[gpmap.map(candidate)] == max_fit:  # found target phenotype
             break
     return path
 

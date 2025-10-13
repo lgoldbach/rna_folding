@@ -13,8 +13,8 @@ from rna_folding.parsing import many_to_one_map_from_file_to_dict
 # compare overall fraction and without redundant mut
 # show that without redundant mut, they are similar in evolvability
 
-fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(ncols=2, nrows=2, figsize=(10, 5))
-bp_ids = [2, 3, 5, 7, 6, 4, 9, 8, 10, 11]
+# fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(ncols=2, nrows=2, figsize=(10, 5))
+# bp_ids = [2, 3, 5, 7, 6, 4, 9, 8, 10, 11]
 # bp_ids = [4]
 
 allowed_mut = {1: {'J': ['K', 'L', 'M'], 'K': ['J', 'M'], 'L': ['J', 'M'], 'M': ['J', 'L', 'K']},
@@ -113,18 +113,53 @@ for i, bpid in enumerate(bp_ids, start=1):
     nc_evolv_all_bp_rules.append(nc_evolvs_all)
     nc_evolv_allowed_bp_rules.append(nc_evolvs_allowed)
 
-ax1.boxplot(nc_evolv_all_bp_rules)
-ax2.boxplot(nc_evolv_allowed_bp_rules)
+# ax1.boxplot(nc_evolv_all_bp_rules)
+# ax2.boxplot(nc_evolv_allowed_bp_rules)
 
-ax3.errorbar(np.arange(len(nc_evolv_all_bp_rules)), [np.mean(e) for e in nc_evolv_all_bp_rules], yerr=[np.std(e) for e in nc_evolv_all_bp_rules], ls='none', marker="o")
-ax4.errorbar(np.arange(len(nc_evolv_allowed_bp_rules))+0.15, [np.mean(e) for e in nc_evolv_allowed_bp_rules], yerr=[np.std(e) for e in nc_evolv_allowed_bp_rules], ls='none', marker="o")
-ax4.errorbar(np.arange(len(nc_evolv_all_bp_rules))-0.15, [np.mean(e) for e in nc_evolv_all_bp_rules], yerr=[np.std(e) for e in nc_evolv_all_bp_rules], ls='none', marker="o")
+# ax3.errorbar(np.arange(len(nc_evolv_all_bp_rules)), [np.mean(e) for e in nc_evolv_all_bp_rules], yerr=[np.std(e) for e in nc_evolv_all_bp_rules], ls='none', marker="o")
+# ax4.errorbar(np.arange(len(nc_evolv_allowed_bp_rules))+0.15, [np.mean(e) for e in nc_evolv_allowed_bp_rules], yerr=[np.std(e) for e in nc_evolv_allowed_bp_rules], ls='none', marker="o")
+# ax4.errorbar(np.arange(len(nc_evolv_all_bp_rules))-0.15, [np.mean(e) for e in nc_evolv_all_bp_rules], yerr=[np.std(e) for e in nc_evolv_all_bp_rules], ls='none', marker="o")
+pickle.dump(nc_evolv_allowed_bp_rules, open("nc_evolv_allowed_bp_rules.pkl", "wb"))
+pickle.dump(nc_evolv_all_bp_rules, open("nc_evolv_all_bp_rules.pkl", "wb"))
 
+fig, ax = plt.subplots()
+
+nc_evolv_allowed_bp_rules = pickle.load(open("nc_evolv_allowed_bp_rules.pkl", "rb"))
+nc_evolv_all_bp_rules = pickle.load(open("nc_evolv_all_bp_rules.pkl", "rb"))
+
+ax.set_box_aspect(1)
+# for i, e in enumerate(nc_evolv_allowed_bp_rules):
+#     print(i, max(e))
+
+# print("\n\n")
+# for i, e in enumerate(nc_evolv_all_bp_rules):
+#     print(i, max(e), np.mean(e))
+
+
+ax.bar(np.arange(start=1, stop=11)+0.2, [np.mean(e) for e in nc_evolv_allowed_bp_rules], width=0.4, color="orange", label="non-redundant neighborhood")
+ax.bar(np.arange( start=1, stop=11)-0.2, [np.mean(e) for e in nc_evolv_all_bp_rules], width=0.4, color="grey", label="complete neighborhood")
+
+fontsize = 15
+x_tick_fontsize=15
+y_tick_fontsize=15
+ax.set_xticks(list(range(1, 11)))
+p =[1, 2, 3, " ", 5, 6, 7, 8, 9, 10]
+ax.set_xticklabels(p) #(list(range(1, 11)))
+ax.tick_params(axis='y', which='major', labelsize=y_tick_fontsize)
+ax.tick_params(axis='y', which='minor', labelsize=y_tick_fontsize)
+ax.tick_params(axis='x', which='major', labelsize=x_tick_fontsize)
+ax.tick_params(axis='x', which='minor', labelsize=x_tick_fontsize)
+ax.set_ylabel("Fraction of novel phenotypes\nin neutral component neighborhood", size=fontsize)
+ax.set_xlabel("g-p map", size=fontsize)
+ax.legend(loc="upper left", fontsize=10, title_fontsize=10, frameon=False)
+
+ax.set_ylim(0, 0.014)
+
+ax.set_title("canon.")
+
+plt.tight_layout()
 plt.savefig("boxplot_mut_impact.pdf", format="pdf")
         
-for i in range(10):
-    print("AAASDASDAS" * 1)
-
     
     # def create_all_neighbors(gt, alphabet, sites):
     #     neighbors = []

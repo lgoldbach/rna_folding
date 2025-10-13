@@ -22,13 +22,16 @@ if __name__ ==  "__main__":
     
     args = parser.parse_args()
     fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(15, 5), sharey=False)
-    
+    for ax in (ax1, ax2, ax3):
+        ax.set_box_aspect(1)
     rug_x_m_all = []
     y_m_all = []
     x_m_all = []
     new_order = [2, 3, 5, 7, 6, 4, 9, 8, 10, 11]
     new_order_idx = [i - 2 for i in new_order]
-    labels = ["1", "2", "3", "natural", "5", "6", "7", "8", "9", "10"]
+    labels = ["1", "2", "3", "canon.", "5", "6", "7", "8", "9", "10"]
+    x_all = []
+    y_all = []
     all_gt = 4**12
     for idx, label in zip(new_order_idx, labels):
         print(idx)
@@ -66,15 +69,20 @@ if __name__ ==  "__main__":
         for ph, c in zip(phenotypes, counts):
             if c > 0 and ph != "............":
                 folded_counts += c
-
+    
         for ph, c in zip(phenotypes, counts):
             if c > 0 and ph != "............":
                 x.append(c/(rugged_av[ph]+c))
                 rug_x.append((rugged_av[ph]+c)/folded_counts)
-                # rug_x.append(rugged_av[ph]+c)
+                
                 y.append(np.mean(ph_to_navig[ph]))  # mean navigability   
 
-        im = ax1.scatter(x, y, s=15, alpha=.5, linewidths=0)
+        im = ax1.scatter(x, y, s=20, alpha=.6, linewidths=0)
+        x_all += x
+        y_all += y
+
+        # add a hidden point outside of data limit that is not opague for the legend
+        ax1.scatter(-1, -1, s=20, linewidths=0, color="C"+str(idx), label=label)
 
         rug_x_m = np.mean(rug_x)
         rug_x_std = np.std(rug_x)
@@ -95,8 +103,11 @@ if __name__ ==  "__main__":
         yq2 = [np.percentile(y, q=75)-y_m]
 
         ax2.errorbar(rug_x_m, y_m, xerr=(rxq1, rxq2), yerr=(yq1, yq2), elinewidth=1, marker="s", markersize=5, label=label)
-    
-        ax1.errorbar(x_m, y_m, xerr=(xq1, xq2), yerr=(yq1, yq2), elinewidth=1.5, marker="s", markersize=5, label=label)
+        print(label, y_m)
+        ax1.errorbar(x_m, y_m, xerr=(xq1, xq2), yerr=(yq1, yq2), elinewidth=1.5, marker="s", markersize=5)
+        # add handle for centroid to add to legend
+        if label == "3":
+            ax1.errorbar(x_m, y_m, xerr=(xq1, xq2), yerr=(yq1, yq2), elinewidth=1.5, marker="s", markersize=5, label="Centroid\nwith quartiles", color="black", zorder=-1)           
 
         rug_x_m_all.append(rug_x_m)
         x_m_all.append(x_m)
@@ -104,26 +115,34 @@ if __name__ ==  "__main__":
 
     r, p = pearsonr(rug_x_m_all, y_m_all)
     p_str = "%.3g" % p
-    ax2.text(.025, .9, f'r = {np.round(r, 2)}\np = {p_str}', transform=ax2.transAxes, horizontalalignment='left', size=10)
+    ax2.text(.025, .9, f'r = {np.round(r, 2)}\np = {p_str}', transform=ax2.transAxes, horizontalalignment='left', size=12)
 
     r, p = pearsonr(x_m_all, y_m_all)
     p_str = "%.3g" % p
-    ax1.text(.025, .9, f'r = {np.round(r, 2)}\np = {p_str}', transform=ax1.transAxes, horizontalalignment='left', size=10)
-        
-    ax1.set_xlabel("Target phenotype size / Ruggedness", size=15)
-    ax1.set_ylabel("Phenotype accessibility", size=15)
+    ax1.text(.025, .9, f'r = {np.round(r, 2)}\np = {p_str}', transform=ax1.transAxes, horizontalalignment='left', size=12)
+    
+    r, p = pearsonr(x_all, y_all)
+    p_str = "%.3g" % p
+    print(idx+1, r, p_str)
+
+    ax1.set_xlabel("Target phenotype freq. / Ruggedness", size=15)
+    ax1.set_ylabel("Fraction of successful adaptive walks\nper target phenotype", size=15)
     ax1.set_xlim(0, 1)
     ax1.set_ylim(0, 1)
+    ax1.tick_params(axis='both', which='major', labelsize=15)
+    ax1.tick_params(axis='both', which='minor', labelsize=15)
 
     ax2.set_xlabel("Ruggedness", size=15)
-    ax2.set_ylabel("Phenotype accessibility", size=15)
+    ax2.set_ylabel("g-p map navigability", size=15)
+    ax2.tick_params(axis='both', which='major', labelsize=15)
+    ax2.tick_params(axis='both', which='minor', labelsize=15)
 
-    ax3.set_xlabel("Target phenotype size / Ruggedness", size=15)
+    ax3.set_xlabel("Target phenotype freq. / Ruggedness", size=15)
     ax3.set_ylabel("Phenotype accessibility", size=15)
     ax3.set_xlim(0, 1)
     ax3.set_ylim(0, 1)    
     
-    ax1.legend(fontsize=9, title="g-p map", loc="lower right", frameon=False)
+    ax1.legend(fontsize=6, title="g-p map", loc="lower right", frameon=False)
     ax2.legend(fontsize=9, title="g-p map", loc="lower left", frameon=False)
     plt.tight_layout()
     plt.savefig(args.output, format="pdf", dpi=30)

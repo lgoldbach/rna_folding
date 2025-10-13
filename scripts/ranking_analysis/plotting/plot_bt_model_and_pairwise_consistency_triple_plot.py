@@ -121,7 +121,13 @@ if __name__ ==  "__main__":
 
     # combine all except the unmatches pairs
     total_balance = unbalanced_list + ([1]*balanced)  
-    
+    count_above_50 = 0
+    for c in total_balance:
+        if c > 0.75:
+            count_above_50 += 1
+    print(count_above_50, len(total_balance), count_above_50/len(total_balance))
+
+
     # s = sum(total_balance)
     # total_balance_norm = [i/s for i in total_balance]
     ax2.hist(total_balance, color=".4", edgecolor='white')
@@ -156,17 +162,17 @@ if __name__ ==  "__main__":
     left, bottom, width, height = [0.81, 0.3, 0.08, 0.23]
     ax4 = fig.add_axes([left, bottom, width, height])
     ax4.bar(range(30, len(scores)), scores[30:], color=".4")
-    ax4.tick_params(axis='both', which='major', labelsize=12)
+    ax4.tick_params(axis='both', which='major', labelsize=20)
     # ax3.set_xticks(range(len(scores)))
     # ax3.set_xticklabels(phenotypes)
     # ax.tick_params(axis='x', labelrotation=60, labelsize=8)
     # ax3.xticks(fontsize=10, rotation=55, ha="right")
 
-    ax3.tick_params(axis='both', which='major', labelsize=12)
+    ax3.tick_params(axis='both', which='major', labelsize=20)
 
 
-    ax3.set_xlabel("Rank", fontsize=18)
-    ax3.set_ylabel("mfe-score (a.u.)", fontsize=18)
+    ax3.set_xlabel("Rank", fontsize=28)
+    ax3.set_ylabel("mfe-score (a.u.)", fontsize=28)
 
     plt.tight_layout(rect=[0.1, 0.1, 0.9, 0.9])
     plt.savefig(args.output, format="pdf", dpi=30)
