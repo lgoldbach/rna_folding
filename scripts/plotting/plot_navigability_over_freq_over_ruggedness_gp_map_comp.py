@@ -25,7 +25,8 @@ if __name__ ==  "__main__":
     ax1.set_box_aspect(1)
     ax2.set_aspect("equal")
 
-    labels = ["RNA12", "HP5x5", "HP20"]
+    print(args.nc_graph)
+    labels = ["RNA12", "HP5x5", "HP20", "S_2,8"]
     for i, (nc_graph, navig, rugg, ph_dist, label) in enumerate(zip(args.nc_graph, args.navigability, args.ruggedness, args.ph_dist, labels)): 
         nc_graph = pickle.load(open(nc_graph, "rb"))
 
@@ -62,12 +63,13 @@ if __name__ ==  "__main__":
         x_m = np.mean(x)
         y_m = np.mean(y_nav)
 
-        xq1 = [x_m-np.percentile(x, q=25)]
+        xq1 = [max(0, x_m-np.percentile(x, q=25))]
         xq2 = [max(0, np.percentile(x, q=75)-x_m)]
     
-        yq1 = [y_m-np.percentile(y_nav, q=25)]
+        yq1 = [max(0, y_m-np.percentile(y_nav, q=25))]
         yq2 = [np.percentile(y_nav, q=75)-y_m]
 
+        print(xq1, xq2, x_m, np.percentile(x, q=25), np.percentile(x, q=25))
         ax1.errorbar(x_m, y_m, xerr=(xq1, xq2), yerr=(yq1, yq2), elinewidth=1, marker="s", markersize=7, label=label)
 
         p, res, l, o, k = np.polyfit(x, y_nav, 1, full=True)

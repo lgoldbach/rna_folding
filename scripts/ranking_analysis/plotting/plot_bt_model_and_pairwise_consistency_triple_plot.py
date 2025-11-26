@@ -37,12 +37,14 @@ if __name__ ==  "__main__":
     # consensus matrix plot
     phenotypes = np.loadtxt(args.phenotypes, dtype=str)
 
-
+    print(phenotypes, len(phenotypes))
     if args.ignore:
         # find index of phenotype to ignore
         ignore_idx = np.where(phenotypes==args.ignore)[0][0]
+        print(A.shape)
         A = np.delete(A, (ignore_idx), axis=0)  # delete respective row
         A = np.delete(A, (ignore_idx), axis=1)  # delete respective column
+        print(A.shape)
         # remove from phenotypes
         phenotypes = np.array([ph for ph in phenotypes if ph != args.ignore])
 
@@ -127,10 +129,17 @@ if __name__ ==  "__main__":
             count_above_50 += 1
     print(count_above_50, len(total_balance), count_above_50/len(total_balance))
 
+    all_pr = []
+    for i in range(A_ratio.shape[0]):
+        for j in range(A_ratio.shape[1]):
+            if i != j:
+                if A_ratio[i, j] != 0 and A_ratio[j, i] != 0:
+                    all_pr.append(A_ratio[i, j])
 
+    print(len(all_pr), len(all_pr)/2)
     # s = sum(total_balance)
     # total_balance_norm = [i/s for i in total_balance]
-    ax2.hist(total_balance, color=".4", edgecolor='white')
+    ax2.hist(all_pr, color=".4", edgecolor='white')
     ax2.set_xlabel("Pairwise consistency", fontsize=18)
     ax2.set_ylabel("Count", fontsize=18)
 

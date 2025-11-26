@@ -33,7 +33,7 @@ bp_e = {2: 1,
                 11: 6}
 
 
-edge_numbers = np.array([1, 2, 2, 3, 3, 3, 4, 4, 5, 6])/2
+edge_numbers = np.array([1, 2, 2, 3, 3, 3, 4, 4, 5, 6])/6
 fig, axes = plt.subplots(ncols=10, nrows=2, figsize=(50, 5))
 
 axislabel_size = 10
@@ -54,7 +54,7 @@ for c, (i, e) in enumerate(zip([2, 3, 5, 7, 6, 4, 9, 8, 10, 11], edge_numbers), 
     for p, k in zip(ph, counts):
         if k > 0 and p != "............":
             counter+=1
-    print(c+1, counter)
+
     counts = [count/4**12 for count in counts if count > 0]
     
     # print(sum(counts)/4**12)
@@ -66,13 +66,12 @@ for c, (i, e) in enumerate(zip([2, 3, 5, 7, 6, 4, 9, 8, 10, 11], edge_numbers), 
 
     p, res, l, o, k = np.polyfit(x, log_counts, 1, full=True)
     
-    print(res, p)
     poly1d_fn = np.poly1d(p) 
     m = p[0]
     b = p[1]
 
     slope, intercept, r_value, p_value, std_err = linregress(x, log_counts)
-    print(slope, r_value, p_value)
+    print("XXXX", c+1, slope, r_value, p_value)
 
 
 

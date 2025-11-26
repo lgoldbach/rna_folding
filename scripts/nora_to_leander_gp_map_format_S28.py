@@ -9,11 +9,11 @@ from rna_folding.parsing import dict_to_gpmap
 
 
 gp = pickle.load(open("gp_map_Nora.pkl", "rb"))
-alphabet = "10"
+alphabet = "01234567"
 
 print("Load done", flush=True)
 
-gt_gen = combinatorically_complete_genotypes(27, alphabet)
+gt_gen = combinatorically_complete_genotypes(8, alphabet)
 
 print(gp.shape, np.unique(gp), flush=True)
 
@@ -31,7 +31,7 @@ print("gp map gen start", flush=True)
 gp_map = GenotypePhenotypeGraph(genotypes=genotypes, phenotypes=phenotypes, alphabet=alphabet)
 print("gp map gen Done", flush=True)
 
-pickle.dump(gp_map, open("gp_map.pickle", "bw"), protocol=2)
+pickle.dump(gp_map, open("gp_map.pickle", "bw"))
 print("gp map dump Done", flush=True)
 
 with open("genotypes.txt", "w") as f:

@@ -32,8 +32,8 @@ if __name__ ==  "__main__":
     
     # here we just assemble all navigabilities for each phenotype on each fl
     nav = []
-    nav_per_bp = []
-    x = []
+    # nav_per_bp = []
+    # x = []
     # for i, id in enumerate(new_order_idx, start=1):
     #     nav_per_bp.append([])
     #     for ph in navigs[id]:
@@ -44,22 +44,35 @@ if __name__ ==  "__main__":
     #             nav_per_bp[-1].append(n)  # make list of lists 
 
 
-    # Take the mean of navigabilities for each phenotype over every fl
-    nav_per_bp_per_fl = []
-    nav_per_bp = []
-    for i, id in enumerate(new_order_idx, start=1):
-        nav_per_bp.append([])
-        for navigs_over_fls in navigs[id].values():  # per ph navigs
-            navig_per_ph_mean_over_fl = np.mean(navigs_over_fls)  # mean per ph over fls
-            nav_per_bp_per_fl.append(navig_per_ph_mean_over_fl)
-            x.append(i)
+    # # Take the mean of navigabilities for each phenotype over every fl
+    # nav_per_bp_per_fl = []
+    # nav_per_bp = []
+    # for i, id in enumerate(new_order_idx, start=1):
+    #     nav_per_bp.append([])
+    #     for navigs_over_fls in navigs[id].values():  # per ph navigs
+    #         navig_per_ph_mean_over_fl = np.mean(navigs_over_fls)  # mean per ph over fls
+    #         nav_per_bp_per_fl.append(navig_per_ph_mean_over_fl)
+    #         x.append(i)
 
-            nav_per_bp[-1].append(navig_per_ph_mean_over_fl)
-        
+    #         nav_per_bp[-1].append(navig_per_ph_mean_over_fl)
+
+    # pool navigabilities all navigabilities per bp (ignore phenotype distinction)
+    navigs_in_bp_order = []
+    navigs_per_bp = []
+    x = []
+    for i, id in enumerate(new_order_idx, start=1):
+        navigs_per_bp.append([])
+        for navigs_over_fls in navigs[id].values():  # per ph navigs
+            for navig in navigs_over_fls:
+                x.append(i) 
+                navigs_in_bp_order.append(navig)
+                navigs_per_bp[-1].append(navig)
+        print(i, len(x))
+            
 
     palette = ["0.9" if i != 4 else "0.6" for i in range(1, len(x))]
     ax = sns.boxplot(x=x,
-                y=nav_per_bp_per_fl, 
+                y=navigs_in_bp_order, 
                 ax=ax,
                 color="0.9",
                 linewidth=0.2,
@@ -92,7 +105,7 @@ if __name__ ==  "__main__":
 
 
     for i, id in enumerate(new_order_idx):
-        d = nav_per_bp[i]
+        d = navigs_per_bp[i]
         q1 = np.percentile(d, q=25)
         q3 = np.percentile(d, q=75)
         mean = np.mean(d)
@@ -123,7 +136,7 @@ if __name__ ==  "__main__":
     # l = ax2.legend(title="Selection pressure", prop={'size': 12})
     # plt.setp(l.get_title(),fontsize=12)
 
-    ax.legend(loc="lower left", frameon=False, fancybox=False, prop={'size': 15})
+    # ax.legend(loc="lower left", frameon=False, fancybox=False, prop={'size': 15})
 
     ax.set_ylim(0, 1)
 

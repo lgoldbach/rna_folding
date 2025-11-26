@@ -74,7 +74,7 @@ if __name__ ==  "__main__":
                 new_labels.append(l)
                 new_handels.append(h)
 
-        ax.legend(new_handels, new_labels, loc="upper right", prop={'size': 18}, frameon=False, title="g-p map", title_fontsize=18)
+        ax.legend(new_handels, new_labels, loc="upper right", prop={'size': 18}, frameon=False, title="GP map", title_fontsize=18)
    
 
     axes[0].set_xlim(-5, 275)
@@ -83,7 +83,7 @@ if __name__ ==  "__main__":
 
     for ax in axes:
         ax.set_ylim(1.9, 5.7)
-        ax.set_ylabel("Neutral component size (log10)", fontsize=22)
+        ax.set_ylabel("Neutral network size (log10)", fontsize=22)
         ax.set_xlabel("Rank", fontsize=22)
         ax.tick_params(axis='both', which='major', labelsize=22)
         ax.tick_params(axis='both', which='minor', labelsize=22)

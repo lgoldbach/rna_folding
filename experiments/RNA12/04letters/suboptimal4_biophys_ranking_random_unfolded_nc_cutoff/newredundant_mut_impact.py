@@ -14,15 +14,18 @@ from rna_folding.parsing import many_to_one_map_from_file_to_dict
 # show that without redundant mut, they are similar in evolvability
 
 # fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(ncols=2, nrows=2, figsize=(10, 5))
-# bp_ids = [2, 3, 5, 7, 6, 4, 9, 8, 10, 11]
-# bp_ids = [4]
+bp_ids = [2, 3, 5, 7, 6, 4, 9, 8, 10, 11]
+
+num_of_ph = [33, 36, 33, 36, 36, 32, 32, 36, 31, 19]
+
+# bp_ids = [4, 7]
 
 allowed_mut = {1: {'J': ['K', 'L', 'M'], 'K': ['J', 'M'], 'L': ['J', 'M'], 'M': ['J', 'L', 'K']},
                2: {'J': ['L', 'M'], 'K': ['L', 'M'], 'L': ['J', 'K', 'M'], 'M': ['J', 'L', 'K']},
                3: {'J': ['K', 'L', 'M'], 'K': ['J', 'L', 'M'], 'L': ['J', 'K', 'M'], 'M': ['J', 'L', 'K']},
                4: {'J': ['K', 'L', 'M'], 'K': ['J', 'L', 'M'], 'L': ['J', 'K', 'M'], 'M': ['J', 'L', 'K']},
                5: {'J': ['K', 'L', 'M'], 'K': ['J', 'L', 'M'], 'L': ['J', 'K', 'M'], 'M': ['J', 'L', 'K']},
-               6: {'J': ['K', 'L', 'M'], 'K': ['J'], 'L': ['J'], 'M': ['J']},
+               6: {'M': ['K', 'L', 'J'], 'K': ['M'], 'L': ['M'], 'J': ['M']},
                7: {'J': ['L', 'M'], 'K': ['L', 'M'], 'L': ['J', 'K'], 'M': ['J', 'K']},
                8: {'J': ['K', 'L', 'M'], 'K': ['J', 'L', 'M'], 'L': ['J', 'K', 'M'], 'M': ['J', 'L', 'K']},
                9: {'J': ['L', 'M'], 'K': ['L', 'M'], 'L': ['J', 'K', 'M'], 'M': ['J', 'L', 'K']},
@@ -48,7 +51,13 @@ def get_neighbors(gp_map, genotype):
 
 nc_evolv_all_bp_rules = []
 nc_evolv_allowed_bp_rules = []
+
+nc_evolv_all_bp_rules_series = {}
+nc_evolv_allowed_bp_rules_series = {}
+
 for i, bpid in enumerate(bp_ids, start=1):
+    # if bpid != 4 and bpid !=7:
+    #     continue
     print("BP: ", i)
     gp_map_path = f"bp_graph{bpid}/ranking1/gp_map.pickle"
     
@@ -67,51 +76,84 @@ for i, bpid in enumerate(bp_ids, start=1):
             nc = line[0]
             gts = line[2:]
             nc_to_gt[nc] = gts
-    
-    nc_evolvs_all = []
-    nc_evolvs_allowed = []
-    nc_evolv_all = {nc: {} for nc in list(nc_to_gt.keys())}
-    nc_evolv_allowed = {nc: {} for nc in list(nc_to_gt.keys())}
-    for nc, gts in nc_to_gt.items():
-        if len(gts) < 100:
-            continue
-        nc_evolvs_sample_all = []
-        nc_evolvs_sample_allowed = []
-        for k in range(5):
-            evolv_all_per_samp = {}
-            evolv_allowed_per_samp  = {}
-            neigh_count_all = 0
-            neigh_count_allowed = 0
-            gt_sample = np.random.choice(gts, size=50, replace=False)
+
+    nc_evolv_all_bp_rules_series[i] = []
+    nc_evolv_allowed_bp_rules_series[i] = []
+    for gt_sample_size in [1, 2, 5, 10, 50, 100]:
+
+        nc_evolvs_all = []
+        nc_evolvs_allowed = []
+        nc_evolv_all = {nc: {} for nc in list(nc_to_gt.keys())}
+        nc_evolv_allowed = {nc: {} for nc in list(nc_to_gt.keys())}
+        for nc, gts in nc_to_gt.items():
+            if len(gts) < 100:
+                continue
+            nc_evolvs_sample_all = []
+            nc_evolvs_sample_allowed = []
             nc_ph = gp_map.map(gts[0])  # get phenotype of the nc
-            for gt in gt_sample:
-                neighbors_all = get_neighbors(gp_map, gt)
-                neighbors_allowed = create_all_neighbors_allowed_mut(gt, allowed_mut = allowed_mut[i])
-                for n in neighbors_all:
-                    neigh_count_all += 1
-                    try:
-                        p = gp_map.map(n)
-                    except KeyError:  # unfolded neighbor, does not matter
-                        continue
-                    if p not in evolv_all_per_samp:  # add phenotype if it is not in there yet
-                        evolv_all_per_samp[p] = 1
-                for n in neighbors_allowed:
-                    neigh_count_allowed += 1
-                    try:
-                        p = gp_map.map(n)
-                    except KeyError:  # unfolded neighbor, does not matter
-                        continue
-                    if p not in evolv_allowed_per_samp:  # add phenotype if it is not in there yet
-                        evolv_allowed_per_samp[p] = 1
+            for k in range(5):  # how often to sample
+                evolv_all_per_samp = {}
+                evolv_allowed_per_samp  = {}
+                neigh_count_all = 0
+                neigh_count_allowed = 0
+                gt_sample = np.random.choice(gts, size=gt_sample_size, replace=False)  # how many gt to sample
+                for gt in gt_sample:
+                    neighbors_all = get_neighbors(gp_map, gt)
+                    neighbors_allowed = create_all_neighbors_allowed_mut(gt, allowed_mut = allowed_mut[i])
+                    for n in neighbors_all:
+                        # neigh_count_all += 1
+                        try:
+                            p = gp_map.map(n)                            
+                        except KeyError:  # unfolded neighbor, does not matter
+                            continue
+                        neigh_count_all += 1
+                        if p not in evolv_all_per_samp:  # add phenotype if it is not in there yet
+                            evolv_all_per_samp[p] = 1
+                    for n in neighbors_allowed:
+                        # neigh_count_allowed += 1
+                        try:
+                            p = gp_map.map(n)
+                        except KeyError:  # unfolded neighbor, does not matter
+                            continue
+                        neigh_count_allowed += 1
+                        if p not in evolv_allowed_per_samp:  # add phenotype if it is not in there yet
+                            evolv_allowed_per_samp[p] = 1
+                
+                if neigh_count_all == 0 or neigh_count_allowed == 0:
+                    continue
+                nc_evolvs_sample_all.append(len(evolv_all_per_samp.keys())/neigh_count_all)  # count unqiue phenotypes per sample
+                nc_evolvs_sample_allowed.append(len(evolv_allowed_per_samp.keys())/neigh_count_allowed)  # count unqiue phenotypes per sample
 
-            nc_evolvs_sample_all.append(len(evolv_all_per_samp.keys())/neigh_count_all)  # count unqiue phenotypes per sample
-            nc_evolvs_sample_allowed.append(len(evolv_allowed_per_samp.keys())/neigh_count_allowed)  # count unqiue phenotypes per sample
+            nc_evolvs_all.append(np.mean(nc_evolvs_sample_all))  # take mean over samples per nc
+            nc_evolvs_allowed.append(np.mean(nc_evolvs_sample_allowed))
+              
+        print(np.round(np.mean(nc_evolvs_all), 2), np.round(np.mean(nc_evolvs_allowed), 2))
+        nc_evolv_all_bp_rules_series[i].append(np.mean(nc_evolvs_all))
+        nc_evolv_allowed_bp_rules_series[i].append(np.mean(nc_evolvs_allowed))
 
-        nc_evolvs_all.append(np.mean(nc_evolvs_sample_all))  # take mean over samples per nc
-        nc_evolvs_allowed.append(np.mean(nc_evolvs_sample_allowed))
-    
-    nc_evolv_all_bp_rules.append(nc_evolvs_all)
-    nc_evolv_allowed_bp_rules.append(nc_evolvs_allowed)
+        nc_evolv_all_bp_rules.append(nc_evolvs_all)
+        nc_evolv_allowed_bp_rules.append(nc_evolvs_allowed)
+
+        
+fig, (axes) = plt.subplots(nrows=1, ncols=10, figsize=(50, 5))
+
+for i, a in enumerate(axes, start=1):
+    a.set_ylim(0, 1)
+    try:
+        print(nc_evolv_all_bp_rules_series[i])
+        a.plot([1, 2, 5, 10, 50, 100], nc_evolv_all_bp_rules_series[i], label="all")
+        a.plot([1, 2, 5, 10, 50, 100], nc_evolv_allowed_bp_rules_series[i], label="non-degen.")
+    except KeyError:
+        continue
+
+    a.legend()
+
+plt.savefig("unique_ph_series.pdf", format="pdf", dpi=10)
+
+exit()
+
+pickle.dump(nc_evolv_allowed_bp_rules, open("nc_evolv_allowed_bp_rules.pkl", "wb"))
+pickle.dump(nc_evolv_all_bp_rules, open("nc_evolv_all_bp_rules.pkl", "wb"))
 
 # ax1.boxplot(nc_evolv_all_bp_rules)
 # ax2.boxplot(nc_evolv_allowed_bp_rules)
@@ -119,8 +161,7 @@ for i, bpid in enumerate(bp_ids, start=1):
 # ax3.errorbar(np.arange(len(nc_evolv_all_bp_rules)), [np.mean(e) for e in nc_evolv_all_bp_rules], yerr=[np.std(e) for e in nc_evolv_all_bp_rules], ls='none', marker="o")
 # ax4.errorbar(np.arange(len(nc_evolv_allowed_bp_rules))+0.15, [np.mean(e) for e in nc_evolv_allowed_bp_rules], yerr=[np.std(e) for e in nc_evolv_allowed_bp_rules], ls='none', marker="o")
 # ax4.errorbar(np.arange(len(nc_evolv_all_bp_rules))-0.15, [np.mean(e) for e in nc_evolv_all_bp_rules], yerr=[np.std(e) for e in nc_evolv_all_bp_rules], ls='none', marker="o")
-pickle.dump(nc_evolv_allowed_bp_rules, open("nc_evolv_allowed_bp_rules.pkl", "wb"))
-pickle.dump(nc_evolv_all_bp_rules, open("nc_evolv_all_bp_rules.pkl", "wb"))
+
 
 fig, ax = plt.subplots()
 
@@ -136,8 +177,13 @@ ax.set_box_aspect(1)
 #     print(i, max(e), np.mean(e))
 
 
-ax.bar(np.arange(start=1, stop=11)+0.2, [np.mean(e) for e in nc_evolv_allowed_bp_rules], width=0.4, color="orange", label="non-redundant neighborhood")
-ax.bar(np.arange( start=1, stop=11)-0.2, [np.mean(e) for e in nc_evolv_all_bp_rules], width=0.4, color="grey", label="complete neighborhood")
+
+ax.bar(np.arange(start=1, stop=11)+0.2, [np.mean(e) for i, e in enumerate(nc_evolv_allowed_bp_rules)], width=0.4, color="orange", label="non-redundant neighborhood")
+ax.bar(np.arange( start=1, stop=11)-0.2, [np.mean(e) for i, e in enumerate(nc_evolv_all_bp_rules)], width=0.4, color="grey", label="complete neighborhood")
+
+# ax.bar(np.arange(start=1, stop=11)+0.2, [np.mean(e)/num_of_ph[i] for i, e in enumerate(nc_evolv_allowed_bp_rules)], width=0.4, color="orange", label="non-redundant neighborhood")
+# ax.bar(np.arange( start=1, stop=11)-0.2, [np.mean(e)/num_of_ph[i] for i, e in enumerate(nc_evolv_all_bp_rules)], width=0.4, color="grey", label="complete neighborhood")
+
 
 fontsize = 15
 x_tick_fontsize=15
@@ -153,7 +199,7 @@ ax.set_ylabel("Fraction of novel phenotypes\nin neutral component neighborhood",
 ax.set_xlabel("g-p map", size=fontsize)
 ax.legend(loc="upper left", fontsize=10, title_fontsize=10, frameon=False)
 
-ax.set_ylim(0, 0.014)
+# ax.set_ylim(0, 0.014)
 
 ax.set_title("canon.")
 

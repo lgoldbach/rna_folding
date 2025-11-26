@@ -173,8 +173,8 @@ fontsize = 14
 r, p = pearsonr(x, y)
 p_str = "%.3g" % p
 ax2.text(30, 950, f'r = {np.round(r, 2)}\np = {p_str}')
-ax2.set_xlabel("No. neutral components", fontsize=fontsize)
-ax2.set_ylabel("Predicted no. neutral components", fontsize=fontsize)
+ax2.set_xlabel("No. neutral networks", fontsize=fontsize)
+ax2.set_ylabel("Predicted no. neutral networks", fontsize=fontsize)
 # ax2.legend(loc="lower right", prop={'size': 8}, frameon=False, title="Base-pairing")
 
 ax1.tick_params(axis='both', which='major', labelsize=fontsize)
@@ -185,9 +185,9 @@ ax2.tick_params(axis='both', which='minor', labelsize=fontsize)
 r, p = pearsonr(x2, y2)
 p_str = "%.3g" % p
 ax1.text(3.08, 5.7, f'r = {np.round(r, 2)}\np = {p_str}')
-ax1.set_xlabel("Size of largest\nneutral component (log10)", fontsize=fontsize)
-ax1.set_ylabel("Predicted size of\nlargest neutral component (log10)", fontsize=fontsize)
-ax1.legend(loc="lower right", prop={'size': 10}, frameon=False, title="g-p map", title_fontsize=fontsize)
+ax1.set_xlabel("Size of largest\nneutral network (log10)", fontsize=fontsize)
+ax1.set_ylabel("Predicted size of\nlargest neutral network (log10)", fontsize=fontsize)
+ax1.legend(loc="lower right", prop={'size': 10}, frameon=False, title="GP map", title_fontsize=fontsize)
 
 plt.tight_layout()
 plt.savefig(args.output, format="pdf", dpi=30)

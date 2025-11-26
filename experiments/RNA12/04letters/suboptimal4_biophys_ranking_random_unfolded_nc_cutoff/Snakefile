@@ -34,14 +34,14 @@ rule all:
     input:
         expand("analysis/ranking{rank}/navigability_boxplot_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
         # expand("analysis/ranking{rank}/phenotype_bias.pdf", rank=config["rankings"]),
-        # expand("analysis/ranking{rank}/neutral_component_sizes_three_groups.pdf", rank=config["rankings"]),
+        expand("analysis/ranking{rank}/neutral_component_sizes_three_groups.pdf", rank=config["rankings"]),
         # expand("bp_graph{bp}/ranking{rank}/greedy_walk_lengths_seed{seed}.csv", rank=config["rankings"], seed=config["random_seed"], bp=config["base_pairing"])
         # expand("bp_graph{bp}/ranking{rank}/gp_map.pickle", bp=config["base_pairing"], rank=config["rankings"]),
         # expand("bp_graph{ref_bp}/ranking{rank}/analysis/vienna_comparison_triple_plot_pop{pop_size}_seed{seed}.pdf", ref_bp=config["ref_bp_rule"], pop_size=config["adaptive_walks_vienna"]["population_sizes"], seed=config["random_seed"], rank=config["rankings"]),
         # expand("bp_graph{bp}/ranking{rank}/analysis/navigability_over_freq_{pop_size}_seed{seed}.pdf", bp=config["base_pairing"], rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
-        # expand("analysis/ranking{rank}/nc_count_prediction_vs_truth.pdf", rank=config["rankings"]),
-        # expand("analysis/ranking{rank}/navigability_over_frequency_over_ruggedness_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
-        # expand("analysis/ranking{rank}/ruggedness_evolvability_mut_grou_red_mut_plots_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"])
+        expand("analysis/ranking{rank}/nc_count_prediction_vs_truth.pdf", rank=config["rankings"]),
+        expand("analysis/ranking{rank}/navigability_over_frequency_over_ruggedness_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"]),
+        expand("analysis/ranking{rank}/ruggedness_evolvability_mut_grou_red_mut_plots_pop{pop_size}_seed{seed}.pdf", rank=config["rankings"], pop_size=config["adaptive_walks"]["population_sizes"], seed=config["random_seed"])
         
 
 """GP MAP GENERATION """
