@@ -52,7 +52,30 @@ rule run_adaptive_walks_productive_trace_paths_no_new_ph_target:
         sample_size_walks=None,  # int
         avoid_phenotype=None,  # immutable
     shell:
-        "adaptive_walks_productive_trace_path_no_new_ph_target.py "
+        "adaptive_walks_productive_trace_path_no_new_ph_target_.py "
+        "-i {input.gp_map} "
+        "-f {input.fl} "
+        "-l {output.walk_lengths} "
+        "-p {output.paths} "
+        "-n {wildcards.pop_size} "
+        "-m {params.max_steps} "
+        "-a {params.avoid_phenotype} "
+        "-s {params.sample_size_walks} "
+        "-r {wildcards.seed} "
+
+rule run_adaptive_walks_productive_trace_paths_no_new_ph_target_no_T_precomp:
+    input:
+        fl="fl.txt",
+        gp_map="gp_map.pickle",
+    output:
+        walk_lengths="walk_lengths_seed{seed}.csv",
+        paths="paths_seed{seed}.csv"
+    params:        
+        max_steps=None,  # int
+        sample_size_walks=None,  # int
+        avoid_phenotype=None,  # immutable
+    shell:
+        "adaptive_walks_productive_trace_path_no_new_ph_target_no_T_precomp.py "
         "-i {input.gp_map} "
         "-f {input.fl} "
         "-l {output.walk_lengths} "
@@ -136,6 +159,21 @@ rule compute_navigability_per_fl_and_ruggedness:
         "-f {input.fitness_landscapes} "
         "-n {input.nc_graph} "
         "-o {output} "
+
+rule compute_nc_walk_navigability_per_fl_and_ruggedness:
+    input:
+        nc_paths="nc_path_files",
+        fitness_landscapes="fitness_landscape_files",
+        nc_graph="nc_graph"
+    output:
+        "navigability_per_fl.txt"
+    shell:
+        "compute_nc_walk_navigability_per_fl_and_ruggedness.py "
+        "-p {input.nc_paths} "  # assumes one per fitness landscape
+        "-f {input.fitness_landscapes} "
+        "-n {input.nc_graph} "
+        "-o {output} "
+
 
 rule compute_uphill_navigability_per_ph_per_fl:
     input:

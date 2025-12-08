@@ -20,11 +20,14 @@ print(gp.shape, np.unique(gp), flush=True)
 phenotypes = []
 genotypes = []
 for g in gt_gen:
-    gt_str = "".join(g)
-    genotypes.append(gt_str)
-    
     g_tup = tuple(int(s) for s in g) # turn str genotype into tuple
-    phenotypes.append(str(gp[g_tup]))
+    if str(gp[g_tup]) != '0':
+        gt_str = "".join(g)
+        genotypes.append(gt_str)
+    
+        phenotypes.append(str(gp[g_tup]))
+
+print(np.unique(phenotypes, return_counts=True), flush=True)
 
 
 print("gp map gen start", flush=True)

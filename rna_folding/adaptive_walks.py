@@ -3,6 +3,7 @@ from rna_folding.gp_map import GenotypePhenotypeGraph
 from typing import Callable, Type
 import copy
 from rna_folding.utils import remove_nonadaptive_edges
+import networkx as nx
 
 
 def kimura_fixation_from_fitness(f1: float, f2: float, N: int):
@@ -96,17 +97,18 @@ def productive_adaptive_walk(gpmap: GenotypePhenotypeGraph,
                   max_steps,
                   population_size,
                   fixation_function,
-                  rng) -> list:
+                  rng,
+                  max_fit=1) -> list:
     path = [starting_genotype]
-    if fitness_function[gpmap.nodes[path[-1]]["phenotype"]] == 1:
+    if fitness_function[gpmap.map(path[-1])] == max_fit:
         return path
     
     while len(path) < max_steps:
         probs = []
-        f1 = fitness_function[gpmap.nodes[path[-1]]["phenotype"]]
+        f1 = fitness_function[gpmap.map(path[-1])]
         neighbors = gpmap._neighbors(path[-1])
         for neigh in neighbors:
-            f2 = fitness_function[gpmap.nodes[neigh]["phenotype"]]
+            f2 = fitness_function[gpmap.map(neigh)]
             s = f2-f1
             p = fixation_function(s, N=population_size)
             probs.append(p)
@@ -117,7 +119,7 @@ def productive_adaptive_walk(gpmap: GenotypePhenotypeGraph,
         candidate = rng.choice(neighbors, p=normed_probs)
 
         path.append(candidate)
-        if fitness_function[gpmap.nodes[candidate]["phenotype"]] == 1:  # found target phenotype
+        if fitness_function[gpmap.map(candidate)] == max_fit:  # found target phenotype
             break
     return path
 
@@ -211,6 +213,28 @@ def greedy_adaptive_walk_no_neutral(gpmap: GenotypePhenotypeGraph,
         else:
             break  # no higher fitness found, end path
         
+    return path
+
+def nc_uniform_adaptive_walk(nc_graph: nx.DiGraph, 
+                             starting_nc,
+                             max_steps,
+                             rng) -> list:
+    path = [starting_nc]
+
+    while len(path) < max_steps:
+        print(path, flush=True)
+        successors = list(nc_graph.successors(path[-1]))
+        # reached a peak if there are no successors in digraph
+        if not successors:  
+            print(successors, flush=True)
+            break
+        else:
+            print(successors, flush=True)
+            # randomly choose a successor (uniform adaptive walk)
+            next_nc = rng.choice(successors)  
+            print(next_nc, flush=True)
+            path.append(next_nc)
+
     return path
 
 def pairwise_transition_prob_dict(f_map: dict, func: Callable) -> dict:
@@ -451,3 +475,4 @@ def write_paths_to_file(paths: list, file: str, delimiter: str = " ") -> None:
         for path in paths:
             # one path per line. Map every element to str first.
             f.write(delimiter.join(map(str, path)) + "\n")
+

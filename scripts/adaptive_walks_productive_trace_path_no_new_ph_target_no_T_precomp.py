@@ -7,7 +7,7 @@ import numpy as np
 import datetime
 import time
 
-from rna_folding.adaptive_walks import kimura_fixation_from_fitness, pairwise_transition_prob_dict, kimura_fixation, productive_adaptive_walk_w_T
+from rna_folding.adaptive_walks import kimura_fixation_from_fitness, pairwise_transition_prob_dict, kimura_fixation, productive_adaptive_walk
 
 
 if __name__ ==  "__main__":
@@ -54,20 +54,17 @@ if __name__ ==  "__main__":
             ph_to_fitness[phenotype] = fitness
             if fitness > max_fit:
                 max_fit = fitness
-                print("X", max_fit, phenotype, flush=True)
     print("f loop complete", flush=True)
-    fix_prob = lambda x, y: kimura_fixation_from_fitness(x, y, N=args.population_size)
-    print("fix prob done complete", flush=True)
-    T = pairwise_transition_prob_dict(f_map=ph_to_fitness, func=fix_prob)
 
-    print("Transition matrix complete", flush=True)
     all_nodes = set(G.genotypes)
+    print("Num. of genotypes:", len(all_nodes), flush=True)
     print("Genotype sets complete", flush=True)
     # phenotypes to avoid as starting nodes, e.g. lethal ones.
     if args.avoid:
         # get all lethal nodes
         lethal_nodes = [g for i, g in enumerate(G.genotypes) if G.phenotypes[i]==args.avoid]
-
+    else:
+        lethal_nodes = []
     # extract nodes that are not target (or lethal if applicable)
     potential_starting_nodes = list(all_nodes.difference(set(lethal_nodes)))
     
@@ -79,13 +76,13 @@ if __name__ ==  "__main__":
     print("Start adaptive walks", flush=True)
     for g in start_gt:
         # store adaptive walks by target phenotype
-        path = productive_adaptive_walk_w_T(G, g,
+        path = productive_adaptive_walk(G, g,
                                 fitness_function=ph_to_fitness, 
-                                T=T,
+                                fixation_function=kimura_fixation,
+                                population_size=args.population_size,
                                 max_steps=args.max_steps,
                                 rng=rng, max_fit=max_fit)
         
-        print(ph_to_fitness[G.map(path[-1])], G.map(path[-1]), flush=True)
         if ph_to_fitness[G.map(path[-1])] == max_fit:  # walk reached target
             adaptive_walk_lengths.append(len(path))
         else:

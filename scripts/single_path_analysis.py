@@ -17,155 +17,148 @@ if __name__ ==  "__main__":
     parser.add_argument("-p", "--nc_paths", help="File with adaptive walks along neutral components", required=True)
     parser.add_argument("-n", "--nc_graph", help="Neutral component graph", required=True)
     parser.add_argument("-f", "--fitness_landscapes", help="Fitness landscape files", required=True)
-    parser.add_argument("-m", "--gp_map", help="whole gp map", required=True)
+    parser.add_argument("-g", "--gp_map", help="whole gp map", required=True)
+    parser.add_argument("-i", "--ignore", help="Phenotype to ignore, e.g. the unviable", required=True)
     parser.add_argument("-o", "--output", help="Output file for plot (.pdf)",
                         required=True)
     
     args = parser.parse_args()
 
-
     nc_graph = pickle.load(open(args.nc_graph, "rb"))
     ph_to_nc = {nc_graph.nodes[nc]["phenotype"]: nc for nc in nc_graph.nodes}
+    ph_to_f = load_fl_file_to_dict(args.fitness_landscapes)
+
+    nc_to_f = {}
+    for nc in nc_graph:
+        ph = nc_graph.nodes[nc]["phenotype"]
+        f = ph_to_f[ph]
+        nc_to_f[nc] = f
 
     viable_gt_sum = sum([nc_graph.nodes[nc]["size"] for nc in nc_graph.nodes if nc_graph.nodes[nc]["phenotype"] != args.ignore])
 
-    ph_to_f = load_fl_file_to_dict(args.fitness_landscapes)
-
-    with open(args.nc_paths[i], "r") as f:
+    paths = []
+    with open(args.nc_paths, "r") as f:
         for c, line in enumerate(f):
-            path = line.strip().split(" ")
+            path_raw = line.strip().split(" ")
+            path = [int(path_raw[0])]
+            for i, nc in enumerate(path_raw[1:], start=1):
+                if nc != path_raw[i-1]:
+                    path.append(int(nc))
+            paths.append(path)
     
-        nc_reached = {}
-        accessible_from = {}
+    # get dict of peak id to peak fitness
+    peaks_to_f = dict(zip(*get_peaks(nc_graph=nc_graph, ph_to_f=ph_to_f)))
 
-        start_ncs = {nc: [] for nc in nc_graph.nodes}
+    global_peak_f = max(peaks_to_f.values())
 
-        peaks, peak_f = get_peaks(nc_graph=nc_graph, ph_to_f=ph_to_f)
-        # global_peak = peaks[np.argmax(peak_f)]
-        global_peaks = list(np.array(peaks)[np.argwhere(peak_f == np.amax(peak_f))].flatten())  # get all global peaks
+    local_peaks = []
+    global_peaks = []
+    for peak in peaks_to_f:
+        if peaks_to_f[peak] == global_peak_f:  # get global peaks
+            global_peaks.append(peak)
+        else:  # all non-global peaks are local peaks
+            local_peaks.append(peak)
 
-        peak_size_sum = sum([nc_graph.nodes[p]["size"] for p in peaks])
+    global_peak_combined_size = sum([nc_graph.nodes[nc]["size"] for nc in global_peaks])
+    local_peak_combined_size = sum([nc_graph.nodes[nc]["size"] for nc in local_peaks])
+    # Turn nc graph into directed graph to easily check accessibility
+    di_graph = nc_graph_to_directed_graph(nc_graph, ph_to_f)
 
-        di_graph = nc_graph_to_directed_graph(nc_graph, ph_to_f)
+    N = 20
+    
+    paths_sample_id = np.random.choice(range(len(paths)), N)
+    paths_sample = [paths[path_id] for path_id in paths_sample_id]
 
-        plateau_steps = [0]*args.walk_length
-        global_peak_steps = [0]*args.walk_length
-        local_peak_steps = [0]*args.walk_length
+    fig, axes = plt.subplots(ncols=2, nrows=1, figsize=(10, 5), sharey=True)
 
-        # paths to NC paths (already have this somewhere
-        with open(args.nc_paths[i], "r") as f:
-            for c, line in enumerate(f):
-                path = line.strip().split(" ")
+    global_ending = 0
+    local_ending = 0
+    plateau = 0
 
-                final_nc = int(path[-1])  # map to nc
-
-                start_nc = int(path[0])  # phenotype reached
-
-                if start_nc == final_nc:  # ignore paths that didnt move
-                    continue
-
-                for step, nc_ in enumerate(path):
-                    nc = int(nc_)
-                    if nc in global_peaks:
-                        global_peak_steps[step] += 1
-                        
-                    elif nc in peaks:
-                        local_peak_steps[step] += 1
-                    else:
-                        plateau_steps[step] += 1                
-
-                start_ncs[final_nc].append(start_nc)
-
-                if final_nc not in nc_reached:
-                    nc_reached[final_nc] = 1  # add to dir and count 1
-                else:
-                    nc_reached[final_nc] += 1  # increase count
-
-                if final_nc not in accessible_from:  # if accessibility not yet assessed
-                    accessible_from[final_nc] = 0
-
-                    for source in di_graph.nodes:  # for all possible sources
-                        if nx.has_path(di_graph, source=source, target=final_nc):  # check if accessible
-                            accessible_from[final_nc] += di_graph.nodes[source]["size"]  # size of source nc
+    xmins = []
+    for path in paths_sample:
+        global_acc_nc_along_path = []
+        local_acc_nc_along_path = []
         
-        per_nc_navigability_peak = []
-        per_nc_accessibility_peak = []
-        nc_size_peak = []
-        nc_f_peak = []
+        x_f = []  # x values will be fitness of ncs along path
+        for nc in path:  # go along path nc by nc
+            x_f.append(nc_to_f[nc])
 
-        per_nc_navigability_plat = []
-        per_nc_accessibility_plat = []
-        nc_size_plat = []
-        nc_f_plat = []
-        all_paths = sum(list(nc_reached.values()))
+            global_acc_peaks = []
+            for peak in global_peaks:  # go through all global peaks
+                if nx.has_path(di_graph, source=nc, target=peak):  # check which are accessible
+                    global_acc_peaks.append(peak)
+            global_acc_nc_along_path.append(global_acc_peaks)  # save all accessible peaks per step
 
-        accesibility_global_peak = []
-        navigability_global_peak = []
-        peak_size_global = []
-        peak_f_global = []
+            # repeat for local peaks
+            local_acc_peaks = []
+            for peak in local_peaks:  # go through all peaks
+                if nx.has_path(di_graph, source=nc, target=peak):  # check which are accessible
+                    local_acc_peaks.append(peak)
+            local_acc_nc_along_path.append(local_acc_peaks)  # save all accessible peaks per step
+    
+        y_global = []
+        for peaks in global_acc_nc_along_path:
+            combined_peak_size = sum([nc_graph.nodes[p]["size"] for p in peaks])
+            y_global.append(combined_peak_size)
 
-        peak_count = 0
-        for nc in nc_reached:
-            if nc in global_peaks:
-                navigability_global_peak.append(nc_reached[nc]/all_paths)
-                peak_size_global.append(nc_graph.nodes[nc]["size"]/peak_size_sum)
-                accesibility_global_peak.append(accessible_from[nc]/viable_gt_sum)
-                peak_f_global.append(ph_to_f[nc_graph.nodes[nc]["phenotype"]])
-
-                peak_count += nc_reached[nc]
-            # note: global peaks are contained in peaks which is 
-            # why I need to elif and check global peaks first
-            elif nc in peaks:
-                per_nc_navigability_peak.append(nc_reached[nc]/all_paths)
-                nc_size_peak.append(nc_graph.nodes[nc]["size"]/peak_size_sum)
-                per_nc_accessibility_peak.append(accessible_from[nc]/viable_gt_sum)
-                nc_f_peak.append(ph_to_f[nc_graph.nodes[nc]["phenotype"]])
-
-                peak_count += nc_reached[nc]
-            else:
-                per_nc_navigability_plat.append(nc_reached[nc]/all_paths)
-                nc_size_plat.append(nc_graph.nodes[nc]["size"]/peak_size_sum)
-                per_nc_accessibility_plat.append(accessible_from[nc]/viable_gt_sum)
-                nc_f_plat.append(ph_to_f[nc_graph.nodes[nc]["phenotype"]])
-                
-
-        fraction_peaks_over_plateau = np.round(peak_count/all_paths, 2)
-        sum_of_paths = sum([global_peak_steps[0], local_peak_steps[0], plateau_steps[0]])
-
-        axes[i][1].plot([0, 1], [0, 1], color="black", linestyle="--", linewidth=0.5)
-        axes[i][0].plot([0, 1], [0, 1], color="black", linestyle="--", linewidth=0.5)
+        y_local = []
+        for peaks in local_acc_nc_along_path:
+            combined_peak_size = sum([nc_graph.nodes[p]["size"] for p in peaks])
+            y_local.append(combined_peak_size)
         
-        axes[i][0].scatter(per_nc_accessibility_peak, per_nc_navigability_peak, color="red", alpha=0.5, label="local peak")
-        axes[i][1].scatter(nc_size_peak, per_nc_navigability_peak, color="red", alpha=0.5, label="local peak")
-        axes[i][2].scatter(nc_f_peak, per_nc_navigability_peak, color="red", alpha=0.5, label="local peak")
+        y = [yg/(yl+yg) for yl, yg in zip(y_local, y_global)]
+        
+        # step size counting backwards from end of path (=0)
+        # e.g. path of length 3 will have x = [-2, -1, 0]
+        x = [-len(path)+i+1 for i in range(len(path))]  
+        xmins.append(min(x))
 
-        # axes[i][1].axis('equal')
+        x2 = [nc_to_f[nc] for nc in path]  
+        
+        if path[-1] in global_peaks:
+            axes[0].plot(x, y, marker="x", color="green")
+            global_ending += 1
+        elif nc in local_peaks:
+            axes[0].plot(x, y, marker="x", color="red")
+            local_ending += 1
+        else:
+            axes[0].plot(x2, y, marker="x", color="blue")
+            plateau += 1
+        
+        if path[-1] in global_peaks:
+            axes[1].plot(x2, y, marker="x", color="green")
+            global_ending += 1
+        elif nc in local_peaks:
+            axes[1].plot(x2, y, marker="x", color="red")
+            local_ending += 1
+        else:
+            axes[1].plot(x2, y, marker="x", color="blue")
+            plateau += 1
+    
+    all_paths = global_ending+local_ending+plateau
+    succ_paths = global_ending/all_paths
+    unsucc_paths = local_ending/all_paths
+    plateau_paths = plateau/all_paths
 
-        axes[i][0].scatter(per_nc_accessibility_plat, per_nc_navigability_plat, color="blue", alpha=0.5, label="plateau")
-        # axes[i][1].scatter(nc_size_plat, per_nc_navigability_plat, color="blue", alpha=0.5, label="plateau")
-        axes[i][2].scatter(nc_f_plat, per_nc_navigability_plat, color="blue", alpha=0.5, label="plateau")
-        # for global
-        axes[i][0].scatter(accesibility_global_peak, navigability_global_peak, marker="*", s=50, color="green", label="global peak")
-        axes[i][1].scatter(peak_size_global, navigability_global_peak, marker="*", s=50, color="green", label="global peak")
-        axes[i][2].scatter(peak_f_global, navigability_global_peak, marker="*", s=50, color="green", label="global peak")
+    axes[0].bar(1, succ_paths, color="green")
+    axes[0].bar(1, unsucc_paths, bottom=succ_paths, color="red")
+    axes[0].bar(1, plateau, bottom=succ_paths+unsucc_paths, color="blue")
 
-        axes[i][3].plot(range(len(plateau_steps)), plateau_steps, color="blue", label="plateau")
-        axes[i][3].plot(range(len(local_peak_steps)), local_peak_steps, color="red", label="local peak")
-        axes[i][3].plot(range(len(global_peak_steps)), global_peak_steps, color="green", label="global peak")
+    axes[0].hlines(global_peak_combined_size/(global_peak_combined_size+local_peak_combined_size), 
+                   xmin=min(xmins)-0.3, xmax=1, color="grey", linestyle="--", 
+                   zorder=-10, label="|global peaks|/|all peaks|")
+    axes[0].set_xlabel("Steps away from end")
+    axes[0].set_ylabel("Fraction of accessible peaks that are global peaks")
+        # ax.plot(x, y_global, label="global", marker="x")
+        # ax.plot(x, y_local, label="local", marker="x")
+    
+    axes[1].set_xlabel("Fitness")
+    axes[1].set_ylabel("Fraction of accessible peaks that are global peaks")
 
-        axes[i][0].set_ylabel("Navigability")
-        axes[i][1].set_ylabel("Navigability")
-        axes[i][2].set_ylabel("Navigability")
-        axes[i][0].set_xlabel("Fraction of viable genotypes from which NC is accessible")
-        axes[i][1].set_xlabel("|NC|/ruggedness") 
-        axes[i][2].set_xlabel("NC fitness")
-        axes[i][3].set_xlabel("Steps")
-        axes[i][3].set_ylabel("Number of paths\n" + "Peak ending fraction: " + str(fraction_peaks_over_plateau) + "\n" + "Number of paths: " + str(sum_of_paths))
+    labels = [item.get_text() for item in axes[0].get_xticklabels()]
+    labels[-1] = "Navigability"
 
-        axes[i][0].legend()
-        axes[i][1].legend()
-        axes[i][2].legend()
-        axes[i][3].legend()
-
-    # plt.tight_layout()
-    plt.savefig(args.output, format="pdf", dpi=30)
+    axes[0].legend(loc="lower left")
+    plt.tight_layout()
+    plt.savefig(args.output, format="pdf", dpi=10)
