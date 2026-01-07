@@ -52,7 +52,7 @@ rule run_adaptive_walks_productive_trace_paths_no_new_ph_target:
         sample_size_walks=None,  # int
         avoid_phenotype=None,  # immutable
     shell:
-        "adaptive_walks_productive_trace_path_no_new_ph_target_.py "
+        "adaptive_walks_productive_trace_path_no_new_ph_target.py "
         "-i {input.gp_map} "
         "-f {input.fl} "
         "-l {output.walk_lengths} "

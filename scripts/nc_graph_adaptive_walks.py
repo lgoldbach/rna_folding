@@ -55,7 +55,7 @@ if __name__ ==  "__main__":
 
     for nc in start_nc:
         # store adaptive walks by target phenotype
-        path = nc_uniform_adaptive_walk(di_graph, 
+        path = nc_uniform_adaptive_walk(di_graph,
                                         nc, 
                                         max_steps=args.max_steps,
                                         rng=rng) 

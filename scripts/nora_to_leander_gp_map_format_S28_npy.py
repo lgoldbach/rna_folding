@@ -8,12 +8,12 @@ from rna_folding.utils import combinatorically_complete_genotypes
 from rna_folding.parsing import dict_to_gpmap
 
 
-gp = pickle.load(open("gp_map_Nora.pkl", "rb"))
+gp = np.load("data/GPmap_polyomino2_8_nruns500_threshold0_seededtraditional_DGPmap.npy")
 alphabet = "01234567"
 
 print("Load done", flush=True)
 
-gt_gen = combinatorically_complete_genotypes(2*4, alphabet)
+gt_gen = combinatorically_complete_genotypes(8, alphabet)
 
 print(gp.shape, np.unique(gp), flush=True)
 

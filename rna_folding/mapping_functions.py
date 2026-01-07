@@ -12,6 +12,8 @@ from rna_folding.utils import bp_to_dotbracket, dotbracket_to_genotype, dotbrack
 from rna_folding.parsing import dict_to_gpmap
 import RNA
 
+def test():
+    print("D")
 
 def gp_mapper(input: str, output: str, mapping_function: Callable):
     """Takes file with genotypes, maps them to phenotypes and saves them in
