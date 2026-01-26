@@ -1,7 +1,6 @@
 import numpy as np
 import networkx as nx
 import pickle
-import RNA
 
 
 class GenotypePhenotypeGraph(nx.Graph):
@@ -297,8 +296,8 @@ class GenotypePhenotypeGraph(nx.Graph):
                     boundaries.append((genotype, neighbor))
         return stack
     
-    def to_pickle(path):
-        pickle.dump(self, open(path, "rb"))
+    def to_pickle(self, path):
+        pickle.dump(self, open(path, "wb"))
 
 
 # class GenotypePhenotypeGraph(nx.Graph):
